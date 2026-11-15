@@ -21,7 +21,7 @@ const PX_PER_STEP = SCALE * PHYS.DT; // world u/s -> matter px/step
 export const MAX_SHOTS = 5; // must match backend scores.rs MAX_SHOTS
 const MAX_DRAG_PX = 12 * SCALE; // pull distance for 100% power
 const MIN_POWER = 0.08; // smaller pulls cancel instead of wasting a bird
-const PREVIEW_SECONDS = 0.75; // short arc, Angry Birds style
+const PREVIEW_SECONDS = 0.75; // short arc, Sling Squads style
 const MAX_STEPS_PER_FRAME = 5; // avoid spiral-of-death after tab switch
 const NEXT_BIRD_DELAY_STEPS = 30;
 const PIXEL_FONT = '"Press Start 2P", ui-monospace, monospace';
@@ -290,7 +290,7 @@ export class GameEngine {
   private destroyTarget(t: Target) {
     t.destroyed = true;
     Matter.Composite.remove(this.engine.world, t.body);
-    const color = t.isPig ? "#7bd389" : MATERIAL_COLOR[t.material ?? "wood"][0];
+    const color = t.isPig ? "#9d4edd" : MATERIAL_COLOR[t.material ?? "wood"][0];
     for (let i = 0; i < 14; i++) {
       const a = Math.random() * Math.PI * 2;
       const s = 1 + Math.random() * 3;
@@ -362,7 +362,7 @@ export class GameEngine {
       if (this.phase === "aiming" && e.pointerId === this.pointerId) this.cancelAim();
     };
     const onKey = (e: KeyboardEvent) => {
-      if (this.phase === "aiming" && currentAction("angry-bird", e.code) === "cancel") this.cancelAim();
+      if (this.phase === "aiming" && currentAction("sling-squad", e.code) === "cancel") this.cancelAim();
     };
 
     c.addEventListener("pointerdown", onDown);
@@ -704,20 +704,35 @@ export class GameEngine {
     const { ctx } = this;
     const r = body.circleRadius ?? 12;
     const { x, y } = body.position;
-    ctx.fillStyle = "#7bd389";
-    ctx.strokeStyle = "#2d6a4f";
+    // Gobbo: a purple blob with two little horns, one big eye and a grin.
+    ctx.fillStyle = "#c77dff";
+    ctx.strokeStyle = "#3c096c";
     ctx.lineWidth = 2;
+    for (const side of [-1, 1]) {
+      ctx.beginPath();
+      ctx.moveTo(x + side * r * 0.35, y - r * 0.75);
+      ctx.lineTo(x + side * r * 0.6, y - r * 1.25);
+      ctx.lineTo(x + side * r * 0.75, y - r * 0.55);
+      ctx.fill();
+      ctx.stroke();
+    }
+    ctx.fillStyle = "#9d4edd";
     ctx.beginPath();
     ctx.arc(x, y, r, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
-    ctx.fillStyle = "#52b788";
+    ctx.fillStyle = "#ffffff";
     ctx.beginPath();
-    ctx.ellipse(x, y + r * 0.15, r * 0.4, r * 0.3, 0, 0, Math.PI * 2);
+    ctx.arc(x, y - r * 0.2, r * 0.38, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = "#1b4332";
-    ctx.fillRect(x - r * 0.45, y - r * 0.4, 2, 2);
-    ctx.fillRect(x + r * 0.35, y - r * 0.4, 2, 2);
+    ctx.fillStyle = "#10002b";
+    ctx.beginPath();
+    ctx.arc(x + r * 0.08, y - r * 0.18, r * 0.16, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#10002b";
+    ctx.beginPath();
+    ctx.arc(x, y + r * 0.25, r * 0.38, 0.15 * Math.PI, 0.85 * Math.PI);
+    ctx.stroke();
   }
 
   private drawBird(pos: Vec, angle = 0) {

@@ -251,16 +251,16 @@ export const api = {
       `/api/games/${encodeURIComponent(gameId)}/scores/me`,
     );
   },
-  // Angry Bird specific.
+  // Sling Squad specific.
   birds() {
-    return request<Bird[]>("/api/games/angry-bird/birds");
+    return request<Bird[]>("/api/games/sling-squad/birds");
   },
-  /** Angry Bird levels with your best, stars and unlocks. */
-  angryBirdLevels() {
-    return request<AbProgress>("/api/games/angry-bird/levels");
+  /** Sling Squad levels with your best, stars and unlocks. */
+  slingSquadLevels() {
+    return request<AbProgress>("/api/games/sling-squad/levels");
   },
   submitScore(level: number, shots: ShotInput[]) {
-    return request<SubmitResponse>("/api/games/angry-bird/scores", {
+    return request<SubmitResponse>("/api/games/sling-squad/scores", {
       method: "POST",
       body: JSON.stringify({ level, shots }),
     });

@@ -13,7 +13,7 @@ interface Props {
   mark?: Mark;
 }
 
-/** One Tic-Tac-Toe piece: X/O, emoji, Angry Bird chip, your character or your photo. */
+/** One Tic-Tac-Toe piece: X/O, emoji, Sling Squad chip, your character or your photo. */
 export default function Piece({ face, size = 64, className, mark }: Props) {
   const colorblind = useColorblind();
   const art = findFace(face).art;

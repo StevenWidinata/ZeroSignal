@@ -119,7 +119,7 @@ export default function Stats() {
   const s = stats;
   const cf = s.series.filter((r) => r.game === "connect-four");
   const ttt = s.series.filter((r) => r.game === "tic-tac-toe");
-  const ab = sumBoards(s.boards, "angry-bird");
+  const ab = sumBoards(s.boards, "sling-squad");
   const wamBoards = s.boards.filter((b) => b.game_id === "whack-a-mole");
   const mfBoards = s.boards.filter((b) => b.game_id === "minefield");
   const boards2048 = s.boards.filter((b) => b.game_id === "2048");
@@ -184,7 +184,7 @@ export default function Stats() {
           <SeriesTable rows={ttt} withDraws />
         </GameCard>
 
-        <GameCard id="angry-bird" played={ab.rounds > 0}>
+        <GameCard id="sling-squad" played={ab.rounds > 0}>
           <dl className="wam-stats">
             <div>
               <dt>Rounds</dt>

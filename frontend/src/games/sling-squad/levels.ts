@@ -1,7 +1,7 @@
-// Angry Bird levels, read from shared/angry_bird_levels.json: the same file
+// Sling Squad levels, read from shared/sling_squad_levels.json: the same file
 // the server's physics uses (backend/src/physics/level.rs). The server is
 // authoritative; the browser uses these numbers to draw and preview.
-import raw from "../../../../shared/angry_bird_levels.json";
+import raw from "../../../../shared/sling_squad_levels.json";
 
 export type Material = "wood" | "stone" | "ice";
 

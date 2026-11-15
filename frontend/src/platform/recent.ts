@@ -2,10 +2,16 @@
 const KEY = "zerosignal_recent_games";
 export const RECENT_MAX = 3;
 
+/** Old game ids -> current ones. */
+const RENAMED: Record<string, string> = { "angry-bird": "sling-squad" };
+
 export function parseRecent(raw: string | null): string[] {
   try {
     const v: unknown = JSON.parse(raw ?? "[]");
-    return Array.isArray(v) ? v.filter((x): x is string => typeof x === "string").slice(0, RECENT_MAX) : [];
+    if (!Array.isArray(v)) return [];
+    // The slingshot game was renamed (angry-bird -> sling-squad).
+    const ids = v.filter((x): x is string => typeof x === "string").map((x) => RENAMED[x] ?? x);
+    return [...new Set(ids)].slice(0, RECENT_MAX);
   } catch {
     return [];
   }

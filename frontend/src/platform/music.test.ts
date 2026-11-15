@@ -35,7 +35,7 @@ describe("music", () => {
   it("picks the track for each page", () => {
     expect(trackForPath("/")).toBe("hub");
     expect(trackForPath("/shop")).toBe("hub");
-    expect(trackForPath("/play/angry-bird")).toBe("upbeat");
+    expect(trackForPath("/play/sling-squad")).toBe("upbeat");
     expect(trackForPath("/play/connect-four")).toBe("calm");
     expect(trackForPath("/play/tic-tac-toe")).toBe("calm");
   });

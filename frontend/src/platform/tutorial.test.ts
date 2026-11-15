@@ -19,6 +19,6 @@ describe("tutorials", () => {
     expect(parseSeen(null)).toEqual([]);
     expect(parseSeen("oops")).toEqual([]);
     expect(parseSeen('{"a":1}')).toEqual([]);
-    expect(parseSeen('["connect-four", 3, "angry-bird"]')).toEqual(["connect-four", "angry-bird"]);
+    expect(parseSeen('["connect-four", 3, "sling-squad"]')).toEqual(["connect-four", "sling-squad"]);
   });
 });

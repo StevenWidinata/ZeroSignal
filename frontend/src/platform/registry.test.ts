@@ -6,8 +6,8 @@ import { GAMES, LIVE_GAMES, findGame } from "./registry";
 // Ids declared in the backend catalog (backend/src/games.rs).
 function backendGameIds(): string[] {
   const src = readFileSync(resolve(__dirname, "../../../backend/src/games.rs"), "utf8");
-  const ids = [...src.matchAll(/id:\s*(?:"([a-z0-9-]+)"|ANGRY_BIRD)/g)].map(
-    (m) => m[1] ?? "angry-bird",
+  const ids = [...src.matchAll(/id:\s*(?:"([a-z0-9-]+)"|SLING_SQUAD)/g)].map(
+    (m) => m[1] ?? "sling-squad",
   );
   return ids;
 }
@@ -27,12 +27,12 @@ describe("game registry", () => {
     for (const g of GAMES) {
       expect(!!g.Play).toBe(g.meta.status === "live");
     }
-    expect(LIVE_GAMES.map((g) => g.meta.id)).toContain("angry-bird");
+    expect(LIVE_GAMES.map((g) => g.meta.id)).toContain("sling-squad");
     expect(LIVE_GAMES.map((g) => g.meta.id)).toContain("connect-four");
   });
 
   it("finds games by id and rejects unknown ones", () => {
-    expect(findGame("angry-bird")?.meta.title).toBe("Angry Bird");
+    expect(findGame("sling-squad")?.meta.title).toBe("Sling Squad");
     expect(findGame("connect-four")?.meta.status).toBe("live");
     expect(findGame("tic-tac-toe")?.meta.status).toBe("live");
     expect(findGame("whack-a-mole")?.meta.status).toBe("live");

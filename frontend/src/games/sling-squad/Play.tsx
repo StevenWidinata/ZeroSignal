@@ -23,10 +23,10 @@ export default function Play() {
         <div className="page-head">
           <div>
             <BackButton />
-            <h1 style={{ marginTop: 12 }}>Angry Bird</h1>
-            <p>Smash the fort. Pop the pigs. Clear all 12 levels.</p>
+            <h1 style={{ marginTop: 12 }}>Sling Squad</h1>
+            <p>Smash the fort. Pop the gobbos. Clear all 12 levels.</p>
           </div>
-          <Link to="/leaderboard/angry-bird" className="btn btn-blue btn-sm">
+          <Link to="/leaderboard/sling-squad" className="btn btn-blue btn-sm">
             🏆 Leaderboard
           </Link>
         </div>
@@ -51,7 +51,7 @@ function Game({ level, onLevels, onPlay }: { level: Level; onLevels: () => void;
   const [submitting, setSubmitting] = useState(false);
   const [roundOver, setRoundOver] = useState(false);
   const [shotFired, setShotFired] = useState(false);
-  useGuardWhile("angry-bird", shotFired && !roundOver);
+  useGuardWhile("sling-squad", shotFired && !roundOver);
   const [error, setError] = useState<string | null>(null);
 
   // Load bird catalog (with unlock state) from the server.
@@ -146,14 +146,14 @@ function Game({ level, onLevels, onPlay }: { level: Level; onLevels: () => void;
         <div>
           <BackButton />
           <h1 style={{ marginTop: 12 }}>
-            Angry Bird{" "}
+            Sling Squad{" "}
             <span className="tag tag-yellow">
               {findWorld(level.world).icon} Level {level.id}: {level.name}
             </span>
           </h1>
-          <p>Destroy every pig to clear the level. Smash blocks for more stars.</p>
+          <p>Destroy every gobbo to clear the level. Smash blocks for more stars.</p>
         </div>
-        <Link to="/leaderboard/angry-bird" className="btn btn-blue btn-sm">
+        <Link to="/leaderboard/sling-squad" className="btn btn-blue btn-sm">
           🏆 Leaderboard
         </Link>
       </div>
@@ -168,7 +168,7 @@ function Game({ level, onLevels, onPlay }: { level: Level; onLevels: () => void;
             <canvas
               ref={canvasRef}
               className="game-canvas"
-              aria-label="Angry Bird game. Drag to pull the slingshot, release to launch."
+              aria-label="Sling Squad game. Drag to pull the slingshot, release to launch."
             />
           </div>
 
@@ -204,16 +204,16 @@ function Game({ level, onLevels, onPlay }: { level: Level; onLevels: () => void;
           {result && (
             <div className="result-card">
               <h3>
-                {result.cleared ? (result.first_clear ? "🎉 Level cleared!" : "Level cleared!") : "Some pigs survived"}
+                {result.cleared ? (result.first_clear ? "🎉 Level cleared!" : "Level cleared!") : "Some gobbos survived"}
                 {isBest && " · ★ New best"}
               </h3>
               <Stars n={result.stars} />
               <div className="score-big">{fmt(result.score)}</div>
-              {!result.cleared && <p className="wam-hint">Destroy every pig to clear the level and unlock the next one.</p>}
+              {!result.cleared && <p className="wam-hint">Destroy every gobbo to clear the level and unlock the next one.</p>}
               {result.first_clear && <p className="unlock">+50 XP for your first clear of this level.</p>}
               <div className="stat-row">
                 <div className="stat">
-                  <small>Pigs popped</small>
+                  <small>Gobbos popped</small>
                   <strong>{result.pigs_destroyed}</strong>
                 </div>
                 <div className="stat">

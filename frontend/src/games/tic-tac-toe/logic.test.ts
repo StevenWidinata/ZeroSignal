@@ -54,7 +54,7 @@ describe("boards and faces", () => {
   });
 
   it("resolves spin keys and never gives both sides the same face", () => {
-    expect(findByKey("face:pig")?.item.name).toBe("Piggy");
+    expect(findByKey("face:pig")?.item.name).toBe("Gobbo");
     expect(findByKey("board:neon")?.kind).toBe("board");
     expect(findByKey("hat:pig")).toBeNull();
     for (const f of FACES) expect(opponentFace(f.id)).not.toBe(f.id);

@@ -16,3 +16,10 @@ describe("recently played", () => {
     expect(parseRecent('["x", 3, "y", "z", "w"]')).toEqual(["x", "y", "z"]);
   });
 });
+
+describe("renamed games", () => {
+  it("maps the old slingshot id to Sling Squad", async () => {
+    const { parseRecent } = await import("./recent");
+    expect(parseRecent(JSON.stringify(["angry-bird", "2048", "sling-squad"]))).toEqual(["sling-squad", "2048"]);
+  });
+});

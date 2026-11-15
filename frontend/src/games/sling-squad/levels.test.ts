@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { LEVELS, LEVEL_ONE, WORLDS, findLevel, starsFor } from "./levels";
 
-describe("angry bird levels", () => {
+describe("sling squad levels", () => {
   it("has 12 levels in 3 worlds, read from the shared file", () => {
     expect(LEVELS).toHaveLength(12);
     expect(WORLDS.map((w) => w.name)).toEqual(["Meadow", "Desert", "Ice Castle"]);

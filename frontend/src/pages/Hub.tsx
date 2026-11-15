@@ -187,7 +187,7 @@ export default function Hub() {
     };
   }, [user]);
 
-  const quickPlay = recent[0] ?? LIVE_GAMES[0]?.meta.id ?? "angry-bird";
+  const quickPlay = recent[0] ?? LIVE_GAMES[0]?.meta.id ?? "sling-squad";
 
   return (
     <div className="hub">

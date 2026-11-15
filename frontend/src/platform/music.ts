@@ -73,7 +73,7 @@ export const TRACKS: Record<TrackId, Track> = {
     },
     drums: rep(["k", "-", "-", "-", "h", "-", "-", "-"], 4),
   },
-  // Fast E minor loop (Em - Em - C - B) for Angry Bird.
+  // Fast E minor loop (Em - Em - C - B) for Sling Squad.
   upbeat: {
     name: "Slingshot Rush",
     bpm: 150,
@@ -112,7 +112,7 @@ export function noteFreq(note: string): number | null {
 
 /** Which track fits a page. */
 export function trackForPath(pathname: string): TrackId {
-  if (pathname.startsWith("/play/angry-bird") || pathname.startsWith("/play/whack-a-mole")) return "upbeat";
+  if (pathname.startsWith("/play/sling-squad") || pathname.startsWith("/play/whack-a-mole")) return "upbeat";
   if (pathname.startsWith("/play/")) return "calm";
   return "hub";
 }

@@ -44,7 +44,7 @@ const POS3 = ["Top left", "Top middle", "Top right", "Middle left", "Center", "M
 
 export const KEYMAPS: GameKeymap[] = [
   {
-    gameId: "angry-bird",
+    gameId: "sling-squad",
     groups: [{ actions: [{ id: "cancel", label: "Cancel aiming", keys: ["Escape"] }] }],
     note: "Drag the bird back with the mouse or a finger, then let go to launch.",
   },

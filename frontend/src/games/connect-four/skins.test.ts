@@ -22,7 +22,7 @@ describe("connect four skins", () => {
   });
 
   it("falls back to the first skin for unknown ids", () => {
-    expect(findSkin("pig").name).toBe("Piggy");
+    expect(findSkin("pig").name).toBe("Gobbo");
     expect(findSkin("nope").id).toBe("red");
   });
 

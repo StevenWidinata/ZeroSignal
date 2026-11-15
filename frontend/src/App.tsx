@@ -199,7 +199,10 @@ export default function App() {
             path="/play/:gameId"
             element={<PlayGame />}
           />
-          <Route path="/leaderboard" element={<Navigate to="/leaderboard/angry-bird" replace />} />
+          <Route path="/leaderboard" element={<Navigate to="/leaderboard/sling-squad" replace />} />
+          {/* Old addresses of the slingshot game (renamed to Sling Squad). */}
+          <Route path="/play/angry-bird" element={<Navigate to="/play/sling-squad" replace />} />
+          <Route path="/leaderboard/angry-bird" element={<Navigate to="/leaderboard/sling-squad" replace />} />
           <Route path="/leaderboard/:gameId" element={<Leaderboard />} />
           <Route path="/u/:username" element={<PublicProfile />} />
           <Route

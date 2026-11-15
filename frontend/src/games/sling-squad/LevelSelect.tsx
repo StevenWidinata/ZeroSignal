@@ -25,7 +25,7 @@ export default function LevelSelect({ onPlay }: { onPlay: (levelId: number) => v
 
   useEffect(() => {
     api
-      .angryBirdLevels()
+      .slingSquadLevels()
       .then(setProgress)
       .catch((e) => setError(e instanceof Error ? e.message : "could not load your levels"));
   }, []);
@@ -87,7 +87,7 @@ export default function LevelSelect({ onPlay }: { onPlay: (levelId: number) => v
         </section>
       ))}
       <p className="wam-hint">
-        Destroy every pig to clear a level (1 ★) and unlock the next one. Smash more blocks for 2 ★ and 3 ★. The first clear of each
+        Destroy every gobbo to clear a level (1 ★) and unlock the next one. Smash more blocks for 2 ★ and 3 ★. The first clear of each
         level gives +50 XP.
       </p>
     </div>

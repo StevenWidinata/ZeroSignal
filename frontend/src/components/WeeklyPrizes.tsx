@@ -8,7 +8,7 @@ import { useWallet } from "../store/wallet";
 
 const MEDAL = ["", "🥇", "🥈", "🥉"];
 
-/** "Angry Bird" or "Whack-a-Mole · ⚡ Frenzy". */
+/** "Sling Squad" or "Whack-a-Mole · ⚡ Frenzy". */
 export function prizeBoardName(p: Pick<WeeklyPrize, "game_id" | "level">): string {
   const g = findGame(p.game_id);
   const title = g?.meta.title ?? p.game_id;

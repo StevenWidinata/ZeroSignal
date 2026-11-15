@@ -2,11 +2,11 @@ import { lazy } from "react";
 import type { GameModule } from "../../platform/types";
 import { LEVELS, findWorld } from "./levels";
 
-const angryBird: GameModule = {
+const slingSquad: GameModule = {
   meta: {
-    id: "angry-bird",
-    title: "Angry Bird",
-    tagline: "Fling birds, smash forts, pop every pig.",
+    id: "sling-squad",
+    title: "Sling Squad",
+    tagline: "Fling birds, smash forts, pop every gobbo.",
     tags: ["Physics", "Solo", "12 levels"],
     accent: "yellow",
     icon: "🐦",
@@ -30,16 +30,16 @@ const angryBird: GameModule = {
       {
         icon: "✨",
         title: "Use abilities",
-        text: "Tap while a bird is flying to use its power: Chuck dashes, Bomb explodes, Matilda drops an egg, Blues splits in three.",
+        text: "Tap while a bird is flying to use its power: Zip dashes, Boomer explodes, Eggbert drops an egg, Trio splits in three.",
       },
       {
         icon: "🐷",
         title: "Score big",
-        text: "Pop every pig to clear a level (1 ★) and unlock the next of 12. Smash blocks for 2 ★ and 3 ★. Your campaign score unlocks new birds.",
+        text: "Pop every gobbo to clear a level (1 ★) and unlock the next of 12. Smash blocks for 2 ★ and 3 ★. Your campaign score unlocks new birds.",
       },
     ],
   },
   Play: lazy(() => import("./Play")),
 };
 
-export default angryBird;
+export default slingSquad;

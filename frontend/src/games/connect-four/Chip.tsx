@@ -78,33 +78,29 @@ function Face({ id }: { id: string }) {
     case "red-bird":
       return (
         <g>
-          {/* head feathers */}
-          <path d="M44 8 l6 -6 l4 8 l6 -4 l-2 10z" fill="#8f1d26" stroke="#03040c" strokeWidth="2" />
-          {/* belly */}
-          <ellipse cx="50" cy="74" rx="24" ry="14" fill="#f6e7c8" />
-          {/* eyes + angry brows */}
-          <circle cx="38" cy="46" r="9" fill="#fff" stroke="#03040c" strokeWidth="2" />
-          <circle cx="62" cy="46" r="9" fill="#fff" stroke="#03040c" strokeWidth="2" />
-          <circle cx="40" cy="47" r="3.5" fill="#03040c" />
-          <circle cx="60" cy="47" r="3.5" fill="#03040c" />
-          <path d="M26 32 L48 40 M74 32 L52 40" stroke="#03040c" strokeWidth="7" strokeLinecap="round" />
-          {/* beak */}
-          <path d="M42 58 L58 58 L50 70z" fill="#ffb703" stroke="#03040c" strokeWidth="2" />
+          {/* Pip: a round, cheerful bird with a little wing */}
+          <ellipse cx="50" cy="74" rx="22" ry="12" fill="#ffe8d6" />
+          <circle cx="38" cy="44" r="9" fill="#fff" stroke="#03040c" strokeWidth="2" />
+          <circle cx="62" cy="44" r="9" fill="#fff" stroke="#03040c" strokeWidth="2" />
+          <circle cx="39" cy="45" r="4" fill="#03040c" />
+          <circle cx="61" cy="45" r="4" fill="#03040c" />
+          <circle cx="40.5" cy="43" r="1.4" fill="#fff" />
+          <circle cx="62.5" cy="43" r="1.4" fill="#fff" />
+          <path d="M43 56 Q50 66 57 56z" fill="#ffd23f" stroke="#03040c" strokeWidth="2" />
+          <path d="M16 56 q10 -10 18 2" stroke="#b2431c" strokeWidth="5" fill="none" strokeLinecap="round" />
         </g>
       );
     case "pig":
       return (
         <g>
-          <circle cx="24" cy="18" r="8" fill="#6fb83a" stroke="#03040c" strokeWidth="3" />
-          <circle cx="76" cy="18" r="8" fill="#6fb83a" stroke="#03040c" strokeWidth="3" />
-          <circle cx="34" cy="40" r="7" fill="#fff" stroke="#03040c" strokeWidth="2" />
-          <circle cx="66" cy="40" r="7" fill="#fff" stroke="#03040c" strokeWidth="2" />
-          <circle cx="35" cy="41" r="3" fill="#03040c" />
-          <circle cx="65" cy="41" r="3" fill="#03040c" />
-          {/* snout */}
-          <ellipse cx="50" cy="60" rx="16" ry="12" fill="#b7ea7f" stroke="#03040c" strokeWidth="3" />
-          <ellipse cx="44" cy="60" rx="3" ry="5" fill="#2f5d12" />
-          <ellipse cx="56" cy="60" rx="3" ry="5" fill="#2f5d12" />
+          {/* Gobbo: horns, one big eye and a toothy grin */}
+          <path d="M30 22 L24 4 L40 16z" fill="#c77dff" stroke="#03040c" strokeWidth="3" />
+          <path d="M70 22 L76 4 L60 16z" fill="#c77dff" stroke="#03040c" strokeWidth="3" />
+          <circle cx="50" cy="42" r="14" fill="#fff" stroke="#03040c" strokeWidth="2.5" />
+          <circle cx="52" cy="43" r="6" fill="#10002b" />
+          <circle cx="54" cy="40" r="2" fill="#fff" />
+          <path d="M34 64 Q50 78 66 64" stroke="#03040c" strokeWidth="3" fill="#fff" />
+          <path d="M42 66 l3 5 l3 -5 M52 66 l3 5 l3 -5" stroke="#03040c" strokeWidth="1.5" fill="none" />
         </g>
       );
     case "bomb-bird":
@@ -113,13 +109,13 @@ function Face({ id }: { id: string }) {
           {/* fuse + spark */}
           <path d="M50 6 q6 -6 12 -2" stroke="#c8873a" strokeWidth="4" fill="none" />
           <circle cx="64" cy="4" r="4" fill="#ffb703" />
-          <circle cx="38" cy="46" r="8" fill="#fff" stroke="#03040c" strokeWidth="2" />
-          <circle cx="62" cy="46" r="8" fill="#fff" stroke="#03040c" strokeWidth="2" />
-          <circle cx="40" cy="47" r="3" fill="#03040c" />
-          <circle cx="60" cy="47" r="3" fill="#03040c" />
-          <path d="M28 34 L48 40 M72 34 L52 40" stroke="#ff4d4f" strokeWidth="5" strokeLinecap="round" />
-          <path d="M43 58 L57 58 L50 68z" fill="#ffb703" stroke="#03040c" strokeWidth="2" />
-          <ellipse cx="50" cy="80" rx="14" ry="6" fill="#4a4e69" />
+          {/* Boomer: a round bird with a fuse and a big grin */}
+          <circle cx="38" cy="44" r="8" fill="#fff" stroke="#03040c" strokeWidth="2" />
+          <circle cx="62" cy="44" r="8" fill="#fff" stroke="#03040c" strokeWidth="2" />
+          <circle cx="39" cy="45" r="3.5" fill="#03040c" />
+          <circle cx="61" cy="45" r="3.5" fill="#03040c" />
+          <path d="M36 60 Q50 72 64 60" stroke="#ffd23f" strokeWidth="4" fill="none" strokeLinecap="round" />
+          <path d="M44 56 L56 56 L50 64z" fill="#ffb703" stroke="#03040c" strokeWidth="2" />
         </g>
       );
     case "egg":
