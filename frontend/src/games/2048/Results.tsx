@@ -1,4 +1,5 @@
 import type { G2048Finish } from "../../api/types";
+import ShareDaily from "../../components/dailies/ShareDaily";
 import { TENTHS } from "./engine";
 import { MODE_INFO } from "./modes";
 import { digitsClass, formatPlayTime, tileClass } from "./tiles";
@@ -39,6 +40,11 @@ export default function Results({ result, playMs, onAgain, onMenu }: Props) {
             </small>
           )}
         </>
+      }
+      footer={
+        result.mode === "daily" ? (
+          <ShareDaily gameId="2048" headline={`${fmt(s.points)} pts`} detail={`🧱 Biggest tile ${fmt(s.max_tile)} · ${fmt(s.moves)} moves`} />
+        ) : undefined
       }
       onAgain={onAgain}
       onMenu={onMenu}

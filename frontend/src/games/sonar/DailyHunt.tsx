@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import ShareDaily from "../../components/dailies/ShareDaily";
 import { sonar } from "../../api/client";
 import type { SonarDaily } from "../../api/types";
 import { MyReaction } from "../../character/Live";
@@ -137,6 +138,11 @@ export default function DailyHunt({ look, onExit }: { look: { fleet: string; sea
               </span>
             )}
           </div>
+          <ShareDaily
+            gameId="sonar"
+            headline={`🎯 Fleet found in ${d.target.shots} shots`}
+            detail={`📡 ${2 - d.target.pings_left} pings used${d.points !== null ? ` · ${d.points} pts` : ""}`}
+          />
         </div>
       )}
       <div className="game-controls">

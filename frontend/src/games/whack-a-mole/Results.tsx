@@ -1,4 +1,5 @@
 import type { WamFinish } from "../../api/types";
+import ShareDaily from "../../components/dailies/ShareDaily";
 import { KINDS } from "./engine";
 import { itemName } from "./items";
 import Mole, { KIND_LABEL } from "./Mole";
@@ -49,6 +50,15 @@ export default function Results({ result, grid, onAgain, onMenu }: Props) {
         </>
       }
       drop={result.drop ? itemName(result.drop) : null}
+      footer={
+        result.mode === "daily" ? (
+          <ShareDaily
+            gameId="whack-a-mole"
+            headline={`${s.score.toLocaleString()} pts`}
+            detail={`🎯 ${acc}% accuracy · 🔥 ${s.best_streak} combo${s.fever ? " · FEVER" : ""}`}
+          />
+        ) : undefined
+      }
       onAgain={onAgain}
       onMenu={onMenu}
     >

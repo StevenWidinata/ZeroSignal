@@ -5160,3 +5160,25 @@ kbd.key {
 .roadmap-ideas small {
   color: var(--muted);
 }
+
+/* Daily share card */
+.share-daily {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 2px dashed var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+.share-text {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+.share-daily .game-controls {
+  justify-content: flex-start;
+  margin: 0;
+}

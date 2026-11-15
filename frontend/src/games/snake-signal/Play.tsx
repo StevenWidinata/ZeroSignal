@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import ShareDaily from "../../components/dailies/ShareDaily";
 import { wantsDaily } from "../../components/dailies/logic";
 import { snakeSignal } from "../../api/client";
 import type { SnakeCollection, SnakeFinish, SnakeItemKind, SnakeMode, SnakeSize, SnakeStart } from "../../api/types";
@@ -257,6 +258,15 @@ export default function Play() {
           result={screen.result}
           onAgain={daily ? null : () => void start()}
           onMenu={() => setScreen({ kind: "setup" })}
+          footer={
+            daily ? (
+              <ShareDaily
+                gameId="snake-signal"
+                headline={`${screen.result.summary.score.toLocaleString()} pts`}
+                detail={`📏 ${screen.result.summary.max_length} long · 🔥 ×${screen.result.summary.best_combo} · 📦 ${screen.result.summary.eaten} packets`}
+              />
+            ) : undefined
+          }
         />
       </>
     );

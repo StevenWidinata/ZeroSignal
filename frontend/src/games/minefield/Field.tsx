@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import ShareDaily from "../../components/dailies/ShareDaily";
 import { minefield } from "../../api/client";
 import type { MfGame } from "../../api/types";
 import { useGuardWhile } from "../../platform/leaveGuard";
@@ -340,6 +341,13 @@ export default function Field({ initial, onNew, onMenu }: Props) {
             </div>
           </dl>
           {!res.won && <p className="wam-hint">Mines are shown now. ❌ marks a flag that was wrong.</p>}
+          {game.difficulty === "daily" && (
+            <ShareDaily
+              gameId="minefield"
+              headline={res.won ? `🚩 Cleared in ${formatTime(res.time_ms ?? 0)} · ${(res.score ?? 0).toLocaleString()} pts` : "💥 Boom!"}
+              detail={`🧠 ${efficiency(res.three_bv ?? 0, res.clicks)}% efficiency · 💡 ${game.hints_used} hints`}
+            />
+          )}
           {res.won && <SaveScorePrompt />}
           <div className="game-controls">
             {game.difficulty !== "daily" && (

@@ -1,4 +1,5 @@
 import { Chess } from "chess.js";
+import ShareDaily from "../../components/dailies/ShareDaily";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { chess } from "../../api/client";
 import type { ChessPuzzle } from "../../api/types";
@@ -177,6 +178,13 @@ export default function PuzzleGame({ look, onExit }: { look: { board: string; pi
           ← Menu
         </button>
       </div>
+      {!open && (
+        <ShareDaily
+          gameId="chess"
+          headline={p.status === "solved" ? `🧩 Solved mate in ${p.mate_in}${p.points ? ` · ${p.points} pts` : ""}` : "❌ Not solved today"}
+          detail={`${"❤️".repeat(p.mistakes_left)}${"🖤".repeat(Math.max(0, 3 - p.mistakes_left))} · 🔥 ${p.streak} day streak`}
+        />
+      )}
       {!open && <SaveScorePrompt />}
       <p className="hint">Solve with no mistakes: 40 coins + 30 points. 1 mistake: 25 + 20. 2 mistakes: 15 + 10. A 7-day streak earns a title.</p>
     </div>
