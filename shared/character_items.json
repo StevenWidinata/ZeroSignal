@@ -268,6 +268,10 @@
     { "id": "title-checkmate", "slot": "title", "name": "Checkmate!", "rarity": "common", "unlock": { "kind": "achievement" }, "art": { "text": "Checkmate!", "tier": "bronze", "color": "#b58863", "icon": "♟️" } },
     { "id": "title-grandmaster", "slot": "title", "name": "Grandmaster", "rarity": "legendary", "unlock": { "kind": "achievement" }, "art": { "text": "Grandmaster", "tier": "mythic", "color": "#c9a227", "icon": "♚", "effect": "shimmer" } },
     { "id": "title-puzzle-sage", "slot": "title", "name": "Puzzle Sage", "rarity": "epic", "unlock": { "kind": "achievement" }, "art": { "text": "Puzzle Sage", "tier": "gold", "color": "#7b61ff", "icon": "🧩", "effect": "glow" } },
-    { "id": "title-lightning-mate", "slot": "title", "name": "Lightning Mate", "rarity": "epic", "unlock": { "kind": "achievement" }, "art": { "text": "Lightning Mate", "tier": "gold", "color": "#ffd23f", "icon": "⚡", "effect": "glow" } }
+    { "id": "title-lightning-mate", "slot": "title", "name": "Lightning Mate", "rarity": "epic", "unlock": { "kind": "achievement" }, "art": { "text": "Lightning Mate", "tier": "gold", "color": "#ffd23f", "icon": "⚡", "effect": "glow" } },
+    { "id": "title-sea-legs", "slot": "title", "name": "Sea Legs", "rarity": "common", "unlock": { "kind": "achievement" }, "art": { "text": "Sea Legs", "tier": "bronze", "color": "#1f6aa5", "icon": "⚓" } },
+    { "id": "title-fleet-admiral", "slot": "title", "name": "Fleet Admiral", "rarity": "legendary", "unlock": { "kind": "achievement" }, "art": { "text": "Fleet Admiral", "tier": "mythic", "color": "#2a9df4", "icon": "🎖️", "effect": "shimmer" } },
+    { "id": "title-eagle-eye", "slot": "title", "name": "Eagle Eye", "rarity": "epic", "unlock": { "kind": "achievement" }, "art": { "text": "Eagle Eye", "tier": "gold", "color": "#f2c14e", "icon": "🦅", "effect": "glow" } },
+    { "id": "title-untouchable", "slot": "title", "name": "Untouchable", "rarity": "epic", "unlock": { "kind": "achievement" }, "art": { "text": "Untouchable", "tier": "gold", "color": "#1fa39b", "icon": "🛡️", "effect": "glow" } }
   ]
 }

@@ -1,4 +1,4 @@
-//! Achievements: 44 one-time goals. Progress is computed live from data the
+//! Achievements: 48 one-time goals. Progress is computed live from data the
 //! server already verified (matches, scores, ledger, inventory), so older
 //! progress counts too. Claiming pays coins + the same XP once, plus a title.
 
@@ -72,6 +72,12 @@ pub struct Stats {
     pub chess_fast_mates: i64,
     /// Longest run of Daily puzzles solved on days in a row.
     pub chess_puzzle_streak: i64,
+    /// Sonar vs Zero-Bot: wins, Master wins, wins vs Medium+ without losing a ship.
+    pub sonar_wins: i64,
+    pub sonar_master_wins: i64,
+    pub sonar_flawless: i64,
+    /// Fewest shots in a finished Daily Hunt (0 = none yet).
+    pub sonar_best_daily: i64,
 }
 
 pub struct Achievement {
@@ -105,7 +111,7 @@ macro_rules! ach {
     };
 }
 
-pub static ACHIEVEMENTS: [Achievement; 44] = [
+pub static ACHIEVEMENTS: [Achievement; 48] = [
     ach!("cf_first_win", "First Drop", "Win your first Connect Four series", 30, "title-chip-dropper", 1, |s| s.cf_wins),
     ach!("cf_medium", "Thinking Ahead", "Win a Connect Four series vs Medium or harder", 40, "title-four-thinker", 1, |s| s.cf_wins_medium),
     ach!("cf_hard", "Hard Hitter", "Win a Connect Four series vs Hard or harder", 80, "title-grid-breaker", 1, |s| s.cf_wins_hard),
@@ -155,6 +161,11 @@ pub static ACHIEVEMENTS: [Achievement; 44] = [
     ach!("chess_master", "Beat Master", "Beat Zero-Bot on Master in chess", 300, "title-grandmaster", 1, |s| s.chess_master_wins),
     ach!("chess_puzzle_streak", "Puzzle Streak", "Solve the Daily chess puzzle 7 days in a row", 150, "title-puzzle-sage", 7, |s| s.chess_puzzle_streak),
     ach!("chess_lightning", "Lightning Mate", "Checkmate Zero-Bot in under 20 of your moves", 120, "title-lightning-mate", 1, |s| s.chess_fast_mates),
+    ach!("sonar_first_win", "First Splash", "Sink Zero-Bot's whole fleet in Sonar", 30, "title-sea-legs", 1, |s| s.sonar_wins),
+    ach!("sonar_master", "Fleet Admiral", "Beat Zero-Bot on Master in Sonar", 300, "title-fleet-admiral", 1, |s| s.sonar_master_wins),
+    ach!("sonar_eagle_eye", "Eagle Eye", "Finish a Sonar Daily Hunt in 30 shots or fewer", 120, "title-eagle-eye", 1,
+        |s| i64::from(s.sonar_best_daily > 0 && s.sonar_best_daily <= 30)),
+    ach!("sonar_untouchable", "Untouchable", "Beat Zero-Bot on Medium or harder in Sonar without losing a ship", 150, "title-untouchable", 1, |s| s.sonar_flawless),
     ach!("quest_days_7", "Quest Master", "Finish all 3 daily quests in one day, 7 times", 200, "title-quest-master", 7, |s| s.quest_full_days),
 ];
 
@@ -244,6 +255,21 @@ pub async fn load_stats(pool: &sqlx::PgPool, user_id: Uuid) -> AppResult<Stats> 
     )
     .bind(user_id)
     .fetch_one(pool)
+    .await?;
+    let sonar: (i64, i64, i64) = sqlx::query_as(
+        r#"SELECT COUNT(*),
+                  COUNT(*) FILTER (WHERE level = 'master'),
+                  COUNT(*) FILTER (WHERE level <> 'easy' AND ships_lost = 0)
+           FROM sonar_games WHERE user_id = $1 AND status = 'won'"#,
+    )
+    .bind(user_id)
+    .fetch_one(pool)
+    .await?;
+    let sonar_best_daily = count(
+        pool,
+        "SELECT MIN(shots)::BIGINT FROM sonar_daily_runs WHERE user_id = $1 AND status = 'done'",
+        user_id,
+    )
     .await?;
     // Days in a row: solved days minus their row number are equal within a run.
     let chess_puzzle_streak = count(
@@ -336,6 +362,10 @@ pub async fn load_stats(pool: &sqlx::PgPool, user_id: Uuid) -> AppResult<Stats> 
         chess_master_wins: chess.1,
         chess_fast_mates: chess.2,
         chess_puzzle_streak,
+        sonar_wins: sonar.0,
+        sonar_master_wins: sonar.1,
+        sonar_flawless: sonar.2,
+        sonar_best_daily,
     })
 }
 
@@ -489,11 +519,11 @@ mod tests {
     use super::*;
 
     #[test]
-    fn there_are_44_unique_achievements() {
+    fn there_are_48_unique_achievements() {
         let mut ids: Vec<_> = ACHIEVEMENTS.iter().map(|a| a.id).collect();
         ids.sort();
         ids.dedup();
-        assert_eq!(ids.len(), 44);
+        assert_eq!(ids.len(), 48);
         assert!(ACHIEVEMENTS.iter().all(|a| a.coins > 0 && a.target > 0 && a.id.len() <= 32));
     }
 
@@ -508,9 +538,9 @@ mod tests {
         let mut titles: Vec<_> = ACHIEVEMENTS.iter().map(|a| a.title).collect();
         titles.sort();
         titles.dedup();
-        assert_eq!(titles.len(), 44);
+        assert_eq!(titles.len(), 48);
         let achievement_items = c.items.iter().filter(|i| i.unlock == Unlock::Achievement).count();
-        assert_eq!(achievement_items, 44, "orphan achievement-only items in catalog");
+        assert_eq!(achievement_items, 48, "orphan achievement-only items in catalog");
     }
 
     #[test]
