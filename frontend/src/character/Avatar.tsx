@@ -1202,8 +1202,13 @@ export function drawItem(item: Item, ctx: Ctx): ReactNode {
   }
 }
 
-function Body({ skin }: { skin: string }) {
+/** Which arms are raised (for waving and cheering). */
+type Arms = "down" | "right-up" | "both-up";
+
+function Body({ skin, arms = "down" }: { skin: string; arms?: Arms }) {
   const dark = shade(skin, -0.15);
+  const leftUp = arms === "both-up";
+  const rightUp = arms !== "down";
   return (
     <>
       {/* legs + feet */}
@@ -1211,12 +1216,30 @@ function Body({ skin }: { skin: string }) {
       {px(33, 54, 6, 14, skin)}
       {px(24, 68, 7, 3, skin)}
       {px(33, 68, 7, 3, skin)}
-      {/* torso, arms, hands */}
+      {/* torso, arms, hands (a raised arm points up from the shoulder) */}
       {px(23, 34, 18, 20, skin)}
-      {px(18, 35, 5, 17, skin)}
-      {px(41, 35, 5, 17, skin)}
-      {px(18, 52, 5, 4, dark)}
-      {px(41, 52, 5, 4, dark)}
+      {leftUp ? (
+        <g className="av-arm av-arm-l">
+          {px(18, 19, 5, 17, skin)}
+          {px(18, 15, 5, 4, dark)}
+        </g>
+      ) : (
+        <>
+          {px(18, 35, 5, 17, skin)}
+          {px(18, 52, 5, 4, dark)}
+        </>
+      )}
+      {rightUp ? (
+        <g className="av-arm av-arm-r">
+          {px(41, 19, 5, 17, skin)}
+          {px(41, 15, 5, 4, dark)}
+        </g>
+      ) : (
+        <>
+          {px(41, 35, 5, 17, skin)}
+          {px(41, 52, 5, 4, dark)}
+        </>
+      )}
       {/* neck, ears, head */}
       {px(29, 29, 6, 6, dark)}
       {px(20, 17, 3, 5, dark)}
@@ -1228,8 +1251,16 @@ function Body({ skin }: { skin: string }) {
   );
 }
 
+/** What the character is doing (animated only with `animated`). */
+export type Pose = "idle" | "wave" | "cheer" | "sad" | "think";
+
+const ARMS: Record<Pose, Arms> = { idle: "down", wave: "right-up", cheer: "both-up", sad: "down", think: "down" };
+
 interface Props {
   loadout: Loadout | null | undefined;
+  /** Breathing, blinking and the pose's movement. Off by default. */
+  animated?: boolean;
+  pose?: Pose;
   /** Rendered width in px (height follows the 4:5 shape, or 1:1 for "head"). */
   size?: number;
   /** "full" = whole character; "head" = face close-up for small chips. */
@@ -1262,7 +1293,7 @@ const ORDER = [
   "pet",
 ] as const;
 
-export default function Avatar({ loadout, size = 160, crop = "full", className, label }: Props) {
+export default function Avatar({ loadout, size = 160, crop = "full", className, label, animated = false, pose = "idle" }: Props) {
   const uid = useId().replace(/:/g, "");
   const l = normalizeLoadout(loadout);
   const get = (slot: string) => findItem(l[slot]);
@@ -1275,7 +1306,7 @@ export default function Avatar({ loadout, size = 160, crop = "full", className, 
   const hair = get("hair_style");
 
   const layer = (name: (typeof ORDER)[number]): ReactNode => {
-    if (name === "body") return <Body skin={ctx.skin} />;
+    if (name === "body") return <Body skin={ctx.skin} arms={animated ? ARMS[pose] : "down"} />;
     if (name === "hair_back") return hair ? hairBack(hair.art, ctx) : null;
     if (name === "hair_front") return hair ? hairFront(hair.art, ctx) : null;
     if (name === "eyebrows" || name === "facial_hair") {
@@ -1296,7 +1327,7 @@ export default function Avatar({ loadout, size = 160, crop = "full", className, 
       viewBox={viewBox}
       width={size}
       height={head ? size : size * 1.25}
-      className={className}
+      className={[className, animated ? `av-live av-${pose}` : ""].filter(Boolean).join(" ") || undefined}
       shapeRendering="crispEdges"
       role={label ? "img" : undefined}
       aria-label={label}
@@ -1312,9 +1343,15 @@ export default function Avatar({ loadout, size = 160, crop = "full", className, 
       </defs>
       {head ? <rect x="14" y="-4" width="36" height="36" fill={bg?.art.color ?? "#8ecae6"} /> : bg && background(bg.art, ctx)}
       {get("back") && !head && back(get("back")!.art)}
-      {ORDER.map((name) => (
-        <g key={name}>{layer(name)}</g>
-      ))}
+      <g className="av-figure">
+        {ORDER.map((name) => (
+          <g key={name}>
+            {layer(name)}
+            {/* Eyelids, shown for a blink (above the eyes, under brows/glasses). */}
+            {animated && name === "eyes" && <rect className="av-lids" x="25" y="16" width="14" height="6" fill={ctx.skin} />}
+          </g>
+        ))}
+      </g>
       {!head && fr && frame(fr.art)}
     </svg>
   );
