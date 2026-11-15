@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent } from "react";
+import { isTyping } from "../../platform/display";
+import { currentAction } from "../../platform/keymap";
 import { playSfx } from "../../platform/sound";
 import {
   FILES,
@@ -141,18 +143,24 @@ export default function ChessBoard({ fen, orientation, legal, lastMove, check, b
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [drag !== null]);
 
+  // Keys come from Settings → Controls (platform/keymap.ts, "chess").
   function onKeyDown(e: KeyboardEvent) {
+    if (e.ctrlKey || e.metaKey || e.altKey || isTyping(e.target)) return;
     const flip = orientation === "w" ? 1 : -1;
-    const step: Record<string, [number, number]> = { ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] };
-    const s = step[e.key];
-    if (s) {
+    const a = currentAction("chess", e.code);
+    const step: Record<string, [number, number]> = { up: [-1, 0], down: [1, 0], left: [0, -1], right: [0, 1] };
+    const s = a ? step[a] : undefined;
+    if (a === "select") {
+      e.preventDefault();
+      buttons.current[cursor]?.click();
+    } else if (s) {
       e.preventDefault();
       const r = Math.min(7, Math.max(0, Math.floor(cursor / 8) + s[0] * flip));
       const c = Math.min(7, Math.max(0, (cursor % 8) + s[1] * flip));
       const next = r * 8 + c;
       setCursor(next);
       buttons.current[next]?.focus();
-    } else if (e.key === "Escape") {
+    } else if (a === "cancel") {
       setSelected(null);
       setPromo(null);
     }
