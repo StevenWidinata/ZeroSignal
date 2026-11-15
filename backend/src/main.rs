@@ -14,6 +14,7 @@ mod error;
 mod game_2048;
 mod games;
 mod minefield;
+mod online;
 mod physics;
 mod quests;
 mod scores;
@@ -152,6 +153,16 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/games/2048/runs/active", get(game_2048::api::active))
         .route("/api/games/2048/runs/:id/save", post(game_2048::api::save))
         .route("/api/games/2048/runs/:id/finish", post(game_2048::api::finish))
+        // Online play: two devices, one room code, every move checked here.
+        .route("/api/rooms", post(online::api::create))
+        .route("/api/rooms/leaderboard", get(online::api::leaderboard))
+        .route("/api/rooms/:code", get(online::api::get))
+        .route("/api/rooms/:code/join", post(online::api::join))
+        .route("/api/rooms/:code/move", post(online::api::make_move))
+        .route("/api/rooms/:code/next", post(online::api::next_game))
+        .route("/api/rooms/:code/emote", post(online::api::emote))
+        .route("/api/rooms/:code/leave", post(online::api::leave))
+        .route("/api/rooms/:code/rematch", post(online::api::rematch))
         .route("/api/games/connect-four/skins", get(cf::list_skins))
         .route("/api/games/connect-four/spins", post(cf::spin))
         // Legacy aliases (Sling Squad) for older clients.
