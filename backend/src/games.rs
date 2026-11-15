@@ -96,14 +96,14 @@ pub const GAMES: &[GameInfo] = &[
         ranking: Ranking::Total,
         prize_boards: &[],
     },
-    // Planned (docs/ROADMAP.md, docs/GAME_KIT.md): shown as "Coming soon".
     GameInfo {
         id: "snake-signal",
         title: "Snake Signal",
-        status: GameStatus::ComingSoon,
+        status: GameStatus::Live,
         ranking: Ranking::Best,
-        prize_boards: &[],
+        prize_boards: &[1, 2],
     },
+    // Planned (docs/ROADMAP.md, docs/GAME_KIT.md): shown as "Coming soon".
     GameInfo {
         id: "brick-breaker",
         title: "Brick Breaker",
@@ -206,6 +206,7 @@ mod tests {
         assert!(require("whack-a-mole").is_ok());
         assert!(require("minefield").is_ok());
         assert!(require("2048").is_ok());
+        assert!(require("snake-signal").is_ok());
         assert!(require("../etc").is_err());
         assert!(require("").is_err());
     }

@@ -594,6 +594,14 @@ export interface StatsView {
     longest_survival_ms: number | null;
   };
   g2048: { games: number; best_tile: number | null; reached_2048: number; moves: number | null };
+  snake: {
+    runs: number;
+    longest: number | null;
+    packets: number | null;
+    powers: number | null;
+    combo5_runs: number;
+    bugs_eaten: number | null;
+  };
 }
 
 // ---------------------------------------------------------------------------

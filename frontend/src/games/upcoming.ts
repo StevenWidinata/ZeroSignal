@@ -16,7 +16,6 @@ const soon = (
 ): GameModule => ({ meta: { id, title, icon, accent, tagline, tags, status: "soon", scoreLabel: "Best score" } });
 
 export const UPCOMING: GameModule[] = [
-  soon("snake-signal", "Snake Signal", "🐍", "green", "Grow the snake, grab power-ups, don't bite your tail.", ["Arcade", "Solo", "Daily"]),
   soon("brick-breaker", "Brick Breaker", "🧱", "blue", "Bounce the ball, smash every brick, catch the drops.", ["Arcade", "Solo", "Levels"]),
   soon("signal-flap", "Signal Flap", "🪽", "yellow", "One button. Fly through the gaps as far as you can.", ["Reflex", "Solo", "Daily"]),
   soon("memory-match", "Memory Match", "🃏", "green", "Flip cards and find every pair before time runs out.", ["Memory", "Solo", "Timed"]),

@@ -58,6 +58,17 @@ pub struct Row2048 {
     pub moves: Option<i64>,
 }
 
+#[derive(Serialize, sqlx::FromRow, Default)]
+pub struct SnakeRow {
+    pub runs: i64,
+    pub longest: Option<i32>,
+    pub packets: Option<i64>,
+    pub powers: Option<i64>,
+    /// Runs that reached a ×5 combo.
+    pub combo5_runs: i64,
+    pub bugs_eaten: Option<i64>,
+}
+
 #[derive(Serialize)]
 pub struct StatsView {
     pub joined: DateTime<Utc>,
@@ -73,6 +84,7 @@ pub struct StatsView {
     pub boards: Vec<BoardRow>,
     pub minefield: Vec<MinefieldRow>,
     pub whack: WhackRow,
+    pub snake: SnakeRow,
     pub g2048: Row2048,
 }
 
@@ -165,6 +177,17 @@ pub async fn my_stats(State(state): State<AppState>, user: AuthUser) -> AppResul
     .fetch_one(pool)
     .await?;
 
+    let snake: SnakeRow = sqlx::query_as(
+        r#"SELECT COUNT(*) AS runs, MAX(max_length) AS longest,
+                  SUM(eaten)::BIGINT AS packets, SUM(powers)::BIGINT AS powers,
+                  COUNT(*) FILTER (WHERE best_combo >= 5) AS combo5_runs,
+                  SUM(bugs_eaten)::BIGINT AS bugs_eaten
+           FROM snake_runs WHERE user_id = $1 AND finished_at IS NOT NULL"#,
+    )
+    .bind(id)
+    .fetch_one(pool)
+    .await?;
+
     Ok(Json(StatsView {
         joined,
         level: level_info(xp).level,
@@ -179,6 +202,7 @@ pub async fn my_stats(State(state): State<AppState>, user: AuthUser) -> AppResul
         boards,
         minefield,
         whack,
+        snake,
         g2048,
     }))
 }

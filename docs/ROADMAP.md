@@ -296,9 +296,9 @@ Commits go to `main` step by step (each step live once tested); owner is the onl
 - **F. Game Kit** (`feat/game-kit`, done): `docs/GAME_KIT.md` rules so every game
   feels the same; shared ModeSelect / ResultsPanel / GameHeader used by all
   games; "Coming soon" cards and a /roadmap page.
-- **Planned games:** Snake Signal, Brick Breaker, Signal Flap, Memory Match,
-  Pixel Picross, Block Drop, Sudoku, Pong Online, Sonar (Battleship-style),
-  Checkers. All follow the Game Kit.
+- **Planned games:** Brick Breaker, Signal Flap, Memory Match, Pixel
+  Picross, Block Drop, Sudoku, Pong Online, Checkers (Sonar and Snake Signal
+  are live). All follow the Game Kit.
 - **Ideas (build when the owner picks):** Live Arcade Lobby, Community Boss
   Raid, Ghost races, Pet that grows, Glitch Hour, Free seasons, Crews, Share
   cards, Chiptune Jukebox, Weekend tournaments.
@@ -351,6 +351,31 @@ Commits go to `main` step by step (each step live once tested); owner is the onl
   Daily Hunt coins by shots; online XP only. 3 quests, 4 achievements
   (First Splash, Fleet Admiral, Eagle Eye, Untouchable).
 - **Looks:** 8 fleets and 8 seas (4 free each). Loads only on its page.
+
+### Snake Signal (`feat/snake-signal`; agreed and done 2026-11-16)
+- **Modes:** 🧱 Classic (walls), 🌀 Wrap (edges are portals), 📅 Daily (same
+  seed for everyone each WIB day, Medium board, one ranked try). Boards S 15×15
+  (×1.3), M 20×20 (×1), L 26×26 (×0.85), folded into the score. No bot, duel or
+  online modes (owner's choice; live online snake would need sockets).
+- **Twists (all four picked):** power-ups (Boost ×2 + can eat the bug, Phase
+  through your tail, Magnet, Slow-mo, Snip), glitch hazards (blocks flash a
+  warning then turn solid; a wandering 👾 bug), combo chain ×2/×3/×5 plus
+  close-call bonuses, and a signal bar that drains so runs can't circle forever.
+- **Fair scores:** tick-based rules in Rust + TypeScript reading
+  `shared/snake_rules.json`, checked against `shared/snake_vectors.json`. The
+  browser sends `[tick, dir]` turns (and the tick you quit at, if you ended the
+  run); the server replays them and checks the run took at least that long.
+  Ending a run yourself banks the score so far. Runs under 100 ticks score but
+  pay nothing.
+- **Look and feel:** smooth neon canvas (the snake glides between cells),
+  particles, crash shake, weak-signal static; light graphics / reduced motion
+  turn the effects off. Swipe on the board or an optional D-pad (on by
+  default on touch screens), 2-turn input queue, rebindable keys.
+- **Shop:** 8 skins, 8 arenas, 6 trails (half free); 20% lucky drop on runs of
+  5,000+. Quests +3 (play 3, score 3,000, reach ×5), achievements +4 (Signal
+  Found, Long Cable, Glitch Eater, Full Bars). Stats page card.
+- Also: shared countdown / pause / results card / particle helpers
+  (`refactor/run-kit`) now used by Whack-a-Mole, 2048 and Snake Signal.
 
 ## Phase 3b (planned)
 

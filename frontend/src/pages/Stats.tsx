@@ -123,12 +123,14 @@ export default function Stats() {
   const wamBoards = s.boards.filter((b) => b.game_id === "whack-a-mole");
   const mfBoards = s.boards.filter((b) => b.game_id === "minefield");
   const boards2048 = s.boards.filter((b) => b.game_id === "2048");
+  const snakeBoards = s.boards.filter((b) => b.game_id === "snake-signal");
   const totalGames =
     s.series.reduce((n, r) => n + r.played, 0) +
     ab.rounds +
     s.whack.rounds +
     s.minefield.reduce((n, r) => n + r.played, 0) +
-    s.g2048.games;
+    s.g2048.games +
+    s.snake.runs;
 
   return (
     <div className="stats-page">
@@ -281,6 +283,57 @@ export default function Stats() {
                 {boards2048.map((b) => (
                   <tr key={b.level}>
                     <th scope="row">{boardLabel("2048", b.level)}</th>
+                    <td className="num">{b.rounds}</td>
+                    <td className="num">{fmt(b.best)}</td>
+                    <td className="num">{fmt(b.average)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </GameCard>
+
+        <GameCard id="snake-signal" played={s.snake.runs > 0}>
+          <dl className="wam-stats">
+            <div>
+              <dt>Runs</dt>
+              <dd>{fmt(s.snake.runs)}</dd>
+            </div>
+            <div>
+              <dt>Longest snake</dt>
+              <dd>{s.snake.longest ?? "–"}</dd>
+            </div>
+            <div>
+              <dt>Packets eaten</dt>
+              <dd>{fmt(s.snake.packets ?? 0)}</dd>
+            </div>
+            <div>
+              <dt>Power-ups</dt>
+              <dd>{fmt(s.snake.powers ?? 0)}</dd>
+            </div>
+            <div>
+              <dt>×5 combo runs</dt>
+              <dd>{fmt(s.snake.combo5_runs)}</dd>
+            </div>
+            <div>
+              <dt>Glitch bugs eaten</dt>
+              <dd>{fmt(s.snake.bugs_eaten ?? 0)}</dd>
+            </div>
+          </dl>
+          <div className="board-table-wrap">
+            <table className="board-table stats-table">
+              <thead>
+                <tr>
+                  <th scope="col">Mode</th>
+                  <th scope="col">Runs</th>
+                  <th scope="col">Best</th>
+                  <th scope="col">Average</th>
+                </tr>
+              </thead>
+              <tbody>
+                {snakeBoards.map((b) => (
+                  <tr key={b.level}>
+                    <th scope="row">{boardLabel("snake-signal", b.level)}</th>
                     <td className="num">{b.rounds}</td>
                     <td className="num">{fmt(b.best)}</td>
                     <td className="num">{fmt(b.average)}</td>
