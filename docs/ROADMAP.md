@@ -304,6 +304,33 @@ Commits go to `main` step by step (each step live once tested); owner is the onl
   cards, Chiptune Jukebox, Weekend tournaments.
 - Then: language (English / Bahasa Indonesia).
 
+### Chess (`feat/chess`; planned 2026-11-15, build when the owner says go)
+- **Modes:** 🌐 Online vs a friend (existing rooms: code/link, guests ok, the
+  server checks every move, 2-minute away forfeit, rematch, emotes);
+  🤖 vs Zero-Bot in 4 levels (Easy makes mistakes, Medium, Hard, Master =
+  deeper server search); 👥 same device (pass and play); 📅 Daily puzzle
+  ("mate in 2" / "win material", same for everyone each WIB day, own board).
+- **No clocks and no Elo for now** (owner's choice). Online leaderboard by
+  wins, like Connect Four and Tic-Tac-Toe.
+- **Rules from libraries:** `cozy-chess` (Rust, MIT) on the server and
+  `chess.js` (BSD) in the browser: castling, en passant, promotion, check,
+  checkmate, stalemate, repetition, 50-move rule, insufficient material.
+  Tests: perft counts on known positions + an end-to-end online game.
+- **Board:** click or drag, legal-move dots, last-move and check highlights,
+  promotion picker, move list (SAN), resign / offer draw, board flips for
+  black, undo vs AI (max 3), keyboard play, colorblind-safe pieces.
+- **Lots of looks (owner asked):** 8 board styles (Classic Green, Wood,
+  Marble, Ocean, Neon, Candy, Pixel, Midnight; 4 free) and 6 piece sets
+  (Classic, Pixel, Neon Outline, Minimal, Candy, Robot; 3 free), drawn in
+  code, chosen on the setup screen; the rest bought with coins or won.
+- **Game Kit:** shared header/setup/results, your character vs Zero-Bot or
+  your friend (cheer on checkmate, sad on loss), 4-step tutorial for
+  beginners, themes, sounds.
+- **Rewards:** vs Zero-Bot coins + XP by level; online XP only (no coins);
+  Daily puzzle coins. Quests (+3): play 3 games, win vs Medium or harder,
+  solve the Daily. Achievements (+4): First Checkmate, Beat Master, Puzzle
+  Streak (7 Dailies), Lightning Mate (checkmate in under 20 moves).
+
 ## Phase 3b (planned)
 
 - Weekly leaderboards (reset each week, all-time board stays) — done.
