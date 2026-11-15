@@ -1068,7 +1068,7 @@ input:focus {
   }
 }
 
-/* ---------- Settings ---------- */
+/* ---------- Small pop-up dialogs (daily reward, tutorial, photo) ---------- */
 .settings-dialog {
   width: min(480px, calc(100vw - 32px));
   padding: 0;
@@ -1114,6 +1114,605 @@ input:focus {
   font-size: 0.6rem;
   color: var(--green);
 }
+
+/* ---------- Settings: a full-screen page with a sidebar ----------
+   Calm and readable: plain font, thin lines, no chunky arcade shadows.
+   Everything is scoped to .settings-screen so the rest of the site keeps
+   its arcade look. */
+.settings-screen {
+  --hair: color-mix(in srgb, var(--ink) 14%, transparent);
+  --soft: color-mix(in srgb, var(--ink) 5%, var(--surface));
+  --pick: color-mix(in srgb, var(--blue) 20%, transparent);
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  color: var(--ink);
+  background: var(--bg);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.45;
+}
+.settings-screen[open] {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  animation: set-in 0.18s var(--ease);
+}
+@keyframes set-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+.settings-screen::backdrop {
+  background: var(--bg);
+}
+
+/* Header */
+.set-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--hair);
+  background: var(--surface);
+}
+.set-header h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+.set-sync {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+/* Every button in here: plain and flat (the preview keeps the arcade look). */
+.settings-screen button,
+.settings-screen .account-panel .btn {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+  box-shadow: none;
+  transform: none;
+  border-width: 1px;
+  border-radius: 8px;
+  padding: 8px 14px;
+  filter: none;
+}
+.settings-screen button:hover:not(:disabled),
+.settings-screen button:active:not(:disabled) {
+  transform: none;
+  box-shadow: none;
+}
+.settings-screen button:focus-visible,
+.settings-screen input:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 2px;
+}
+.set-close,
+.set-btn,
+.set-reset,
+.set-back {
+  --btn-bg: transparent;
+  --btn-fg: var(--ink);
+  border: 1px solid var(--hair);
+}
+.settings-screen .set-close:hover:not(:disabled),
+.settings-screen .set-btn:hover:not(:disabled),
+.settings-screen .set-reset:hover:not(:disabled),
+.settings-screen .set-back:hover:not(:disabled) {
+  background: var(--soft);
+}
+
+/* Layout: sidebar + content */
+.set-layout {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  min-height: 0;
+}
+.set-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px 14px;
+  border-right: 1px solid var(--hair);
+  background: var(--surface);
+  overflow-y: auto;
+}
+.set-nav ul {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.settings-screen .set-nav-item {
+  --btn-bg: transparent;
+  --btn-fg: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 0;
+  text-align: left;
+}
+.settings-screen .set-nav-item:hover:not(:disabled) {
+  background: var(--soft);
+}
+.settings-screen .set-nav-item[aria-current="page"] {
+  background: var(--pick);
+}
+.set-nav-item strong {
+  display: block;
+  font-size: 0.95rem;
+}
+.set-nav-item small {
+  display: none;
+  font-weight: 400;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+.set-nav-icon {
+  font-size: 1.15rem;
+  width: 1.5em;
+  text-align: center;
+}
+.set-nav-arrow {
+  display: none;
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 1.3rem;
+}
+.settings-screen .set-search {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  border: 1px solid var(--hair);
+  border-radius: 10px;
+  background: var(--bg);
+}
+.set-search input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: 500 0.95rem var(--font-body);
+  box-shadow: none;
+}
+.set-search input:focus-visible {
+  outline: none;
+}
+.set-search:focus-within {
+  outline: 3px solid var(--blue);
+  outline-offset: 1px;
+}
+
+.set-content {
+  overflow-y: auto;
+  padding: 28px 32px 64px;
+}
+.set-content-inner {
+  display: grid;
+  gap: 22px;
+  max-width: 780px;
+}
+.set-title {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 2px 16px;
+}
+.set-title h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-family: var(--font-body);
+}
+.set-title p {
+  grid-column: 1;
+  margin: 0;
+  color: var(--muted);
+}
+.set-title .set-reset {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+.set-back {
+  display: none;
+  justify-self: start;
+}
+.set-empty {
+  color: var(--muted);
+}
+
+/* Groups of rows */
+.set-group h3 {
+  margin: 0 0 8px 4px;
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.set-group-rows {
+  border: 1px solid var(--hair);
+  border-radius: 12px;
+  background: var(--surface);
+  overflow: hidden;
+}
+.set-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 14px 18px;
+}
+.set-row + .set-row {
+  border-top: 1px solid var(--hair);
+}
+.set-row.stack {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+}
+.set-row-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.set-row-text strong {
+  font-size: 0.98rem;
+}
+.set-row-text small {
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+.set-row-control {
+  flex: none;
+}
+.set-row.stack .set-row-control {
+  flex: auto;
+}
+.settings-screen .set-row-link {
+  --btn-bg: transparent;
+  --btn-fg: var(--ink);
+  width: 100%;
+  border: 0;
+  border-radius: 0;
+  text-align: left;
+  font-weight: 400;
+}
+.settings-screen .set-row-link:hover:not(:disabled) {
+  background: var(--soft);
+}
+.set-row-go {
+  flex: none;
+  color: var(--blue);
+  font-weight: 700;
+}
+
+/* Switches: a rounded on/off pill in here. */
+.settings-screen .switch {
+  width: 46px;
+  height: 26px;
+  border: 1px solid var(--hair);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 18%, var(--surface));
+}
+.settings-screen .switch::after {
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+.settings-screen .switch:checked {
+  background: var(--blue);
+  border-color: var(--blue);
+}
+.settings-screen .switch:checked::after {
+  transform: translateX(20px);
+  background: #fff;
+}
+.settings-screen .switch:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Choices (Off / 10s / 20s) */
+.set-seg {
+  display: inline-flex;
+  border: 1px solid var(--hair);
+  border-radius: 9px;
+  overflow: hidden;
+}
+.settings-screen .set-seg button {
+  --btn-bg: transparent;
+  --btn-fg: var(--ink);
+  min-width: 3.2em;
+  padding: 7px 12px;
+  border: 0;
+  border-radius: 0;
+}
+.settings-screen .set-seg button + button {
+  border-left: 1px solid var(--hair);
+}
+.settings-screen .set-seg button[aria-checked="true"] {
+  --btn-bg: var(--blue);
+  --btn-fg: var(--on-blue);
+}
+.set-range {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.set-range input[type="range"] {
+  width: min(220px, 40vw);
+  accent-color: var(--blue);
+}
+.set-range output {
+  min-width: 3.2em;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+/* Live preview (Appearance) */
+.set-preview {
+  display: grid;
+  gap: 10px;
+}
+.set-preview-card {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  border: var(--bw) solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-off) var(--shadow-off) 0 var(--line);
+}
+.set-preview-title {
+  margin: 0;
+  font-family: var(--font-pixel);
+  color: var(--yellow);
+  text-shadow: 2px 2px 0 var(--line);
+}
+.set-preview-text {
+  margin: 0;
+}
+.set-preview-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.set-preview-row .btn {
+  pointer-events: none;
+}
+.set-preview-tiles {
+  display: inline-flex;
+  gap: 6px;
+  margin-left: auto;
+}
+.set-preview-tiles i {
+  display: grid;
+  place-items: center;
+  width: 2.2em;
+  height: 2.2em;
+  border: 2px solid var(--line);
+  border-radius: 6px;
+  color: var(--line);
+  font: 700 0.9rem var(--font-pixel);
+  font-style: normal;
+}
+.set-preview-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.set-preview-tags li {
+  padding: 2px 10px;
+  border: 1px solid var(--hair);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+/* The section panels (Controls, Privacy, Account) in the same calm style. */
+.settings-screen fieldset {
+  display: grid;
+  gap: 0;
+  min-width: 0;
+  margin: 0;
+  padding: 0 18px;
+  border: 1px solid var(--hair);
+  border-radius: 12px;
+  background: var(--surface);
+}
+.settings-screen fieldset {
+  position: relative;
+}
+.settings-screen legend {
+  position: absolute;
+  top: -26px;
+  left: 4px;
+  padding: 0;
+  font: 700 0.78rem var(--font-body);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.settings-screen fieldset {
+  margin-top: 30px;
+}
+.settings-screen fieldset > * + * {
+  border-top: 1px solid var(--hair);
+}
+.settings-screen fieldset > legend + * {
+  border-top: 0;
+}
+.settings-screen .row-label {
+  padding: 14px 0;
+  font-weight: 700;
+  flex-wrap: nowrap;
+}
+.settings-screen .row-label small {
+  font-size: 0.85rem;
+  font-weight: 400;
+}
+.settings-screen .wam-hint {
+  margin: 0;
+  padding: 12px 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+.settings-screen .controls-game {
+  padding: 12px 0;
+}
+.settings-screen .controls-game h4 {
+  font-family: var(--font-body);
+  font-size: 0.98rem;
+}
+.settings-screen .key-add {
+  --btn-bg: transparent;
+  --btn-fg: var(--blue);
+  padding: 2px 10px;
+  border: 1px dashed var(--hair);
+}
+.settings-screen kbd.key {
+  font-family: var(--font-body);
+}
+.settings-screen .account-panel {
+  gap: 16px;
+}
+.settings-screen .account-section {
+  gap: 10px;
+  padding: 16px 18px;
+  border: 1px solid var(--hair);
+  border-radius: 12px;
+  background: var(--surface);
+}
+.settings-screen .account-section.danger {
+  border-color: color-mix(in srgb, var(--red) 60%, transparent);
+}
+.settings-screen .account-section h3 {
+  font-family: var(--font-body);
+  font-size: 1rem;
+}
+.settings-screen .account-field input {
+  font-family: var(--font-body);
+}
+
+/* Theme cards: a calmer grid in here. */
+.settings-screen .theme-picker {
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+}
+.settings-screen .theme-card {
+  border: 1px solid var(--tp-line);
+  border-radius: 10px;
+  padding: 8px;
+  box-shadow: none;
+  font-weight: 400;
+}
+.settings-screen .theme-card.selected {
+  outline: 3px solid var(--blue);
+  outline-offset: 2px;
+}
+
+/* Phones and small tablets: the list first, tap into a section. */
+@media (max-width: 760px) {
+  .set-header {
+    padding: 12px 16px;
+  }
+  .set-sync {
+    display: none;
+  }
+  .set-close {
+    margin-left: auto;
+  }
+  .set-close span {
+    display: none;
+  }
+  .set-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .set-nav {
+    border-right: 0;
+    padding: 16px;
+  }
+  .set-nav-item small {
+    display: block;
+  }
+  .set-nav-arrow {
+    display: block;
+  }
+  .settings-screen .set-nav-item[aria-current="page"] {
+    background: transparent;
+  }
+  .set-content {
+    display: none;
+    padding: 16px 16px 48px;
+  }
+  .settings-screen.in-section .set-nav {
+    display: none;
+  }
+  .settings-screen.in-section .set-content {
+    display: block;
+  }
+  .set-back {
+    display: inline-flex;
+  }
+  .set-title {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+  .set-title .set-reset {
+    grid-column: 1;
+    grid-row: auto;
+    justify-self: start;
+  }
+  .set-row {
+    flex-wrap: wrap;
+    gap: 10px 16px;
+    padding: 14px;
+  }
+  .set-row-text {
+    flex: 1 1 14rem;
+  }
+  .set-preview-tiles {
+    margin-left: 0;
+  }
+  .settings-screen .row-label {
+    flex-wrap: wrap;
+  }
+}
+
 .row-label {
   display: flex;
   flex-direction: row;
@@ -3882,29 +4481,7 @@ html[data-text="xl"] { font-size: 20px; }
   font-weight: 700;
 }
 
-/* ---------- Settings tabs + Account ---------- */
-.settings-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 12px;
-}
-.settings-tab {
-  --btn-bg: var(--surface-2);
-  --btn-fg: var(--ink);
-  padding: 6px 10px;
-  font-size: 0.6rem;
-  box-shadow: 2px 2px 0 var(--line);
-}
-.settings-tab.active {
-  --btn-bg: var(--yellow);
-  --btn-fg: var(--on-yellow);
-}
-.settings-panel {
-  display: grid;
-  gap: 12px;
-  min-height: 220px;
-}
+/* ---------- Account (settings) ---------- */
 .account-panel {
   display: grid;
   gap: 14px;
@@ -3943,11 +4520,6 @@ html[data-text="xl"] { font-size: 20px; }
 .btn-danger {
   --btn-bg: var(--red);
   --btn-fg: #fff;
-}
-.settings-sync {
-  margin-right: auto;
-  margin-left: 8px;
-  color: var(--muted);
 }
 
 /* ---------- Display: high contrast, readable font, FPS, shortcuts ---------- */

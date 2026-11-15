@@ -4,7 +4,6 @@ import { api } from "../../api/client";
 import type { Privacy } from "../../api/types";
 import { useSync } from "../../platform/settingsSync";
 import { useAuth } from "../../store/auth";
-import { useSettings } from "../../store/settings";
 
 function Switch({
   label,
@@ -30,10 +29,9 @@ function Switch({
   );
 }
 
-/** Settings → Privacy: leaderboard and profile visibility, pop-up switches. */
+/** Settings → Privacy: leaderboard and profile visibility (saved on the server). */
 export default function PrivacyPanel({ onClose }: { onClose: () => void }) {
   const user = useAuth((s) => s.user);
-  const s = useSettings();
   const privacy = useSync((x) => x.privacy);
   const setPrivacy = useSync((x) => x.setPrivacy);
   const [busy, setBusy] = useState(false);
@@ -101,27 +99,6 @@ export default function PrivacyPanel({ onClose }: { onClose: () => void }) {
         )}
       </fieldset>
 
-      <fieldset>
-        <legend>Pop-ups</legend>
-        <Switch
-          label="Daily login reward pop-up"
-          hint="Off: claim it from the 🎁 button on the Hub instead."
-          checked={s.dailyLoginPopup}
-          onChange={(v) => s.update({ dailyLoginPopup: v })}
-        />
-        <Switch
-          label="Level-up pop-up"
-          hint="The big celebration with your new unlocks when you level up."
-          checked={s.levelUpPopup}
-          onChange={(v) => s.update({ levelUpPopup: v })}
-        />
-        <Switch
-          label="Reward toasts"
-          hint="The small +coins / +XP message after each game."
-          checked={s.rewardToasts}
-          onChange={(v) => s.update({ rewardToasts: v })}
-        />
-      </fieldset>
     </>
   );
 }

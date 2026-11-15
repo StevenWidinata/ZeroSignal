@@ -1,387 +1,249 @@
-import { useEffect, useRef, useState } from "react";
-import { resetSeen } from "../platform/tutorial";
-import { TEXT_SIZES, TIMER_OPTIONS, useSettings, type TextSize } from "../store/settings";
-import { useTheme } from "../store/theme";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSync } from "../platform/settingsSync";
 import { useAuth } from "../store/auth";
+import { useSettings } from "../store/settings";
 import AccountPanel from "./settings/AccountPanel";
-import ThemePicker from "./settings/ThemePicker";
-import PrivacyPanel from "./settings/PrivacyPanel";
 import ControlsPanel from "./settings/ControlsPanel";
-import { canFullscreen, toggleFullscreen, useFullscreen } from "../platform/display";
+import LivePreview from "./settings/LivePreview";
+import PrivacyPanel from "./settings/PrivacyPanel";
+import { ROWS, SECTION_KEYS, SECTIONS, searchRows, sectionDefaults, type Row, type SectionId } from "./settings/rows";
 
-type TabId = "display" | "sound" | "gameplay" | "controls" | "privacy" | "account";
-const TABS: { id: TabId; icon: string; label: string }[] = [
-  { id: "display", icon: "🖥️", label: "Display" },
-  { id: "sound", icon: "🔊", label: "Sound" },
-  { id: "gameplay", icon: "🎮", label: "Gameplay" },
-  { id: "controls", icon: "⌨️", label: "Controls" },
-  { id: "privacy", icon: "🔒", label: "Privacy" },
-  { id: "account", icon: "👤", label: "Account" },
-];
-/** The last tab you looked at (until the page reloads). */
-let lastTab: TabId = "display";
+/** The section you looked at last (until the page reloads). */
+let lastSection: SectionId = "appearance";
 
 interface Props {
   open: boolean;
   onClose: () => void;
 }
 
-const TEXT_SIZE_NAME: Record<TextSize, string> = { s: "Small", m: "Medium", l: "Large", xl: "Extra large" };
+/** One setting: name and explanation on the left, its control on the right. */
+function SettingRow({ row, onOpen }: { row: Row; onOpen?: (s: SectionId) => void }) {
+  const C = row.Control;
+  const text = (
+    <span className="set-row-text">
+      <strong>{row.label}</strong>
+      {row.hint && <small>{row.hint}</small>}
+    </span>
+  );
+  if (!C) {
+    const sec = SECTIONS.find((s) => s.id === row.section);
+    return (
+      <button type="button" className="set-row set-row-link" onClick={() => onOpen?.(row.section)}>
+        {text}
+        <span className="set-row-go">
+          {sec?.label} ›
+        </span>
+      </button>
+    );
+  }
+  return (
+    <div className={`set-row${row.stack ? " stack" : ""}`} data-row={row.id}>
+      {text}
+      <div className="set-row-control">
+        <C />
+      </div>
+    </div>
+  );
+}
 
-/** Settings modal (native <dialog> for focus trapping + Esc to close). */
+/** Rows grouped under their small headings, in order. */
+function Groups({ rows, onOpen }: { rows: Row[]; onOpen?: (s: SectionId) => void }) {
+  const groups: { name: string; rows: Row[] }[] = [];
+  for (const r of rows) {
+    const g = groups.find((x) => x.name === r.group);
+    if (g) g.rows.push(r);
+    else groups.push({ name: r.group, rows: [r] });
+  }
+  return (
+    <>
+      {groups.map((g) => (
+        <section key={g.name} className="set-group" aria-label={g.name}>
+          <h3>{g.name}</h3>
+          <div className="set-group-rows">
+            {g.rows.map((r) => (
+              <SettingRow key={r.id} row={r} onOpen={onOpen} />
+            ))}
+          </div>
+        </section>
+      ))}
+    </>
+  );
+}
+
+/**
+ * Settings: a full-screen page over whatever you were doing (a game keeps
+ * running underneath). A list of sections on the left, clean rows on the
+ * right, a search box, and a reset for each section. On phones the list
+ * comes first and you tap into a section.
+ */
 export default function SettingsDialog({ open, onClose }: Props) {
   const ref = useRef<HTMLDialogElement>(null);
-  const s = useSettings();
-  const scheme = useTheme((t) => t.scheme);
-  const toggleTheme = useTheme((t) => t.toggle);
-  const [tutorialsReset, setTutorialsReset] = useState(false);
+  const searchRef = useRef<HTMLInputElement>(null);
+  const update = useSettings((s) => s.update);
   const user = useAuth((a) => a.user);
   const sync = useSync((x) => x.status);
-  const fullscreen = useFullscreen();
-  const [tab, setTabState] = useState<TabId>(lastTab);
-  const setTab = (t: TabId) => {
-    lastTab = t;
-    setTabState(t);
+  const [section, setSectionState] = useState<SectionId>(lastSection);
+  const [query, setQuery] = useState("");
+  /** Phones: showing a section (true) or the list of sections (false). */
+  const [inSection, setInSection] = useState(false);
+  const [resetDone, setResetDone] = useState<SectionId | null>(null);
+
+  const openSection = (id: SectionId) => {
+    lastSection = id;
+    setSectionState(id);
+    setQuery("");
+    setInSection(true);
+    setResetDone(null);
+    document.querySelector(".set-content")?.scrollTo({ top: 0 });
   };
 
   useEffect(() => {
     const d = ref.current;
     if (!d) return;
-    if (open && !d.open) d.showModal();
+    if (open && !d.open) {
+      d.showModal();
+      setQuery("");
+      setInSection(false);
+      setResetDone(null);
+    }
     if (!open && d.open) d.close();
-    if (open) setTutorialsReset(false);
   }, [open]);
 
+  // "/" jumps to the search box, like many apps.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "/" && document.activeElement?.tagName !== "INPUT") {
+        e.preventDefault();
+        searchRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  const results = useMemo(() => searchRows(query, ROWS), [query]);
+  const searching = query.trim().length > 0;
+  const current = SECTIONS.find((s) => s.id === section)!;
+  const rows = ROWS.filter((r) => r.section === section && r.Control && (!r.available || r.available()));
+  const canReset = !!SECTION_KEYS[section];
+
+  const syncText =
+    user && !user.is_guest
+      ? { off: "", loading: "Loading your settings…", synced: "Saved to your account", saving: "Saving…", error: "Couldn't sync; saved in this browser" }[sync]
+      : "Saved in this browser";
+
   return (
-    <dialog
-      ref={ref}
-      className="settings-dialog"
-      aria-labelledby="settings-title"
-      onClose={onClose}
-      onClick={(e) => e.target === ref.current && onClose()}
-    >
-      <div className="settings-body">
-        <div className="settings-head">
-          <h2 id="settings-title">⚙️ Settings</h2>
-          <button className="icon-btn" onClick={onClose} aria-label="Close settings">
-            ✕
-          </button>
-        </div>
+    <dialog ref={ref} className={`settings-screen${inSection || searching ? " in-section" : ""}`} aria-labelledby="settings-title" onClose={onClose}>
+      <header className="set-header">
+        <h2 id="settings-title">⚙️ Settings</h2>
+        <span className="set-sync" role="status">
+          {syncText}
+        </span>
+        <button type="button" className="set-close" onClick={onClose} aria-label="Close settings">
+          ✕ <span>Close</span>
+        </button>
+      </header>
 
-        <div className="settings-tabs" role="tablist" aria-label="Settings sections">
-          {TABS.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              role="tab"
-              id={`settings-tab-${t.id}`}
-              aria-selected={tab === t.id}
-              aria-controls={`settings-panel-${t.id}`}
-              className={`settings-tab${tab === t.id ? " active" : ""}`}
-              onClick={() => setTab(t.id)}
-            >
-              <span aria-hidden="true">{t.icon}</span> {t.label}
-            </button>
-          ))}
-        </div>
+      <div className="set-layout">
+        <nav className="set-nav" aria-label="Settings sections">
+          <label className="set-search">
+            <span aria-hidden="true">🔍</span>
+            <input
+              ref={searchRef}
+              type="search"
+              placeholder="Search settings"
+              aria-label="Search settings"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </label>
+          <ul>
+            {SECTIONS.map((s) => (
+              <li key={s.id}>
+                <button
+                  type="button"
+                  className="set-nav-item"
+                  aria-current={!searching && section === s.id ? "page" : undefined}
+                  onClick={() => openSection(s.id)}
+                >
+                  <span className="set-nav-icon" aria-hidden="true">
+                    {s.icon}
+                  </span>
+                  <span>
+                    <strong>{s.label}</strong>
+                    <small>{s.blurb}</small>
+                  </span>
+                  <span className="set-nav-arrow" aria-hidden="true">
+                    ›
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </nav>
 
-        <div role="tabpanel" id={`settings-panel-${tab}`} aria-labelledby={`settings-tab-${tab}`} className="settings-panel">
-          {tab === "display" && (
-            <>
-              <fieldset>
-                <legend>Display</legend>
-                <div className="row-label row-stack">
-                  <span>
-                    Theme
-                    <small>Pick one for your mood. It follows you to every device when you're logged in.</small>
-                  </span>
-                  <ThemePicker />
-                </div>
-                <label className="row-label">
-                  <span>
-                    Dark version
-                    <small>Switch to this mood's {scheme === "dark" ? "light" : "dark"} partner (also the 🌙/☀️ button).</small>
-                  </span>
-                  <input type="checkbox" className="switch" checked={scheme === "dark"} onChange={toggleTheme} />
-                </label>
-                <label className="row-label">
-                  <span>
-                    High contrast
-                    <small>Plain black and white with bright borders. Easier in sunlight or with low vision.</small>
-                  </span>
-                  <input
-                    type="checkbox"
-                    className="switch"
-                    checked={s.highContrast}
-                    onChange={(e) => s.update({ highContrast: e.target.checked })}
-                  />
-                </label>
-                <label className="row-label">
-                  <span>
-                    Readable font
-                    <small>Swap the pixel-art font for a plain one that's easier to read.</small>
-                  </span>
-                  <input
-                    type="checkbox"
-                    className="switch"
-                    checked={s.readableFont}
-                    onChange={(e) => s.update({ readableFont: e.target.checked })}
-                  />
-                </label>
-                {canFullscreen() && (
-                  <label className="row-label">
-                    <span>
-                      Fullscreen
-                      <small>Hide the browser bars. Shortcut: F. Esc leaves.</small>
-                    </span>
-                    <input type="checkbox" className="switch" checked={fullscreen} onChange={() => void toggleFullscreen()} />
-                  </label>
-                )}
-                <label className="row-label">
-                  <span>
-                    Show FPS
-                    <small>Frames per second in the bottom-right corner.</small>
-                  </span>
-                  <input
-                    type="checkbox"
-                    className="switch"
-                    checked={s.showFps}
-                    onChange={(e) => s.update({ showFps: e.target.checked })}
-                  />
-                </label>
-                <label className="row-label">
-                  <span>
-                    Light graphics
-                    <small>Fewer animations and effects. Good for slow devices.</small>
-                  </span>
-                  <input
-                    type="checkbox"
-                    className="switch"
-                    checked={s.lightGraphics}
-                    onChange={(e) => s.update({ lightGraphics: e.target.checked })}
-                  />
-                </label>
-                <label className="row-label">
-                  <span>
-                    Colorblind-friendly
-                    <small>Color-safe palette, plus shapes on pieces so you never need color alone.</small>
-                  </span>
-                  <input
-                    type="checkbox"
-                    className="switch"
-                    checked={s.colorblind}
-                    onChange={(e) => s.update({ colorblind: e.target.checked })}
-                  />
-                </label>
-                <label className="row-label">
-                  <span>
-                    Reduced motion
-                    <small>Stops animations but keeps the effects. Your device setting is followed too.</small>
-                  </span>
-                  <input
-                    type="checkbox"
-                    className="switch"
-                    checked={s.reducedMotion}
-                    onChange={(e) => s.update({ reducedMotion: e.target.checked })}
-                  />
-                </label>
-                <label className="row-label">
-                  <span>
-                    Screen shake
-                    <small>The board shakes on bombs and big hits.</small>
-                  </span>
-                  <input
-                    type="checkbox"
-                    className="switch"
-                    checked={s.screenShake}
-                    onChange={(e) => s.update({ screenShake: e.target.checked })}
-                  />
-                </label>
-                <div className="row-label">
-                  <span id="text-size-label">
-                    Text size
-                    <small>Makes the whole site bigger or smaller.</small>
-                  </span>
-                  <div className="segmented" role="radiogroup" aria-labelledby="text-size-label">
-                    {TEXT_SIZES.map((t: TextSize) => (
-                      <button
-                        key={t}
-                        role="radio"
-                        aria-checked={s.textSize === t}
-                        aria-label={TEXT_SIZE_NAME[t]}
-                        className={`btn-sm${s.textSize === t ? "" : " btn-ghost"}`}
-                        onClick={() => s.update({ textSize: t })}
-                      >
-                        {t.toUpperCase()}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </fieldset>
-            </>
-          )}
-          {tab === "sound" && (
-            <>
-              <fieldset>
-                <legend>Sound</legend>
-                <label className="row-label">
-                  <span>Sound effects</span>
-                  <input
-                    type="checkbox"
-                    className="switch"
-                    checked={s.sound}
-                    onChange={(e) => s.update({ sound: e.target.checked })}
-                  />
-                </label>
-                <label className="row-label">
-                  <span>Game sounds · {Math.round(s.volume * 100)}%</span>
-                  <input
-                    type="range"
-                    min={0}
-                    max={100}
-                    step={5}
-                    value={Math.round(s.volume * 100)}
-                    disabled={!s.sound}
-                    onChange={(e) => s.update({ volume: Number(e.target.value) / 100 })}
-                  />
-                </label>
-              <label className="row-label">
-                  <span>
-                    Menu sounds · {Math.round(s.uiVolume * 100)}%
-                    <small>Button clicks, separate from game sounds.</small>
-                  </span>
-                  <input
-                    type="range"
-                    min={0}
-                    max={100}
-                    step={5}
-                    value={Math.round(s.uiVolume * 100)}
-                    disabled={!s.sound}
-                    onChange={(e) => s.update({ uiVolume: Number(e.target.value) / 100 })}
-                  />
-                </label>
-              </fieldset>
-              <fieldset>
-                <legend>Music</legend>
-                <label className="row-label">
-                  <span>
-                    Background music
-                    <small>Chiptune made in code. Starts after your first click.</small>
-                  </span>
-                  <input
-                    type="checkbox"
-                    className="switch"
-                    checked={s.music}
-                    onChange={(e) => s.update({ music: e.target.checked })}
-                  />
-                </label>
-                <label className="row-label">
-                  <span>Music volume · {Math.round(s.musicVolume * 100)}%</span>
-                  <input
-                    type="range"
-                    min={0}
-                    max={100}
-                    step={5}
-                    value={Math.round(s.musicVolume * 100)}
-                    disabled={!s.music}
-                    onChange={(e) => s.update({ musicVolume: Number(e.target.value) / 100 })}
-                  />
-                </label>
-              </fieldset>
-            </>
-          )}
-          {tab === "gameplay" && (
-            <>
-              <fieldset>
-                <legend>Gameplay</legend>
-                <div className="row-label">
-                  <span id="timer-label">
-                    Turn timer
-                    <small>When time runs out, a random move is played for you.</small>
-                  </span>
-                  <div className="segmented" role="radiogroup" aria-labelledby="timer-label">
-                    {TIMER_OPTIONS.map((t) => (
-                      <button
-                        key={t}
-                        role="radio"
-                        aria-checked={s.turnTimer === t}
-                        className={`btn-sm ${s.turnTimer === t ? "" : "btn-ghost"}`}
-                        onClick={() => s.update({ turnTimer: t })}
-                      >
-                        {t === 0 ? "Off" : `${t}s`}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <label className="row-label">
-                  <span>
-                    Ask before leaving a round
-                    <small>Warns you before closing the tab or opening another page mid-round.</small>
-                  </span>
-                  <input
-                    type="checkbox"
-                    className="switch"
-                    checked={s.confirmLeave}
-                    onChange={(e) => s.update({ confirmLeave: e.target.checked })}
-                  />
-                </label>
-                <label className="row-label">
-                  <span>
-                    Vibration
-                    <small>Short buzzes on phones for hits, bombs and flags.</small>
-                  </span>
-                  <input
-                    type="checkbox"
-                    className="switch"
-                    checked={s.vibration}
-                    onChange={(e) => s.update({ vibration: e.target.checked })}
-                  />
-                </label>
-              </fieldset>
-              <fieldset>
-                <legend>Help</legend>
-                <div className="row-label">
-                  <span>
-                    Tutorials
-                    <small>Show each game's "how to play" again the next time you open it.</small>
-                  </span>
-                  <button
-                    className="btn-sm btn-ghost"
-                    onClick={() => {
-                      resetSeen();
-                      setTutorialsReset(true);
-                    }}
-                    disabled={tutorialsReset}
-                  >
-                    {tutorialsReset ? "✓ Reset" : "Reset tutorials"}
+        <main className="set-content">
+          <div className="set-content-inner">
+            {searching ? (
+              <>
+                <div className="set-title">
+                  <button type="button" className="set-back" onClick={() => setQuery("")}>
+                    ‹ All settings
                   </button>
+                  <h2>Results for "{query.trim()}"</h2>
                 </div>
-              </fieldset>
-            </>
-          )}
-          {tab === "controls" && <ControlsPanel />}
-          {tab === "privacy" && <PrivacyPanel onClose={onClose} />}
-          {tab === "account" && <AccountPanel onClose={onClose} />}
-        </div>
-
-        <div className="settings-foot">
-          {tab !== "account" ? (
-            <button className="btn-ghost btn-sm" onClick={s.reset}>
-              Reset defaults
-            </button>
-          ) : (
-            <span />
-          )}
-          <small className="settings-sync" role="status">
-            {user && !user.is_guest
-              ? { off: "", loading: "Loading your settings…", synced: "☁️ Saved to your account", saving: "☁️ Saving…", error: "⚠️ Couldn't sync; saved in this browser" }[sync]
-              : "Saved in this browser"}
-          </small>
-          <button className="btn-green btn-sm" onClick={onClose}>
-            Done
-          </button>
-        </div>
+                {results.length ? (
+                  SECTIONS.filter((s) => results.some((r) => r.section === s.id)).map((s) => (
+                    <section key={s.id} className="set-group" aria-label={s.label}>
+                      <h3>
+                        {s.icon} {s.label}
+                      </h3>
+                      <div className="set-group-rows">
+                        {results
+                          .filter((r) => r.section === s.id)
+                          .map((r) => (
+                            <SettingRow key={r.id} row={r} onOpen={openSection} />
+                          ))}
+                      </div>
+                    </section>
+                  ))
+                ) : (
+                  <p className="set-empty">Nothing matches. Try "volume", "dark", "keys" or "password".</p>
+                )}
+              </>
+            ) : (
+              <>
+                <div className="set-title">
+                  <button type="button" className="set-back" onClick={() => setInSection(false)}>
+                    ‹ All settings
+                  </button>
+                  <h2>
+                    <span aria-hidden="true">{current.icon}</span> {current.label}
+                  </h2>
+                  <p>{current.blurb}</p>
+                  {canReset && (
+                    <button
+                      type="button"
+                      className="set-reset"
+                      onClick={() => {
+                        update(sectionDefaults(section));
+                        setResetDone(section);
+                      }}
+                    >
+                      {resetDone === section ? "✓ Reset" : "Reset this section"}
+                    </button>
+                  )}
+                </div>
+                {section === "appearance" && <LivePreview />}
+                {rows.length > 0 && <Groups rows={rows} />}
+                {section === "controls" && <ControlsPanel />}
+                {section === "privacy" && <PrivacyPanel onClose={onClose} />}
+                {section === "account" && <AccountPanel onClose={onClose} />}
+              </>
+            )}
+          </div>
+        </main>
       </div>
     </dialog>
   );
