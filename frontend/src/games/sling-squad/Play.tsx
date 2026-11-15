@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useGuardWhile } from "../../platform/leaveGuard";
-import { Link } from "react-router-dom";
+
 import { api } from "../../api/client";
 import type { Bird, SubmitResponse } from "../../api/types";
 import { useTheme } from "../../store/theme";
@@ -10,8 +10,8 @@ import { GameEngine, MAX_SHOTS, type ShotRecord } from "./engine";
 import { LEVELS, findLevel, findWorld, type Level } from "./levels";
 import LevelSelect, { Stars } from "./LevelSelect";
 import { SaveScorePrompt } from "../../components/Guest";
-import BackButton from "../../components/BackButton";
 import { MyReaction } from "../../character/Live";
+import GameHeader from "../../components/GameHeader";
 
 const fmt = (n: number) => n.toLocaleString();
 
@@ -21,16 +21,7 @@ export default function Play() {
   if (levelId === null) {
     return (
       <>
-        <div className="page-head">
-          <div>
-            <BackButton />
-            <h1 style={{ marginTop: 12 }}>Sling Squad</h1>
-            <p>Smash the fort. Pop the gobbos. Clear all 12 levels.</p>
-          </div>
-          <Link to="/leaderboard/sling-squad" className="btn btn-blue btn-sm">
-            🏆 Leaderboard
-          </Link>
-        </div>
+        <GameHeader gameId="sling-squad" />
         <LevelSelect onPlay={setLevelId} />
       </>
     );
@@ -143,21 +134,16 @@ function Game({ level, onLevels, onPlay }: { level: Level; onLevels: () => void;
 
   return (
     <>
-      <div className="page-head">
-        <div>
-          <BackButton />
-          <h1 style={{ marginTop: 12 }}>
-            Sling Squad{" "}
+      <GameHeader
+        gameId="sling-squad"
+        tag={
+          <>
             <span className="tag tag-yellow">
               {findWorld(level.world).icon} Level {level.id}: {level.name}
             </span>
-          </h1>
-          <p>Destroy every gobbo to clear the level. Smash blocks for more stars.</p>
-        </div>
-        <Link to="/leaderboard/sling-squad" className="btn btn-blue btn-sm">
-          🏆 Leaderboard
-        </Link>
-      </div>
+          </>
+        }
+      />
 
       <div className="game-layout">
         <div className="game-main">

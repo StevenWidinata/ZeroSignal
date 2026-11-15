@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+
 import { minefield } from "../../api/client";
 import type { MfDifficulty, MfGame } from "../../api/types";
 import { playSfx } from "../../platform/sound";
 import Field, { DIFF_NAME } from "./Field";
-import BackButton from "../../components/BackButton";
+import GameHeader from "../../components/GameHeader";
 
 const SIZES: { id: MfDifficulty; size: string; blurb: string }[] = [
   { id: "beginner", size: "9×9 · 10 mines", blurb: "Learn the ropes. Pays 5 coins." },
@@ -50,18 +50,14 @@ export default function Play() {
   }
 
   const header = (
-    <div className="page-head">
-      <div>
-        <BackButton />
-        <h1 style={{ marginTop: 12 }}>
-          Minefield {game && <span className="tag">{DIFF_NAME[game.difficulty]}</span>}
-        </h1>
-        <p>Clear the field. Every board is solvable without guessing.</p>
-      </div>
-      <Link to="/leaderboard/minefield" className="btn btn-blue btn-sm">
-        🏆 Leaderboard
-      </Link>
-    </div>
+    <GameHeader
+        gameId="minefield"
+        tag={
+          <>
+            {game && <span className="tag">{DIFF_NAME[game.difficulty]}</span>}
+          </>
+        }
+      />
   );
 
   if (game) {

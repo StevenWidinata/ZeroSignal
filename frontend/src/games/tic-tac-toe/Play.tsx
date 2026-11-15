@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+
 import { ticTacToe } from "../../api/client";
 import type { TttCollection, TttDifficulty, TttMatch } from "../../api/types";
 import { playSfx } from "../../platform/sound";
@@ -11,10 +11,10 @@ import { BOARDS, FACES, opponentFace } from "./items";
 import LocalGame from "./LocalGame";
 import PhotoCapture from "./PhotoCapture";
 import Piece from "./Piece";
-import BackButton from "../../components/BackButton";
 import { useSearchParams } from "react-router-dom";
 import OnlineLobby from "../../online/OnlineLobby";
 import OnlineMatch from "../../online/OnlineMatch";
+import GameHeader from "../../components/GameHeader";
 
 type Mode = "ai" | "local" | "online";
 type Screen =
@@ -141,21 +141,16 @@ export default function Play() {
   }
 
   const header = (
-    <div className="page-head">
-      <div>
-        <BackButton />
-        <h1 style={{ marginTop: 12 }}>
-          Tic-Tac-Toe{" "}
-          {screen.kind === "ai" && <span className="tag tag-blue">vs AI · {DIFFICULTY_LABEL[screen.match.difficulty]}</span>}
+    <GameHeader
+        gameId="tic-tac-toe"
+        tag={
+          <>
+            {screen.kind === "ai" && <span className="tag tag-blue">vs AI · {DIFFICULTY_LABEL[screen.match.difficulty]}</span>}
           {screen.kind === "local" && <span className="tag">2 players</span>}
           {screen.kind === "online" && <span className="tag tag-yellow">🌐 Online · {screen.code}</span>}
-        </h1>
-        <p>Three in a row. Simple to learn, hard to master.</p>
-      </div>
-      <Link to="/leaderboard/tic-tac-toe" className="btn btn-blue btn-sm">
-        🏆 Leaderboard
-      </Link>
-    </div>
+          </>
+        }
+      />
   );
 
   const photoDialog = <PhotoCapture open={photoOpen} onClose={() => setPhotoOpen(false)} />;

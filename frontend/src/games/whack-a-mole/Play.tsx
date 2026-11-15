@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+
 import { whackAMole } from "../../api/client";
 import type { WamCollection, WamFinish, WamMode, WamStart, WamTap } from "../../api/types";
 import { playSfx } from "../../platform/sound";
@@ -10,7 +10,7 @@ import type { Kind } from "./engine";
 import Mole from "./Mole";
 import Results from "./Results";
 import Round from "./Round";
-import BackButton from "../../components/BackButton";
+import GameHeader from "../../components/GameHeader";
 
 type Screen =
   | { kind: "setup" }
@@ -205,23 +205,18 @@ export default function Play() {
   }, []);
 
   const header = (
-    <div className="page-head">
-      <div>
-        <BackButton />
-        <h1 style={{ marginTop: 12 }}>
-          Whack-a-Mole{" "}
-          {screen.kind === "round" && (
+    <GameHeader
+        gameId="whack-a-mole"
+        tag={
+          <>
+            {screen.kind === "round" && (
             <span className="tag tag-yellow">
               {MODE_INFO[screen.run.mode].name} · {screen.run.grid}×{screen.run.grid}
             </span>
           )}
-        </h1>
-        <p>Fast hands win. Bonk every mole before it hides.</p>
-      </div>
-      <Link to="/leaderboard/whack-a-mole" className="btn btn-blue btn-sm">
-        🏆 Leaderboard
-      </Link>
-    </div>
+          </>
+        }
+      />
   );
 
   if (screen.kind === "round") {

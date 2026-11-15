@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+
 import { connectFour } from "../../api/client";
 import type { CfCollection, CfMatch, Difficulty } from "../../api/types";
 import { playSfx } from "../../platform/sound";
@@ -9,10 +9,10 @@ import Chip from "./Chip";
 import LocalGame from "./LocalGame";
 import { RARITY_COLOR, SKINS } from "./skins";
 import SpinWheel from "./SpinWheel";
-import BackButton from "../../components/BackButton";
 import { useSearchParams } from "react-router-dom";
 import OnlineLobby from "../../online/OnlineLobby";
 import OnlineMatch from "../../online/OnlineMatch";
+import GameHeader from "../../components/GameHeader";
 
 type Mode = "ai" | "local" | "online";
 type Screen =
@@ -119,21 +119,16 @@ export default function Play() {
   }
 
   const header = (
-    <div className="page-head">
-      <div>
-        <BackButton />
-        <h1 style={{ marginTop: 12 }}>
-          Connect Four{" "}
-          {screen.kind === "ai" && <span className="tag tag-blue">vs AI · {DIFFICULTY_LABEL[screen.match.difficulty]}</span>}
+    <GameHeader
+        gameId="connect-four"
+        tag={
+          <>
+            {screen.kind === "ai" && <span className="tag tag-blue">vs AI · {DIFFICULTY_LABEL[screen.match.difficulty]}</span>}
           {screen.kind === "local" && <span className="tag">2 players</span>}
           {screen.kind === "online" && <span className="tag tag-yellow">🌐 Online · {screen.code}</span>}
-        </h1>
-        <p>Drop chips, line up four, outsmart your rival.</p>
-      </div>
-      <Link to="/leaderboard/connect-four" className="btn btn-blue btn-sm">
-        🏆 Leaderboard
-      </Link>
-    </div>
+          </>
+        }
+      />
   );
 
   if (screen.kind === "online") {

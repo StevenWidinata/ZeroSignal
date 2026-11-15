@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+
 import { game2048 } from "../../api/client";
 import type { G2048Finish, G2048Mode, G2048Run } from "../../api/types";
 import { playSfx } from "../../platform/sound";
@@ -18,7 +18,7 @@ import {
 } from "./modes";
 import Results from "./Results";
 import Round from "./Round";
-import BackButton from "../../components/BackButton";
+import GameHeader from "../../components/GameHeader";
 
 type Screen =
   | { kind: "setup" }
@@ -101,23 +101,18 @@ export default function Play() {
   }
 
   const header = (
-    <div className="page-head">
-      <div>
-        <BackButton />
-        <h1 style={{ marginTop: 12 }}>
-          2048{" "}
-          {screen.kind === "round" && (
+    <GameHeader
+        gameId="2048"
+        tag={
+          <>
+            {screen.kind === "round" && (
             <span className="tag tag-blue">
               {MODE_INFO[screen.run.mode].name} · {screen.game.size}×{screen.game.size}
             </span>
           )}
-        </h1>
-        <p>Slide, merge, reach 2048. Then keep going.</p>
-      </div>
-      <Link to="/leaderboard/2048" className="btn btn-blue btn-sm">
-        🏆 Leaderboard
-      </Link>
-    </div>
+          </>
+        }
+      />
   );
 
   if (screen.kind === "round") {
