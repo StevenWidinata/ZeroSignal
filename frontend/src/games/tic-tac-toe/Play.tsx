@@ -12,13 +12,17 @@ import LocalGame from "./LocalGame";
 import PhotoCapture from "./PhotoCapture";
 import Piece from "./Piece";
 import BackButton from "../../components/BackButton";
+import { useSearchParams } from "react-router-dom";
+import OnlineLobby from "../../online/OnlineLobby";
+import OnlineMatch from "../../online/OnlineMatch";
 
-type Mode = "ai" | "local";
+type Mode = "ai" | "local" | "online";
 type Screen =
   | { kind: "menu" }
   | { kind: "ai"; match: TttMatch }
   | { kind: "local"; bestOf: 3 | 5; faces: [string, string]; board: string }
-  | { kind: "collection" };
+  | { kind: "collection" }
+  | { kind: "online"; code: string };
 
 const DIFFS: { id: TttDifficulty; blurb: string }[] = [
   { id: "easy", blurb: "Warm-up. Mostly random." },
@@ -83,8 +87,10 @@ export default function Play() {
   const photoUrl = usePhoto((s) => s.url);
   const photoLoaded = usePhoto((s) => s.loaded);
   const loadPhoto = usePhoto((s) => s.load);
-  const [screen, setScreen] = useState<Screen>({ kind: "menu" });
-  const [mode, setMode] = useState<Mode>("ai");
+  const [params, setParams] = useSearchParams();
+  const roomParam = params.get("room");
+  const [screen, setScreen] = useState<Screen>(roomParam ? { kind: "online", code: roomParam.toUpperCase() } : { kind: "menu" });
+  const [mode, setMode] = useState<Mode>(roomParam ? "online" : "ai");
   const [difficulty, setDifficulty] = useState<TttDifficulty>("medium");
   const [bestOf, setBestOf] = useState<3 | 5>(3);
   const [face, setFace] = useState("x");
@@ -142,6 +148,7 @@ export default function Play() {
           Tic-Tac-Toe{" "}
           {screen.kind === "ai" && <span className="tag tag-blue">vs AI · {DIFFICULTY_LABEL[screen.match.difficulty]}</span>}
           {screen.kind === "local" && <span className="tag">2 players</span>}
+          {screen.kind === "online" && <span className="tag tag-yellow">🌐 Online · {screen.code}</span>}
         </h1>
         <p>Three in a row. Simple to learn, hard to master.</p>
       </div>
@@ -153,6 +160,17 @@ export default function Play() {
 
   const photoDialog = <PhotoCapture open={photoOpen} onClose={() => setPhotoOpen(false)} />;
 
+  if (screen.kind === "online") {
+    return (
+      <>
+        {header}
+        <OnlineMatch game="tic-tac-toe" code={screen.code} onExit={() => {
+          setParams({}, { replace: true });
+          setScreen({ kind: "menu" });
+        }} />
+      </>
+    );
+  }
   if (screen.kind === "ai")
     return (
       <>
@@ -203,12 +221,20 @@ export default function Play() {
 
         <div className="panel c4-panel">
           <div className="segmented c4-modes" role="radiogroup" aria-label="Game mode">
-            {(["ai", "local"] as Mode[]).map((m) => (
+            {(["ai", "local", "online"] as Mode[]).map((m) => (
               <button key={m} role="radio" aria-checked={mode === m} className={mode === m ? "" : "btn-ghost"} onClick={() => setMode(m)}>
-                {m === "ai" ? "🤖 vs AI" : "👥 vs Friend"}
+                {m === "ai" ? "🤖 vs AI" : m === "local" ? "👥 Same device" : "🌐 Online"}
               </button>
             ))}
           </div>
+
+          {mode === "online" ? (
+            <OnlineLobby game="tic-tac-toe" onEnter={(code) => {
+              setParams({ room: code }, { replace: true });
+              setScreen({ kind: "online", code });
+            }} />
+          ) : (
+          <>
 
           {mode === "ai" && (
             <fieldset className="c4-diffs">
@@ -320,6 +346,8 @@ export default function Play() {
             <p className="hint">
               Win a series for coins, XP and a reward spin (no undo). Hard can't be beaten, so a drawn Hard series also pays.
             </p>
+          )}
+          </>
           )}
         </div>
       </div>

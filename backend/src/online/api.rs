@@ -105,6 +105,8 @@ pub struct RoomView {
     /// Seat that moved first this game.
     pub first_seat: i16,
     pub board: GameState,
+    /// This game's moves (digits), e.g. "3324".
+    pub moves: String,
     pub your_turn: bool,
     pub game_over: bool,
     /// Wins of seat 1 and seat 2.
@@ -175,6 +177,7 @@ async fn view(pool: &sqlx::PgPool, r: &Room, you: Seat) -> AppResult<RoomView> {
         first_seat: r.first_seat,
         your_turn: r.status == "playing" && !r.game_over && to_move == you,
         board,
+        moves: r.moves.clone(),
         game_over: r.game_over,
         wins: [r.host_wins, r.guest_wins],
         draws: r.draws,

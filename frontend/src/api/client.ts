@@ -1,4 +1,7 @@
 import type {
+  OnlineEntry,
+  OnlineGame,
+  RoomView,
   AccountView,
   AbProgress,
   PrefsView,
@@ -425,5 +428,37 @@ export const minefield = {
   },
   forfeit(id: string) {
     return post<MfGame | null>(`${MF}/${encodeURIComponent(id)}/forfeit`);
+  },
+};
+
+/** Online rooms: the server checks every move; `get` waits up to 20 s for news. */
+export const rooms = {
+  create(game: OnlineGame, bestOf: number) {
+    return post<RoomView>("/api/rooms", { game, best_of: bestOf });
+  },
+  join(code: string) {
+    return post<RoomView>(`/api/rooms/${encodeURIComponent(code)}/join`);
+  },
+  get(code: string, since?: number, signal?: AbortSignal) {
+    const q = since === undefined ? "" : `?since=${since}`;
+    return request<RoomView>(`/api/rooms/${encodeURIComponent(code)}${q}`, { signal });
+  },
+  move(code: string, cell: number) {
+    return post<RoomView>(`/api/rooms/${encodeURIComponent(code)}/move`, { cell });
+  },
+  next(code: string) {
+    return post<RoomView>(`/api/rooms/${encodeURIComponent(code)}/next`);
+  },
+  emote(code: string, emote: string) {
+    return post<RoomView>(`/api/rooms/${encodeURIComponent(code)}/emote`, { emote });
+  },
+  leave(code: string) {
+    return post<RoomView>(`/api/rooms/${encodeURIComponent(code)}/leave`);
+  },
+  rematch(code: string) {
+    return post<RoomView>(`/api/rooms/${encodeURIComponent(code)}/rematch`);
+  },
+  leaderboard(game: OnlineGame) {
+    return request<OnlineEntry[]>(`/api/rooms/leaderboard?game=${game}`);
   },
 };

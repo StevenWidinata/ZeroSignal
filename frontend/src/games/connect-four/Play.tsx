@@ -10,13 +10,17 @@ import LocalGame from "./LocalGame";
 import { RARITY_COLOR, SKINS } from "./skins";
 import SpinWheel from "./SpinWheel";
 import BackButton from "../../components/BackButton";
+import { useSearchParams } from "react-router-dom";
+import OnlineLobby from "../../online/OnlineLobby";
+import OnlineMatch from "../../online/OnlineMatch";
 
-type Mode = "ai" | "local";
+type Mode = "ai" | "local" | "online";
 type Screen =
   | { kind: "menu" }
   | { kind: "ai"; match: CfMatch }
   | { kind: "local"; bestOf: 3 | 5; skins: [string, string] }
-  | { kind: "wheel" };
+  | { kind: "wheel" }
+  | { kind: "online"; code: string };
 
 const DIFFICULTIES: { id: Difficulty; blurb: string }[] = [
   { id: "easy", blurb: "Warm-up. Mostly random." },
@@ -70,8 +74,10 @@ function SkinPicker({
 
 export default function Play() {
   const username = useAuth((s) => s.user?.username ?? "Player 1");
-  const [screen, setScreen] = useState<Screen>({ kind: "menu" });
-  const [mode, setMode] = useState<Mode>("ai");
+  const [params, setParams] = useSearchParams();
+  const roomParam = params.get("room");
+  const [screen, setScreen] = useState<Screen>(roomParam ? { kind: "online", code: roomParam.toUpperCase() } : { kind: "menu" });
+  const [mode, setMode] = useState<Mode>(roomParam ? "online" : "ai");
   const [difficulty, setDifficulty] = useState<Difficulty>("medium");
   const [bestOf, setBestOf] = useState<3 | 5>(3);
   const [skin, setSkin] = useState("red");
@@ -120,6 +126,7 @@ export default function Play() {
           Connect Four{" "}
           {screen.kind === "ai" && <span className="tag tag-blue">vs AI · {DIFFICULTY_LABEL[screen.match.difficulty]}</span>}
           {screen.kind === "local" && <span className="tag">2 players</span>}
+          {screen.kind === "online" && <span className="tag tag-yellow">🌐 Online · {screen.code}</span>}
         </h1>
         <p>Drop chips, line up four, outsmart your rival.</p>
       </div>
@@ -129,6 +136,17 @@ export default function Play() {
     </div>
   );
 
+  if (screen.kind === "online") {
+    return (
+      <>
+        {header}
+        <OnlineMatch game="connect-four" code={screen.code} onExit={() => {
+          setParams({}, { replace: true });
+          setScreen({ kind: "menu" });
+        }} />
+      </>
+    );
+  }
   if (screen.kind === "ai") {
     return (
       <>
@@ -181,7 +199,7 @@ export default function Play() {
 
         <div className="panel c4-panel">
           <div className="segmented c4-modes" role="radiogroup" aria-label="Game mode">
-            {(["ai", "local"] as Mode[]).map((m) => (
+            {(["ai", "local", "online"] as Mode[]).map((m) => (
               <button
                 key={m}
                 role="radio"
@@ -189,10 +207,18 @@ export default function Play() {
                 className={mode === m ? "" : "btn-ghost"}
                 onClick={() => setMode(m)}
               >
-                {m === "ai" ? "🤖 vs AI" : "👥 vs Friend"}
+                {m === "ai" ? "🤖 vs AI" : m === "local" ? "👥 Same device" : "🌐 Online"}
               </button>
             ))}
           </div>
+
+          {mode === "online" ? (
+            <OnlineLobby game="connect-four" onEnter={(code) => {
+              setParams({ room: code }, { replace: true });
+              setScreen({ kind: "online", code });
+            }} />
+          ) : (
+          <>
 
           {mode === "ai" && (
             <fieldset className="c4-diffs">
@@ -272,6 +298,8 @@ export default function Play() {
               Win a series to earn leaderboard points. Win without undo to earn a skin spin. Harder AI = more points and
               better spin odds.
             </p>
+          )}
+          </>
           )}
         </div>
       </div>

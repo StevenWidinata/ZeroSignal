@@ -608,3 +608,53 @@ export interface WeeklyClaim {
   claimed: WeeklyPrize[];
   rewards: Granted;
 }
+
+// ---------------------------------------------------------------------------
+// Online rooms (two devices)
+// ---------------------------------------------------------------------------
+
+export type OnlineGame = "connect-four" | "tic-tac-toe";
+
+export interface RoomPlayer {
+  username: string;
+  is_guest: boolean;
+  avatar: Record<string, string> | null;
+  here: boolean;
+  emote: string | null;
+  emote_at: string | null;
+  rematch: boolean;
+}
+
+export interface RoomView {
+  code: string;
+  game: OnlineGame;
+  best_of: number;
+  status: "waiting" | "playing" | "finished" | "abandoned";
+  /** Your seat: 1 = host, 2 = joined. */
+  you: 1 | 2;
+  players: [RoomPlayer | null, RoomPlayer | null];
+  game_no: number;
+  first_seat: 1 | 2;
+  board: {
+    /** Connect Four: columns bottom-up; Tic-Tac-Toe: 9 cells. 1 = whoever moved first. */
+    cells: number[][] | number[];
+    outcome: CfOutcome;
+    highlight: [number, number][] | [number, number, number] | null;
+    next: "p1" | "p2";
+  };
+  moves: string;
+  your_turn: boolean;
+  game_over: boolean;
+  wins: [number, number];
+  draws: number;
+  winner: number | null;
+  version: number;
+}
+
+export interface OnlineEntry {
+  rank: number;
+  username: string;
+  wins: number;
+  played: number;
+  avatar: Record<string, string> | null;
+}
