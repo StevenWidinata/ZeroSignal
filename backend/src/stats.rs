@@ -58,6 +58,32 @@ pub struct Row2048 {
     pub moves: Option<i64>,
 }
 
+/// Games vs Zero-Bot at one level (Chess, Sonar).
+#[derive(Serialize, sqlx::FromRow)]
+pub struct LevelRow {
+    pub level: String,
+    pub played: i64,
+    pub won: i64,
+    pub drawn: i64,
+}
+
+#[derive(Serialize, Default)]
+pub struct ChessStats {
+    pub levels: Vec<LevelRow>,
+    pub puzzles_played: i64,
+    pub puzzles_solved: i64,
+}
+
+#[derive(Serialize, Default)]
+pub struct SonarStats {
+    pub levels: Vec<LevelRow>,
+    /// Finished Daily Hunts and the fewest shots in one.
+    pub hunts: i64,
+    pub best_hunt: Option<i32>,
+    /// Wins without losing a ship.
+    pub flawless: i64,
+}
+
 #[derive(Serialize, sqlx::FromRow, Default)]
 pub struct SnakeRow {
     pub runs: i64,
@@ -85,6 +111,8 @@ pub struct StatsView {
     pub minefield: Vec<MinefieldRow>,
     pub whack: WhackRow,
     pub snake: SnakeRow,
+    pub chess: ChessStats,
+    pub sonar: SonarStats,
     pub g2048: Row2048,
 }
 
@@ -188,6 +216,43 @@ pub async fn my_stats(State(state): State<AppState>, user: AuthUser) -> AppResul
     .fetch_one(pool)
     .await?;
 
+    const LEVEL_ORDER: &str = "CASE level WHEN 'easy' THEN 1 WHEN 'medium' THEN 2 WHEN 'hard' THEN 3 ELSE 4 END";
+    let chess_levels: Vec<LevelRow> = sqlx::query_as(&format!(
+        r#"SELECT level::TEXT AS level, COUNT(*) AS played,
+                  COUNT(*) FILTER (WHERE status = 'won') AS won,
+                  COUNT(*) FILTER (WHERE status = 'drawn') AS drawn
+           FROM chess_games WHERE user_id = $1 AND status <> 'active'
+           GROUP BY level ORDER BY {LEVEL_ORDER}"#
+    ))
+    .bind(id)
+    .fetch_all(pool)
+    .await?;
+    let (puzzles_played, puzzles_solved): (i64, i64) = sqlx::query_as(
+        r#"SELECT COUNT(*) FILTER (WHERE status <> 'playing'), COUNT(*) FILTER (WHERE status = 'solved')
+           FROM chess_puzzle_runs WHERE user_id = $1"#,
+    )
+    .bind(id)
+    .fetch_one(pool)
+    .await?;
+    let sonar_levels: Vec<LevelRow> = sqlx::query_as(&format!(
+        r#"SELECT level::TEXT AS level, COUNT(*) AS played,
+                  COUNT(*) FILTER (WHERE status = 'won') AS won,
+                  0::BIGINT AS drawn
+           FROM sonar_games WHERE user_id = $1 AND status <> 'active'
+           GROUP BY level ORDER BY {LEVEL_ORDER}"#
+    ))
+    .bind(id)
+    .fetch_all(pool)
+    .await?;
+    let (hunts, best_hunt, flawless): (i64, Option<i32>, i64) = sqlx::query_as(
+        r#"SELECT (SELECT COUNT(*) FROM sonar_daily_runs WHERE user_id = $1 AND status = 'done'),
+                  (SELECT MIN(shots)::INT FROM sonar_daily_runs WHERE user_id = $1 AND status = 'done'),
+                  (SELECT COUNT(*) FROM sonar_games WHERE user_id = $1 AND status = 'won' AND ships_lost = 0)"#,
+    )
+    .bind(id)
+    .fetch_one(pool)
+    .await?;
+
     Ok(Json(StatsView {
         joined,
         level: level_info(xp).level,
@@ -203,6 +268,8 @@ pub async fn my_stats(State(state): State<AppState>, user: AuthUser) -> AppResul
         minefield,
         whack,
         snake,
+        chess: ChessStats { levels: chess_levels, puzzles_played, puzzles_solved },
+        sonar: SonarStats { levels: sonar_levels, hunts, best_hunt, flawless },
         g2048,
     }))
 }

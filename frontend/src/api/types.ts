@@ -573,6 +573,14 @@ export interface StatsBoard {
   average: number;
 }
 
+/** Games vs Zero-Bot at one level (Chess, Sonar). */
+export interface StatsLevelRow {
+  level: string;
+  played: number;
+  won: number;
+  drawn: number;
+}
+
 /** One game's Daily on the Hub ("Today's Dailies"). */
 export interface DailyView {
   game_id: string;
@@ -604,6 +612,8 @@ export interface StatsView {
     longest_survival_ms: number | null;
   };
   g2048: { games: number; best_tile: number | null; reached_2048: number; moves: number | null };
+  chess: { levels: StatsLevelRow[]; puzzles_played: number; puzzles_solved: number };
+  sonar: { levels: StatsLevelRow[]; hunts: number; best_hunt: number | null; flawless: number };
   snake: {
     runs: number;
     longest: number | null;

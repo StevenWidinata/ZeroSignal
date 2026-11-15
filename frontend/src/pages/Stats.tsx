@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api/client";
-import type { StatsSeries, StatsView } from "../api/types";
+import type { StatsLevelRow, StatsSeries, StatsView } from "../api/types";
 import { formatTime } from "../games/minefield/logic";
 import { findGame } from "../platform/registry";
 import { DIFFICULTY_NAME, MF_LEVEL, boardLabel, sumBoards, winRate } from "./statsLogic";
@@ -41,6 +41,41 @@ function GameCard({ id, children, played }: { id: string; children: React.ReactN
       </div>
       {played ? children : <p className="stats-empty">Not played yet. Your records show up here after your first game.</p>}
     </section>
+  );
+}
+
+const LEVEL_NAME: Record<string, string> = { easy: "Easy", medium: "Medium", hard: "Hard", master: "Master" };
+
+/** Games vs Zero-Bot per level, with a win-rate bar. */
+function LevelTable({ rows, withDraws }: { rows: StatsLevelRow[]; withDraws: boolean }) {
+  if (rows.length === 0) return <p className="stats-empty">No games vs Zero-Bot yet.</p>;
+  return (
+    <div className="board-table-wrap">
+      <table className="board-table stats-table">
+        <thead>
+          <tr>
+            <th scope="col">Zero-Bot</th>
+            <th scope="col">Games</th>
+            <th scope="col">Won</th>
+            {withDraws && <th scope="col">Drawn</th>}
+            <th scope="col">Win rate</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={r.level}>
+              <th scope="row">{LEVEL_NAME[r.level] ?? r.level}</th>
+              <td className="num">{r.played}</td>
+              <td className="num">{r.won}</td>
+              {withDraws && <td className="num">{r.drawn}</td>}
+              <td>
+                <RateBar won={r.won} played={r.played} label={LEVEL_NAME[r.level] ?? r.level} />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
@@ -130,7 +165,11 @@ export default function Stats() {
     s.whack.rounds +
     s.minefield.reduce((n, r) => n + r.played, 0) +
     s.g2048.games +
-    s.snake.runs;
+    s.snake.runs +
+    s.chess.levels.reduce((n, r) => n + r.played, 0) +
+    s.chess.puzzles_played +
+    s.sonar.levels.reduce((n, r) => n + r.played, 0) +
+    s.sonar.hunts;
 
   return (
     <div className="stats-page">
@@ -291,6 +330,48 @@ export default function Stats() {
               </tbody>
             </table>
           </div>
+        </GameCard>
+
+        <GameCard id="chess" played={s.chess.levels.length > 0 || s.chess.puzzles_played > 0}>
+          <dl className="wam-stats">
+            <div>
+              <dt>Games vs Zero-Bot</dt>
+              <dd>{fmt(s.chess.levels.reduce((n, r) => n + r.played, 0))}</dd>
+            </div>
+            <div>
+              <dt>Wins</dt>
+              <dd>{fmt(s.chess.levels.reduce((n, r) => n + r.won, 0))}</dd>
+            </div>
+            <div>
+              <dt>Daily puzzles solved</dt>
+              <dd>
+                {s.chess.puzzles_solved} / {s.chess.puzzles_played}
+              </dd>
+            </div>
+          </dl>
+          <LevelTable rows={s.chess.levels} withDraws />
+        </GameCard>
+
+        <GameCard id="sonar" played={s.sonar.levels.length > 0 || s.sonar.hunts > 0}>
+          <dl className="wam-stats">
+            <div>
+              <dt>Games vs Zero-Bot</dt>
+              <dd>{fmt(s.sonar.levels.reduce((n, r) => n + r.played, 0))}</dd>
+            </div>
+            <div>
+              <dt>Flawless wins</dt>
+              <dd>{fmt(s.sonar.flawless)}</dd>
+            </div>
+            <div>
+              <dt>Daily Hunts</dt>
+              <dd>{fmt(s.sonar.hunts)}</dd>
+            </div>
+            <div>
+              <dt>Best Hunt</dt>
+              <dd>{s.sonar.best_hunt ? `${s.sonar.best_hunt} shots` : "–"}</dd>
+            </div>
+          </dl>
+          <LevelTable rows={s.sonar.levels} withDraws={false} />
         </GameCard>
 
         <GameCard id="snake-signal" played={s.snake.runs > 0}>
