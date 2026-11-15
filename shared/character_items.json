@@ -272,6 +272,10 @@
     { "id": "title-sea-legs", "slot": "title", "name": "Sea Legs", "rarity": "common", "unlock": { "kind": "achievement" }, "art": { "text": "Sea Legs", "tier": "bronze", "color": "#1f6aa5", "icon": "⚓" } },
     { "id": "title-fleet-admiral", "slot": "title", "name": "Fleet Admiral", "rarity": "legendary", "unlock": { "kind": "achievement" }, "art": { "text": "Fleet Admiral", "tier": "mythic", "color": "#2a9df4", "icon": "🎖️", "effect": "shimmer" } },
     { "id": "title-eagle-eye", "slot": "title", "name": "Eagle Eye", "rarity": "epic", "unlock": { "kind": "achievement" }, "art": { "text": "Eagle Eye", "tier": "gold", "color": "#f2c14e", "icon": "🦅", "effect": "glow" } },
-    { "id": "title-untouchable", "slot": "title", "name": "Untouchable", "rarity": "epic", "unlock": { "kind": "achievement" }, "art": { "text": "Untouchable", "tier": "gold", "color": "#1fa39b", "icon": "🛡️", "effect": "glow" } }
+    { "id": "title-untouchable", "slot": "title", "name": "Untouchable", "rarity": "epic", "unlock": { "kind": "achievement" }, "art": { "text": "Untouchable", "tier": "gold", "color": "#1fa39b", "icon": "🛡️", "effect": "glow" } },
+    { "id": "title-signal-found", "slot": "title", "name": "Signal Found", "rarity": "common", "unlock": { "kind": "achievement" }, "art": { "text": "Signal Found", "tier": "bronze", "color": "#2ee88a", "icon": "🐍" } },
+    { "id": "title-long-cable", "slot": "title", "name": "Long Cable", "rarity": "rare", "unlock": { "kind": "achievement" }, "art": { "text": "Long Cable", "tier": "silver", "color": "#1fa6c9", "icon": "🔌" } },
+    { "id": "title-glitch-eater", "slot": "title", "name": "Glitch Eater", "rarity": "epic", "unlock": { "kind": "achievement" }, "art": { "text": "Glitch Eater", "tier": "gold", "color": "#ff3fa4", "icon": "👾", "effect": "glow" } },
+    { "id": "title-full-bars", "slot": "title", "name": "Full Bars", "rarity": "legendary", "unlock": { "kind": "achievement" }, "art": { "text": "Full Bars", "tier": "mythic", "color": "#f5c518", "icon": "📶", "effect": "shimmer" } }
   ]
 }
