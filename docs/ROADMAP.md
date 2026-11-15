@@ -304,7 +304,7 @@ Commits go to `main` step by step (each step live once tested); owner is the onl
   cards, Chiptune Jukebox, Weekend tournaments.
 - Then: language (English / Bahasa Indonesia).
 
-### Chess (`feat/chess`; planned 2026-11-15, build when the owner says go)
+### Chess (`feat/chess`; agreed 2026-11-15, building)
 - **Modes:** 🌐 Online vs a friend (existing rooms: code/link, guests ok, the
   server checks every move, 2-minute away forfeit, rematch, emotes);
   🤖 vs Zero-Bot in 4 levels (Easy makes mistakes, Medium, Hard, Master =
@@ -319,10 +319,13 @@ Commits go to `main` step by step (each step live once tested); owner is the onl
 - **Board:** click or drag, legal-move dots, last-move and check highlights,
   promotion picker, move list (SAN), resign / offer draw, board flips for
   black, undo vs AI (max 3), keyboard play, colorblind-safe pieces.
-- **Lots of looks (owner asked):** 8 board styles (Classic Green, Wood,
-  Marble, Ocean, Neon, Candy, Pixel, Midnight; 4 free) and 6 piece sets
-  (Classic, Pixel, Neon Outline, Minimal, Candy, Robot; 3 free), drawn in
-  code, chosen on the setup screen; the rest bought with coins or won.
+- **Lots of looks (owner asked for more):** 12 board styles (6 free) and 8
+  piece sets (4 free), drawn in code (no image files). Sets look really
+  different: classic, outline, pixel art, neon, candy, and emoji "models"
+  (Animals, Space, Food) on a base that shows the side. Picked on the setup
+  screen; the rest bought with coins or won after AI wins.
+- **Fast:** chess code and `chess.js` load only on the chess page; Zero-Bot
+  thinks on the server.
 - **Game Kit:** shared header/setup/results, your character vs Zero-Bot or
   your friend (cheer on checkmate, sad on loss), 4-step tutorial for
   beginners, themes, sounds.
