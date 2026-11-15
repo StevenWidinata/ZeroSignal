@@ -10,7 +10,7 @@ A hub of fun browser games with a retro arcade UI and real, **server-verified le
 
 | Game         | Status      | Notes |
 |--------------|-------------|-------|
-| Angry Bird   | Live        | 12 levels in 3 worlds with stars; full physics; the server re-simulates every shot with `rapier2d` |
+| Sling Squad   | Live        | 12 levels in 3 worlds with stars; full physics; the server re-simulates every shot with `rapier2d` |
 | Connect Four | Live        | vs AI (4 levels) or vs a friend; best of 3/5; 14 chip skins (6 free) + spin wheel |
 | Tic-Tac-Toe  | Live        | vs AI (Easy, Medium, unbeatable Hard) or vs a friend; boards, faces, your photo as a face |
 | Whack-a-Mole | Live        | 4 modes, 6 kinds of moles, combos and FEVER; the server replays every tap |
@@ -23,7 +23,7 @@ A hub of fun browser games with a retro arcade UI and real, **server-verified le
 - **Guest play:** opening a game without an account quietly starts a **guest account** in the background (kept in that browser; deleted after 30 days without a visit). Guests earn coins, XP, tokens, quest progress and items like anyone, but are hidden from leaderboards, weekly prizes and profiles. A slim banner and a "Register to save this score" button on every results screen remind them. **Registering** turns the guest into the real account, so everything is kept. **Logging in** to an existing account moves the guest's scores, games, items and earlier quest days into it, and pays the guest's coins, tokens and XP as a normal reward (coins count toward the 1,000-a-day cap); where both have something (today's quests, an unfinished game, today's Daily) the account's wins. At most 20 new guests per hour per IP; guests can't log in with a password, and usernames can't start with "guest".
 - **Hub:** logged out, a short intro with Create account / Log in / Quick play. Logged in, a welcome strip (your character, level and XP bar, coins, **Continue** your last game, Stats and Achievements shortcuts), **Recently played** (last 3 games, remembered in this browser) beside **Today's quests**, then every game on one row with your best score and NEW badges on the newest games.
 - Per-game leaderboards and personal history, with **All time / This week / Last week** views. Weeks run Monday 00:00 → Monday 00:00 WIB.
-- **Weekly prizes:** the top 3 last week on each board (Angry Bird, Connect Four, Tic-Tac-Toe, each Whack-a-Mole mode, each Minefield size; not the Daily boards) claim 150 coins + 1 token, 100 or 50 coins from a banner on the Hub or Leaderboards. Best-score games rank by the week's best score; Connect Four and Tic-Tac-Toe by points earned that week. Prize coins don't count toward the daily cap.
+- **Weekly prizes:** the top 3 last week on each board (Sling Squad, Connect Four, Tic-Tac-Toe, each Whack-a-Mole mode, each Minefield size; not the Daily boards) claim 150 coins + 1 token, 100 or 50 coins from a banner on the Hub or Leaderboards. Best-score games rank by the week's best score; Connect Four and Tic-Tac-Toe by points earned that week. Prize coins don't count toward the daily cap.
 - Anti-cheat by design: clients send only player *inputs*; the server computes every score.
 - **10 free mood themes** (Settings → Display): Neon Arcade, Daylight, Sunset Chill, Sakura, Ocean Calm, Midnight Focus, Forest, Game Boy Green, Cyberpunk and Candy Pop. They come in light/dark pairs of the same mood, so the 🌙/☀️ button flips to the partner; every theme keeps text at WCAG AA contrast (checked by a test), and the choice syncs to your account.
 - The Hub shows **4 games per row** (2 on tablets, 1 on phones), and every page has the same big, labelled **← Back** button at the top left.
@@ -32,13 +32,13 @@ A hub of fun browser games with a retro arcade UI and real, **server-verified le
   - **Controls:** shortcut keys on every page (**M** mute everything, **F** fullscreen, **Esc** close a window / pause Whack-a-Mole; a game that uses the same key keeps it), with a switch to turn them off, and **every game's keys can be changed**: click ✕ to remove a key or **+ Key** and press a new one (up to 4 per action), with a warning when two actions share a key and a **Reset keys** button per game. Changed keys are part of the synced settings. Connect Four (1–7 drop in a column) and Tic-Tac-Toe (numpad layout, 7 8 9 = top row) can be played by keyboard too.
   - **Sound and music:** on/off and volume for each, plus a separate **menu sounds** volume for button clicks.
   - **Privacy:** **hide me on leaderboards** (you still earn everything, but get no weekly prizes) and **private profile** (your page shows only your name). **Pop-ups:** switch off the daily-login pop-up (claim from the 🎁 button on the Hub instead), the level-up pop-up and the reward toasts separately.
-  - **Gameplay:** turn timer, **ask before leaving a round** (warns before closing the tab or opening another page mid-round in Whack-a-Mole, Angry Bird and Minefield), vibration on phones.
+  - **Gameplay:** turn timer, **ask before leaving a round** (warns before closing the tab or opening another page mid-round in Whack-a-Mole, Sling Squad and Minefield), vibration on phones.
   - **Help:** reset tutorials so every "how to play" shows again.
   - **Account** (registered players): change username (free, once every 30 days), email and password (both need your current password), and **delete account**: you're signed out and hidden at once, and the account is deleted for good after 7 days unless you log in again before then.
 - **Stats page** (`/stats`): your level, coins earned and spent, tokens, login streak, quests and achievements, plus a card per game: AI series win rates per level, best and average scores per mode or size, Minefield best times, Whack-a-Mole best combo and FEVER rounds, 2048 biggest tile and games that reached 2048. Only server-verified results count.
 - **Colorblind-friendly** switch (Settings → Display): pieces switch to the Okabe-Ito palette, which people with common color vision deficiencies can tell apart, and get shapes so no game relies on color alone. In Connect Four, player 1's chips carry a circle and player 2's a cross. In Tic-Tac-Toe, X and O get safe colors and other faces get an X or O badge. Winning lines also get a dashed outline.
 - **Tutorials:** each live game shows a short 4-step "how to play" the first time you open it. The **?** button (bottom-left) shows it again. Seen tutorials are remembered in the browser.
-- Background music: 3 chiptune tracks made in code with Web Audio (no music files). "Insert Coin" plays on the hub and menus, "Quiet Board" in Connect Four and Tic-Tac-Toe, and "Slingshot Rush" in Angry Bird. Music has its own on/off switch and volume (default on at 40%). It starts after your first click or key press, because browsers block autoplay, and it pauses while the tab is hidden.
+- Background music: 3 chiptune tracks made in code with Web Audio (no music files). "Insert Coin" plays on the hub and menus, "Quiet Board" in Connect Four and Tic-Tac-Toe, and "Slingshot Rush" in Sling Squad. Music has its own on/off switch and volume (default on at 40%). It starts after your first click or key press, because browsers block autoplay, and it pauses while the tab is hidden.
 - Shared economy: every server-verified game pays **coins**, **XP** (levels) and sometimes a lucky **token**.
 
 ## Tic-Tac-Toe
@@ -48,7 +48,7 @@ A hub of fun browser games with a retro arcade UI and real, **server-verified le
 - **Series:** best of 3 or 5 games, and draws count as games. A series ends early once one side can't be caught; equal wins at the end means the series is drawn.
 - **Rewards (AI only):** XP every game. Winning a series pays Easy 5 / Medium 15 / Hard 40 coins. A drawn series against Hard pays 15 coins, because surviving it is the achievement. Best of 5 pays double. Token chance 8% / 15% / 50% (15% for a drawn Hard series).
 - **Undo:** max 3 per game, none on Hard. Using undo cancels the series' reward spin.
-- **Boards and faces:** 6 boards and 12 faces (X/O, emojis, Angry Bird chips, your character's face, your photo), listed in `shared/tic_tac_toe_items.json`. Buy them with coins or win them on the reward spin, which never gives a duplicate.
+- **Boards and faces:** 6 boards and 12 faces (X/O, emojis, Sling Squad chips, your character's face, your photo), listed in `shared/tic_tac_toe_items.json`. Buy them with coins or win them on the reward spin, which never gives a duplicate.
 - **Photo face:** upload a picture or use your webcam, then drag and zoom to crop it to a circle. The browser shrinks it to 128×128 before upload, and the server only accepts real JPEG/PNG/WebP files up to 64 KB. Your photo is **private**: only you can load it, and it's deleted with your account.
 
 ## Whack-a-Mole
@@ -90,13 +90,17 @@ A hub of fun browser games with a retro arcade UI and real, **server-verified le
 - **Results:** time, 3BV (fewest clicks that clear the board), 3BV/s, click efficiency, hints. A loss shows every mine and crosses out wrong flags.
 - **Rewards:** win Beginner 5 / Intermediate 20 / Expert 60 / Daily 25 coins; XP 20 × (1 / 2 / 4 / 2); token 2% / 8% / 25% / 10%. A loss gives 5 XP.
 
-## Angry Bird levels
+## Sling Squad
+
+A slingshot physics game with its own cast: **Pip** (balanced), **Zip** (dash), **Boomer** (explode), **Eggbert** (egg drop), **Tank** (heavy) and **Trio** (splits in three), against purple one-eyed **gobbos** hiding in wood, stone and ice forts. (It was called "Angry Bird" before; migration 0019 renamed its id and birds in saved scores, and old links redirect.)
+
+### Levels
 
 - **12 levels in 3 worlds:** Meadow (wood), Desert (stone and wood) and Ice Castle (ice, stone and wood), with each world's own daytime sky. Blocks are colored by material, and stone takes much more damage than ice.
-- **Stars:** destroy every pig to clear a level (1 ★); score enough block points for 2 ★ and 3 ★. Levels unlock in order: clear one to open the next. The first clear of a level gives +50 XP.
-- **Campaign score** = your best score on every level added up. It unlocks new birds and counts for the "Big Score" (10,000) and "Pig Slayer" (25,000) achievements, which a single level could never reach.
-- One leaderboard per level plus "All levels". New: the "Clear 2 Angry Bird levels" quest, and the **World Tour** (clear all 12) and **Three-Star General** (3 ★ on 6 levels) achievements with titles.
-- The levels live in `shared/angry_bird_levels.json`, read by both the server physics and the browser. Tests check that every level stands up on its own, and a slow search (`cargo test --release -- --ignored beatable`) proves every level can be cleared with 5 red birds.
+- **Stars:** destroy every gobbo to clear a level (1 ★); score enough block points for 2 ★ and 3 ★. Levels unlock in order: clear one to open the next. The first clear of a level gives +50 XP.
+- **Campaign score** = your best score on every level added up. It unlocks new birds and counts for the "Big Score" (10,000) and "Gobbo Smasher" (25,000) achievements, which a single level could never reach.
+- One leaderboard per level plus "All levels". New: the "Clear 2 Sling Squad levels" quest, and the **World Tour** (clear all 12) and **Three-Star General** (3 ★ on 6 levels) achievements with titles.
+- The levels live in `shared/sling_squad_levels.json`, read by both the server physics and the browser. Tests check that every level stands up on its own, and a slow search (`cargo test --release -- --ignored beatable`) proves every level can be cleared with 5 red birds.
 
 ## 2048
 
@@ -106,7 +110,7 @@ A hub of fun browser games with a retro arcade UI and real, **server-verified le
 - **Undo:** up to 3 per game (press Z), going back up to 3 moves. Undo games still rank, but don't count for the Pure Skill achievement.
 - **Saved as you play:** moves go to the server every 10 moves and when you leave the tab. One unfinished game per player, kept for 24 hours after your last move; continue it on any device, or end it early and get it scored.
 - **Anti-cheat:** the server picks the seed, and the browser and server drop tiles with the same random number generator (shared test vectors keep the Rust and TypeScript copies identical). The client sends only the move string (`U D L R`, `Z` = undo); the server replays it to get the score and the biggest tile. Saves must extend the saved moves, a move that changes nothing is rejected, and at most 25 moves per second are accepted.
-- **Rewards:** same as Angry Bird for the points (1 coin per 1,000, 10–100 XP, token 3% → 15%), plus **+30 coins for a 2048 tile** and **+80 more and a 50% token chance for 4096**. Games shorter than 20 moves pay nothing and don't count for quests.
+- **Rewards:** same as Sling Squad for the points (1 coin per 1,000, 10–100 XP, token 3% → 15%), plus **+30 coins for a 2048 tile** and **+80 more and a 50% token chance for 4096**. Games shorter than 20 moves pay nothing and don't count for quests.
 - **4 free tile styles** (Classic, Pastel, Neon, Mono), picked on the setup screen; colorblind mode still wins.
 - Slide and merge animations (off with Light graphics), merge sounds, colorblind tile colors (numbers are always shown), and a results screen with points, biggest tile, moves, undos and time.
 
@@ -116,7 +120,7 @@ Only the server pays rewards, and only for results it verified itself, inside th
 
 | Game | Coins | XP | Token drop |
 |------|-------|----|------------|
-| Angry Bird, Whack-a-Mole | 1 per 1,000 points | 10 + up to 90 for big scores | 3% → 15% (bigger score, better chance) |
+| Sling Squad, Whack-a-Mole | 1 per 1,000 points | 10 + up to 90 for big scores | 3% → 15% (bigger score, better chance) |
 | Minefield win | Beginner 5 / Intermediate 20 / Expert 60 / Daily 25 | 20 × (1 / 2 / 4 / 2); loss 5 | 2% / 8% / 25% / 10% |
 | 2048 (20+ moves) | 1 per 1,000 points; +30 for a 2048 tile, +80 more for 4096 | 10 + up to 90 for big scores | 3% → 15%; +50% for 4096 |
 | Connect Four, each AI game | none | win 20 / draw 10 / loss 5, × difficulty (1–4) | none |
@@ -138,7 +142,7 @@ A pop-up offers the reward when you open the site. Claim once per day (days star
 
 ### Daily quests
 
-Every day (00:00 WIB) you get 3 different random quests, shown on the Hub and on the **Quests** page (`/quests`). The nav shows a badge when one is ready to claim. Only results the server verified count: AI games, Angry Bird, Whack-a-Mole, Minefield and 2048 results, and mystery boxes. Local 2-player games don't count.
+Every day (00:00 WIB) you get 3 different random quests, shown on the Hub and on the **Quests** page (`/quests`). The nav shows a badge when one is ready to claim. Only results the server verified count: AI games, Sling Squad, Whack-a-Mole, Minefield and 2048 results, and mystery boxes. Local 2-player games don't count.
 
 - Press **Claim** on a finished quest to get its coins + XP. Claiming all 3 pays a bonus **1 token**.
 - **Reroll:** once per day, swap one unfinished quest for a new random one.
@@ -152,9 +156,9 @@ Every day (00:00 WIB) you get 3 different random quests, shown on the Hub and on
 | Play 3 Tic-Tac-Toe games vs the AI | 20 | 30 |
 | Win or draw 2 Tic-Tac-Toe games vs Hard | 40 | 60 |
 | Win a Tic-Tac-Toe series vs Medium | 40 | 60 |
-| Play 3 Angry Bird rounds | 20 | 30 |
-| Score 5,000 in one Angry Bird round | 40 | 60 |
-| Score 15,000 in total in Angry Bird today | 50 | 80 |
+| Play 3 Sling Squad rounds | 20 | 30 |
+| Score 5,000 in one Sling Squad round | 40 | 60 |
+| Score 15,000 in total in Sling Squad today | 50 | 80 |
 | Win any series without using undo | 50 | 80 |
 | Open a mystery box | 30 | 40 |
 | Win 5 AI games in any game | 60 | 100 |
@@ -184,9 +188,9 @@ The `/achievements` page lists 40 one-time achievements with progress bars; lock
 | Draw a whole Hard Tic-Tac-Toe series | 100 | Unbreakable |
 | Own every Tic-Tac-Toe board and face | 200 | Board Baron |
 | Add a photo face | 20 | Say Cheese |
-| Finish your first Angry Bird round | 20 | Fledgling |
-| Score 10,000 in one Angry Bird round | 80 | Sharpshooter |
-| Score 25,000 in one Angry Bird round | 200 | Pig Slayer |
+| Finish your first Sling Squad round | 20 | Fledgling |
+| Score 10,000 in one Sling Squad round | 80 | Sharpshooter |
+| Score 25,000 in one Sling Squad round | 200 | Gobbo Smasher |
 | Unlock every bird | 150 | Flock Leader |
 | Finish your first Whack-a-Mole round | 20 | First Bonk |
 | Reach FEVER in Whack-a-Mole | 80 | Fever Pitch |
@@ -262,8 +266,8 @@ The server checks every outfit: you can only wear items you own, in the slot the
 |------|--------|
 | Classic Red, Classic Blue | Common (starter, free) |
 | Lime Green | Common |
-| Royal Purple, Red Bird, Piggy | Rare |
-| Bomb Bird, Golden Egg, TNT Crate | Epic |
+| Royal Purple, Pip, Gobbo | Rare |
+| Boomer, Golden Egg, TNT Crate | Epic |
 | Golden | Legendary |
 
 | Spin odds  | Common | Rare | Epic | Legendary |
@@ -347,7 +351,7 @@ zero_signal/
 │   ├── migrations/             # sqlx SQL migrations
 │   └── src/
 │       ├── games.rs            # game catalog (allowed game ids)
-│       ├── scores.rs           # per-game leaderboards + Angry Bird scorer
+│       ├── scores.rs           # per-game leaderboards + Sling Squad scorer
 │       ├── economy.rs          # coins, tokens, XP/levels, daily cap, ledger
 │       ├── daily.rs            # WIB (UTC+7) day boundary for everything daily
 │       ├── daily_login.rs      # 7-day login streak reward
@@ -410,8 +414,8 @@ zero_signal/
 | GET  | `/api/games` | catalog |
 | GET  | `/api/games/:id/leaderboard` | top 20 for that game; `?period=` `all`, `today`, `week` or `last_week`; `?level=` picks one board (Whack-a-Mole: 1 Classic, 2 Frenzy, 3 Survival, 4 Daily; Minefield: 1 Beginner, 2 Intermediate, 3 Expert, 4 Daily; 2048: 1 Classic, 2 Big, 3 Tiny, 4 Daily), `period=today` keeps today only; entries may carry a `detail` (2048: biggest tile) |
 | GET  | `/api/games/:id/scores/me` | your history (auth) |
-| POST | `/api/games/angry-bird/scores` | shot inputs only; server computes score (auth) |
-| GET  | `/api/games/angry-bird/birds` | bird catalog + unlocks |
+| POST | `/api/games/sling-squad/scores` | shot inputs only; server computes score (auth) |
+| GET  | `/api/games/sling-squad/birds` | bird catalog + unlocks |
 | POST | `/api/games/whack-a-mole/runs` | `{mode, grid, hammer?, theme?}` start a run; returns `run_id` + `seed` (auth) |
 | GET  | `/api/games/whack-a-mole/collection` | hammers and themes with prices and what you own (auth) |
 | POST | `/api/games/whack-a-mole/buy` | `{kind: "hammer"\|"theme", id}` buy with coins (auth) |
@@ -444,7 +448,7 @@ Guests (`is_guest`) get **403** from account-only endpoints: wardrobe and preset
 
 `npm test` fails if the frontend and backend game lists drift apart.
 
-## Angry Bird: bird unlock thresholds
+## Sling Squad: bird unlock thresholds
 
 | Bird      | Color      | Ability             | Unlock (best score) |
 |-----------|------------|---------------------|---------------------|

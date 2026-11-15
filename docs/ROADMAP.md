@@ -34,7 +34,7 @@ Branches, each merged into `main` after tests pass:
 ### Daily quests (`feat/daily-rewards`, done)
 - 3 random quests per day from a pool of 12 (listed in README), e.g. "Win 2
   Connect Four games vs Medium or harder", "Play 3 Tic-Tac-Toe games vs the
-  AI", "Score 5,000 in Angry Bird", "Win a series without undo", "Open a
+  AI", "Score 5,000 in Sling Squad", "Win a series without undo", "Open a
   mystery box".
 - Each pays 20 to 60 coins + XP via a **Claim** button. Claiming all 3 gives
   a bonus token. Quest coins don't count toward the daily cap.
@@ -54,7 +54,7 @@ Branches, each merged into `main` after tests pass:
 
 ### Background music (`feat/music`, done)
 - Chiptune generated in code (Web Audio), no music files.
-- 3 tracks: hub, calm (Tic-Tac-Toe / Connect Four), upbeat (Angry Bird).
+- 3 tracks: hub, calm (Tic-Tac-Toe / Connect Four), upbeat (Sling Squad).
 - Separate music on/off + volume in Settings. Default **on at 40%**, starting
   after the first click (browsers block autoplay).
 
@@ -93,7 +93,7 @@ Owner said "go with your picks" for the 10 ideas. Branch order:
   sends only taps `(ms, hole)`; the server replays them, checks timing
   (sorted, inside the round, ≥ 40 ms apart, real time ≥ round length) and
   computes the score. One finish per run; runs expire after 15 min.
-- **Rewards:** same formula as Angry Bird (1 coin / 1,000 points, 10–100 XP,
+- **Rewards:** same formula as Sling Squad (1 coin / 1,000 points, 10–100 XP,
   token 3% → 15%), counts toward the daily cap.
 - **Quests (+3):** play 3 rounds (20/30), score 5,000 in a round (40/60),
   hit 5 golden moles today (40/60).
@@ -106,7 +106,7 @@ Owner said "go with your picks" for the 10 ideas. Branch order:
   hit sounds, tutorial, light-graphics and colorblind support.
 
 ### Settings (`feat/settings-plus`, done)
-- Also added: vibration on phones. "Ask before leaving" covers Whack-a-Mole, Angry Bird (after the first shot) and Minefield.
+- Also added: vibration on phones. "Ask before leaving" covers Whack-a-Mole, Sling Squad (after the first shot) and Minefield.
 - Screen shake on/off, reduced motion (separate from light graphics),
   text size (S/M/L), ask before leaving a match, "reset tutorials" button.
 
@@ -168,7 +168,7 @@ Owner picked Minefield from the 10 new-game ideas. v1 includes:
   Tic-Tac-Toe store running totals, so scores get a `gained` column
   (points that result added, backfilled for old rows) and weekly boards
   rank by points gained that week.
-- **Weekly prizes:** top 3 last week on each board (Angry Bird, Connect
+- **Weekly prizes:** top 3 last week on each board (Sling Squad, Connect
   Four, Tic-Tac-Toe, each Whack-a-Mole mode, each Minefield size; not the
   Daily boards) win #1 150 coins + 1 token, #2 100, #3 50. Claimed from a
   banner on the Hub and Leaderboards (once per board per week, not counted
@@ -206,7 +206,7 @@ Owner picked Minefield from the 10 new-game ideas. v1 includes:
 - **Score:** sum of merged tile values × the mode multiplier. Leaderboards
   show the score and the player's biggest tile; weekly boards and prizes on
   Classic, Big and Tiny.
-- **Rewards:** Angry Bird formula on the score (1 coin / 1,000, 10–100 XP,
+- **Rewards:** Sling Squad formula on the score (1 coin / 1,000, 10–100 XP,
   token 3% → 15%), +30 coins for a 2048 tile, +80 more and a 50% token
   chance for 4096. All count toward the daily cap.
 - **Quests (+3):** play 3 games (20/30), make a 512 tile (40/60), score
@@ -275,10 +275,16 @@ Commits go to `main` step by step (each step live once tested); owner is the onl
 - **B. More free items** (`feat/free-items`, done): +4 Connect Four skins, +4
   Tic-Tac-Toe boards, +6 faces, +3 hammers, +3 Whack-a-Mole themes, 4 free
   2048 tile styles, +20 starter character items. Paid items unchanged.
-- **C. Angry Bird levels** (`feat/angry-bird-levels`, done): 12 levels in 3 worlds
-  from `shared/angry_bird_levels.json` (read by Rust and TS), level select
+- **C. Sling Squad levels** (`feat/sling-squad-levels`, done): 12 levels in 3 worlds
+  from `shared/sling_squad_levels.json` (read by Rust and TS), level select
   with 1–3 stars, unlock by clearing, per-level leaderboards, quest + 2
   achievements.
+- **C2. Sling Squad** (`feat/sling-squad`, done; agreed 2026-11-14): the
+  slingshot game used another game's name and characters, so it became
+  **Sling Squad** with original birds (Pip, Zip, Boomer, Eggbert, Tank, Trio)
+  and purple one-eyed **gobbos** instead of pigs. Migration 0019 renames the
+  game id and bird ids in saved scores; old `/play/angry-bird` links redirect.
+  Themed chips in other games got the new names and art; their ids stay.
 - **D. Living characters** (`feat/living-characters`): animated 2D pixel
   character (idle, wave, cheer, sad, think) + emotes; shown on the Hub,
   results, leaderboard top 3, and both sides of Connect Four / Tic-Tac-Toe
