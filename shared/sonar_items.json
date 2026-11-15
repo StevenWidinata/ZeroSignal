@@ -1,0 +1,22 @@
+{
+  "fleets": [
+    { "id": "navy", "name": "Navy", "rarity": "common", "price": null, "art": { "style": "navy", "hull": "#6b7c8c", "deck": "#9fb0bf", "accent": "#e4ecf2" } },
+    { "id": "submarine", "name": "Submarine", "rarity": "common", "price": null, "art": { "style": "sub", "hull": "#f2c230", "deck": "#ffd95c", "accent": "#3a3a3a" } },
+    { "id": "ducks", "name": "Rubber Ducks", "rarity": "common", "price": null, "art": { "style": "emoji", "hull": "#ffd23f", "deck": "#ffe680", "accent": "#ff8c1a", "icon": "🦆" } },
+    { "id": "pixel", "name": "Pixel", "rarity": "common", "price": null, "art": { "style": "pixel", "hull": "#4a5a3a", "deck": "#8fa66b", "accent": "#e8f0c8" } },
+    { "id": "pirate", "name": "Pirate", "rarity": "rare", "price": 250, "art": { "style": "pirate", "hull": "#6b4226", "deck": "#a0703f", "accent": "#f4ead5" } },
+    { "id": "candy", "name": "Candy", "rarity": "rare", "price": 250, "art": { "style": "candy", "hull": "#ff7eb6", "deck": "#ffd1e6", "accent": "#7ee0c8" } },
+    { "id": "neon", "name": "Neon", "rarity": "epic", "price": 300, "art": { "style": "neon", "hull": "#0b1020", "deck": "#121a33", "accent": "#00e5ff" } },
+    { "id": "space", "name": "Space", "rarity": "epic", "price": 400, "art": { "style": "emoji", "hull": "#2b2f4a", "deck": "#3d4370", "accent": "#b9a7ff", "icon": "🛸" } }
+  ],
+  "seas": [
+    { "id": "ocean", "name": "Ocean", "rarity": "common", "price": null, "art": { "style": "waves", "water": "#1f6aa5", "deep": "#17507e", "line": "#6fb1e3" } },
+    { "id": "lagoon", "name": "Lagoon", "rarity": "common", "price": null, "art": { "style": "waves", "water": "#1fa39b", "deep": "#167a74", "line": "#8be3d9" } },
+    { "id": "arctic", "name": "Arctic", "rarity": "common", "price": null, "art": { "style": "ice", "water": "#9fc8e0", "deep": "#7aa9c6", "line": "#e9f6ff" } },
+    { "id": "night", "name": "Night", "rarity": "common", "price": null, "art": { "style": "plain", "water": "#18213f", "deep": "#10172e", "line": "#3d4f8a" } },
+    { "id": "sunset", "name": "Sunset", "rarity": "rare", "price": 200, "art": { "style": "waves", "water": "#d9663f", "deep": "#a8452d", "line": "#ffc38a" } },
+    { "id": "lava", "name": "Lava", "rarity": "epic", "price": 300, "art": { "style": "lava", "water": "#3a1410", "deep": "#240b08", "line": "#ff6a2b" } },
+    { "id": "deep_space", "name": "Deep Space", "rarity": "epic", "price": 400, "art": { "style": "stars", "water": "#0d0a24", "deep": "#06051a", "line": "#7b61ff" } },
+    { "id": "treasure", "name": "Treasure Gold", "rarity": "legendary", "price": 1000, "art": { "style": "gold", "water": "#1d5b6b", "deep": "#123c47", "line": "#f2c14e" } }
+  ]
+}

@@ -37,6 +37,10 @@ pub enum Event {
     /// A finished chess game vs Zero-Bot (`level` 1 Easy … 4 Master) or online (0).
     ChessGame { level: i64, result: GameResult },
     ChessPuzzleSolved,
+    /// A finished Sonar game vs Zero-Bot (`level` 1 Easy … 4 Master).
+    SonarGame { level: i64, result: GameResult },
+    /// Today's Daily Hunt finished in `shots` moves.
+    SonarDaily { shots: i64 },
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -58,6 +62,9 @@ enum Goal {
     ChessGames,
     ChessWins { min_level: i64 },
     ChessPuzzle,
+    SonarGames,
+    SonarWins { min_level: i64 },
+    SonarDaily,
     Tile2048(i64),
     Score2048(i64),
 }
@@ -111,6 +118,9 @@ impl QuestDef {
             (Goal::ChessGames, ChessGame { .. }) => 1,
             (Goal::ChessWins { min_level }, ChessGame { level, result }) => hit(level >= min_level && result == GameResult::Win),
             (Goal::ChessPuzzle, ChessPuzzleSolved) => 1,
+            (Goal::SonarGames, SonarGame { .. }) => 1,
+            (Goal::SonarWins { min_level }, SonarGame { level, result }) => hit(level >= min_level && result == GameResult::Win),
+            (Goal::SonarDaily, SonarDaily { .. }) => 1,
             (Goal::Tile2048(min), Game2048 { max_tile, .. }) => hit(max_tile >= min),
             (Goal::Score2048(min), Game2048 { points, .. }) => hit(points >= min),
             _ => 0,
@@ -124,7 +134,7 @@ const fn q(id: &'static str, title: &'static str, goal: Goal, target: i32, coins
 
 use Game::{ConnectFour as CF, TicTacToe as TTT};
 
-pub const POOL: [QuestDef; 25] = [
+pub const POOL: [QuestDef; 28] = [
     q("cf_play_3", "Play 3 Connect Four games vs the AI", Goal::PlayAi(CF), 3, 20, 30),
     q("cf_win_2_medium", "Win 2 Connect Four games vs Medium or harder",
         Goal::WinAi { game: Some(CF), min_level: 2 }, 2, 40, 60),
@@ -155,6 +165,9 @@ pub const POOL: [QuestDef; 25] = [
     q("chess_play_3", "Finish 3 chess games", Goal::ChessGames, 3, 20, 30),
     q("chess_win_medium", "Beat Zero-Bot at chess on Medium or harder", Goal::ChessWins { min_level: 2 }, 1, 40, 60),
     q("chess_puzzle", "Solve today's chess puzzle", Goal::ChessPuzzle, 1, 30, 40),
+    q("sonar_play_3", "Finish 3 Sonar games vs Zero-Bot", Goal::SonarGames, 3, 20, 30),
+    q("sonar_win_medium", "Beat Zero-Bot at Sonar on Medium or harder", Goal::SonarWins { min_level: 2 }, 1, 40, 60),
+    q("sonar_daily", "Finish today's Sonar Daily Hunt", Goal::SonarDaily, 1, 30, 40),
     q("g2048_tile_512", "Make a 512 tile in 2048", Goal::Tile2048(512), 1, 40, 60),
     q("g2048_score_10000", "Score 10,000 in one game of 2048", Goal::Score2048(10_000), 1, 40, 60),
 ];
@@ -276,6 +289,16 @@ mod tests {
         assert_eq!(quest("chess_win_medium").progress(&game(4, GameResult::Draw)), 0);
         assert_eq!(quest("chess_puzzle").progress(&Event::ChessPuzzleSolved), 1);
         assert_eq!(quest("chess_puzzle").progress(&game(4, GameResult::Win)), 0);
+    }
+
+    #[test]
+    fn sonar_quests_count_the_right_games() {
+        let game = |level, result| Event::SonarGame { level, result };
+        assert_eq!(quest("sonar_play_3").progress(&game(1, GameResult::Loss)), 1);
+        assert_eq!(quest("sonar_win_medium").progress(&game(2, GameResult::Win)), 1);
+        assert_eq!(quest("sonar_win_medium").progress(&game(1, GameResult::Win)), 0);
+        assert_eq!(quest("sonar_daily").progress(&Event::SonarDaily { shots: 40 }), 1);
+        assert_eq!(quest("sonar_daily").progress(&game(4, GameResult::Win)), 0);
     }
 
     #[test]
