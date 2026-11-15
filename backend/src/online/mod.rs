@@ -1,4 +1,4 @@
-//! Online play: two people on two devices play Connect Four or Tic-Tac-Toe
+//! Online play: two people on two devices play Connect Four, Tic-Tac-Toe or chess
 //! in a room joined by a 6-character code. The server keeps the moves and
 //! checks every one with the same rules as the AI games; clients only send
 //! the cell they want and poll for news (Vercel can't hold sockets open).
@@ -34,6 +34,8 @@ pub enum Game {
     ConnectFour,
     #[serde(rename = "tic-tac-toe")]
     TicTacToe,
+    #[serde(rename = "chess")]
+    Chess,
 }
 
 impl Game {
@@ -41,6 +43,7 @@ impl Game {
         match s {
             "connect-four" => Some(Game::ConnectFour),
             "tic-tac-toe" => Some(Game::TicTacToe),
+            "chess" => Some(Game::Chess),
             _ => None,
         }
     }
@@ -49,6 +52,7 @@ impl Game {
         match self {
             Game::ConnectFour => "connect-four",
             Game::TicTacToe => "tic-tac-toe",
+            Game::Chess => "chess",
         }
     }
 }
@@ -65,9 +69,41 @@ pub struct GameState {
     pub next: Player,
 }
 
-/// Replay a move string ("3324") into a board state.
+/// Replay a move string ("3324"; chess: "e2e4 e7e5") into a board state.
+/// Chess: `cells` is the FEN, `highlight` holds the move list, last move,
+/// check and the legal moves; P1 = White.
 pub fn replay(game: Game, moves: &str) -> Result<GameState, &'static str> {
     match game {
+        Game::Chess => {
+            use crate::chess::{Outcome as C, Side};
+            let g = crate::chess::Game::replay(crate::chess::START_FEN, moves).map_err(|_| "bad moves")?;
+            let outcome = match g.outcome() {
+                C::Ongoing => Outcome::Ongoing,
+                C::Checkmate(Side::White) => Outcome::Win(Player::P1),
+                C::Checkmate(Side::Black) => Outcome::Win(Player::P2),
+                _ => Outcome::Draw,
+            };
+            let ending = match g.outcome() {
+                C::Checkmate(_) => "checkmate",
+                C::Stalemate => "stalemate",
+                C::Repetition => "repetition",
+                C::FiftyMoves => "fifty_moves",
+                C::InsufficientMaterial => "insufficient_material",
+                C::Ongoing => "",
+            };
+            Ok(GameState {
+                cells: json!(g.fen()),
+                outcome,
+                highlight: json!({
+                    "san": g.san(),
+                    "last": g.moves().last(),
+                    "check": g.in_check(),
+                    "legal": g.legal_moves(),
+                    "ending": ending,
+                }),
+                next: if g.to_move() == Side::White { Player::P1 } else { Player::P2 },
+            })
+        }
         Game::ConnectFour => {
             let b = CfBoard::from_move_string(moves).map_err(|_| "bad moves")?;
             Ok(GameState { cells: json!(b.cells()), outcome: b.outcome(), highlight: json!(b.winning_cells()), next: b.to_move() })
@@ -79,9 +115,17 @@ pub fn replay(game: Game, moves: &str) -> Result<GameState, &'static str> {
     }
 }
 
+/// Play a chess move (UCI) after `moves`; returns the new move string.
+pub fn play_uci(moves: &str, uci: &str) -> Result<String, &'static str> {
+    let mut g = crate::chess::Game::replay(crate::chess::START_FEN, moves).map_err(|_| "bad moves")?;
+    g.play(uci).map_err(|e| e.text())?;
+    Ok(g.move_string())
+}
+
 /// Play `cell` (a column or a square) after `moves`; returns the new move string.
 pub fn play(game: Game, moves: &str, cell: u8) -> Result<String, &'static str> {
     match game {
+        Game::Chess => Err("send a chess move as uci"),
         Game::ConnectFour => {
             let mut b = CfBoard::from_move_string(moves).map_err(|_| "bad moves")?;
             b.play(cell).map_err(|e| match e {
@@ -218,6 +262,22 @@ mod tests {
         let s = replay(Game::TicTacToe, &m).unwrap();
         assert_eq!(s.outcome, Outcome::Win(Player::P1));
         assert_eq!(s.highlight, json!([0, 1, 2]));
+    }
+
+    #[test]
+    fn chess_moves_are_checked() {
+        let mut m = String::new();
+        for mv in ["f2f3", "e7e5", "g2g4"] {
+            m = play_uci(&m, mv).unwrap();
+        }
+        assert_eq!(play_uci(&m, "e8e6").err(), Some("that move isn't allowed here"));
+        m = play_uci(&m, "d8h4").unwrap();
+        let s = replay(Game::Chess, &m).unwrap();
+        assert_eq!(s.outcome, Outcome::Win(Player::P2), "black mated white");
+        assert_eq!(s.highlight["ending"], "checkmate");
+        assert_eq!(s.highlight["san"][3], "Qh4#");
+        assert_eq!(play(Game::Chess, &m, 3).err(), Some("send a chess move as uci"));
+        assert_eq!(Game::parse("chess"), Some(Game::Chess));
     }
 
     #[test]

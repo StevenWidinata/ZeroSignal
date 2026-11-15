@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::{Postgres, Transaction};
 use uuid::Uuid;
 
-use super::{clean_code, new_code, play, replay, seat_of, series_xp, Game, GameState, Seat, Series, EMOTES};
+use super::{clean_code, new_code, play, play_uci, replay, seat_of, series_xp, Game, GameState, Seat, Series, EMOTES};
 use crate::auth::jwt::AuthUser;
 use crate::connect_four::board::Outcome;
 use crate::economy::{self, Reward};
@@ -56,6 +56,8 @@ struct Room {
     guest_seen: Option<DateTime<Utc>>,
     version: i32,
     created_at: DateTime<Utc>,
+    /// Chess: the seat that offered a draw.
+    draw_offer: Option<i16>,
 }
 
 impl Room {
@@ -114,6 +116,8 @@ pub struct RoomView {
     pub draws: i16,
     /// Series result: 1/2 = that seat won, 0 = draw.
     pub winner: Option<i16>,
+    /// Chess: the seat offering a draw right now.
+    pub draw_offer: Option<i16>,
     pub version: i32,
 }
 
@@ -182,6 +186,7 @@ async fn view(pool: &sqlx::PgPool, r: &Room, you: Seat) -> AppResult<RoomView> {
         wins: [r.host_wins, r.guest_wins],
         draws: r.draws,
         winner: r.winner,
+        draw_offer: r.draw_offer,
         version: r.version,
     })
 }
@@ -202,7 +207,7 @@ async fn save(tx: &mut Transaction<'_, Postgres>, r: &Room) -> AppResult<()> {
                host_wins = $7, guest_wins = $8, draws = $9, game_over = $10, winner = $11, rewarded = $12,
                host_rematch = $13, guest_rematch = $14, host_emote = $15, host_emote_at = $16,
                guest_emote = $17, guest_emote_at = $18, host_seen = $19, guest_seen = $20,
-               version = version + 1, updated_at = now()
+               draw_offer = $21, version = version + 1, updated_at = now()
            WHERE id = $1"#,
     )
     .bind(r.id)
@@ -225,6 +230,7 @@ async fn save(tx: &mut Transaction<'_, Postgres>, r: &Room) -> AppResult<()> {
     .bind(r.guest_emote_at)
     .bind(r.host_seen)
     .bind(r.guest_seen)
+    .bind(r.draw_offer)
     .execute(&mut **tx)
     .await?;
     Ok(())
@@ -306,7 +312,7 @@ fn default_best_of() -> i16 {
 
 /// `POST /api/rooms`: open a room and wait for a friend.
 pub async fn create(State(state): State<AppState>, user: AuthUser, Json(req): Json<CreateRequest>) -> AppResult<Json<RoomView>> {
-    let game = Game::parse(&req.game).ok_or_else(|| AppError::Validation("game must be connect-four or tic-tac-toe".into()))?;
+    let game = Game::parse(&req.game).ok_or_else(|| AppError::Validation("game must be connect-four, tic-tac-toe or chess".into()))?;
     if ![1, 3, 5].contains(&req.best_of) {
         return Err(AppError::Validation("best_of must be 1, 3 or 5".into()));
     }
@@ -410,7 +416,11 @@ pub async fn get(
 #[serde(deny_unknown_fields)]
 pub struct MoveRequest {
     /// Column (Connect Four, 0–6) or square (Tic-Tac-Toe, 0–8).
-    pub cell: u8,
+    #[serde(default)]
+    pub cell: Option<u8>,
+    /// Chess move in UCI ("e2e4", "e7e8q", castling "e1g1").
+    #[serde(default)]
+    pub uci: Option<String>,
 }
 
 /// `POST /api/rooms/:code/move`
@@ -432,21 +442,70 @@ pub async fn make_move(
     if seat_of(board.next, r.first_seat as u8) != seat {
         return Err(AppError::Conflict("it's your friend's turn".into()));
     }
-    r.moves = play(r.game(), &r.moves, req.cell).map_err(|e| AppError::Validation(e.into()))?;
+    r.moves = match (r.game(), req.cell, req.uci.as_deref()) {
+        (Game::Chess, _, Some(uci)) => play_uci(&r.moves, uci),
+        (Game::Chess, _, None) => Err("send a chess move as uci"),
+        (g, Some(cell), _) => play(g, &r.moves, cell),
+        (_, None, _) => Err("send the cell to play"),
+    }
+    .map_err(|e| AppError::Validation(e.into()))?;
+    r.draw_offer = None;
     let after = replay(r.game(), &r.moves).map_err(|e| AppError::Internal(anyhow::anyhow!(e)))?;
     if after.outcome != Outcome::Ongoing {
-        r.game_over = true;
-        let mut s = r.series();
-        s.record(after.outcome, r.first_seat as u8);
-        r.host_wins = i16::from(s.wins[0]);
-        r.guest_wins = i16::from(s.wins[1]);
-        r.draws = i16::from(s.draws);
-        if let Some(w) = s.winner() {
-            r.winner = Some(i16::from(w));
-            r.status = "finished".into();
-            pay_if_decided(&mut tx, &mut r).await?;
-        }
+        end_game(&mut tx, &mut r, after.outcome).await?;
     }
+    save(&mut tx, &r).await?;
+    tx.commit().await?;
+    let r = reload(&state.pool, r.id).await?;
+    Ok(Json(view(&state.pool, &r, seat).await?))
+}
+
+/// Count a finished game in the series; finish the series when decided.
+async fn end_game(tx: &mut Transaction<'_, Postgres>, r: &mut Room, outcome: Outcome) -> AppResult<()> {
+    r.game_over = true;
+    r.draw_offer = None;
+    let mut s = r.series();
+    s.record(outcome, r.first_seat as u8);
+    r.host_wins = i16::from(s.wins[0]);
+    r.guest_wins = i16::from(s.wins[1]);
+    r.draws = i16::from(s.draws);
+    if let Some(w) = s.winner() {
+        r.winner = Some(i16::from(w));
+        r.status = "finished".into();
+        pay_if_decided(tx, r).await?;
+    }
+    Ok(())
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct DrawRequest {
+    /// "offer", "accept" or "decline".
+    pub action: String,
+}
+
+/// `POST /api/rooms/:code/draw`: offer a draw, or answer the other player's offer (chess).
+pub async fn draw(
+    State(state): State<AppState>,
+    user: AuthUser,
+    Path(code): Path<String>,
+    Json(req): Json<DrawRequest>,
+) -> AppResult<Json<RoomView>> {
+    let mut tx = state.pool.begin().await?;
+    let mut r = lock(&mut tx, &code).await?;
+    let seat = r.seat_of(user.user_id).ok_or(AppError::NotFound)?;
+    if r.game() != Game::Chess || r.status != "playing" || r.game_over {
+        return Err(AppError::Conflict("there's no chess game to draw".into()));
+    }
+    let theirs = r.draw_offer.is_some_and(|s| s != i16::from(seat));
+    match req.action.as_str() {
+        "offer" => r.draw_offer = Some(i16::from(seat)),
+        "accept" if theirs => end_game(&mut tx, &mut r, Outcome::Draw).await?,
+        "decline" if theirs => r.draw_offer = None,
+        "accept" | "decline" => return Err(AppError::Conflict("there's no draw offer to answer".into())),
+        _ => return Err(AppError::Validation("action must be offer, accept or decline".into())),
+    }
+    mark_seen(&mut r, seat, Utc::now());
     save(&mut tx, &r).await?;
     tx.commit().await?;
     let r = reload(&state.pool, r.id).await?;
@@ -638,6 +697,7 @@ mod tests {
             guest_seen: Some(t),
             version: 1,
             created_at: t,
+            draw_offer: None,
         }
     }
 

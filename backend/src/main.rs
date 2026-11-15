@@ -164,6 +164,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/rooms/:code/emote", post(online::api::emote))
         .route("/api/rooms/:code/leave", post(online::api::leave))
         .route("/api/rooms/:code/rematch", post(online::api::rematch))
+        .route("/api/rooms/:code/draw", post(online::api::draw))
         // Chess vs Zero-Bot: the server checks every move and replies.
         .route("/api/games/chess/games", post(chess::api::create))
         .route("/api/games/chess/games/active", get(chess::api::active))
