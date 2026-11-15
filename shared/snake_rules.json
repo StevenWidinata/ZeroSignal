@@ -1,0 +1,57 @@
+{
+  "_doc": "Snake Signal rules, read by backend/src/snake_signal/engine.rs and frontend/src/games/snake-signal/engine.ts. Times are in ticks unless named *_ms. Change both engines' tests (shared/snake_vectors.json) together.",
+  "start_len": 4,
+  "sizes": { "small": 15, "medium": 20, "large": 26 },
+  "size_pct": { "small": 130, "medium": 100, "large": 85 },
+
+  "tick_start_ms": 140,
+  "tick_min_ms": 75,
+  "tick_step_ms": 2,
+  "slow_pct": 150,
+
+  "signal_max": 1000,
+  "signal_drain": 4,
+  "signal_food": 350,
+  "signal_golden": 500,
+
+  "food_base": 20,
+  "food_per_level": 5,
+  "level_every": 5,
+  "level_max": 10,
+
+  "golden_points": 100,
+  "golden_chance": 8,
+  "golden_ticks": 60,
+  "golden_grow": 2,
+
+  "combo_window": 30,
+  "combo_mults": [1, 2, 3, 5],
+
+  "close_call_points": 20,
+  "close_call_gap": 10,
+
+  "power_every": 5,
+  "power_ticks": 80,
+  "boost_ticks": 60,
+  "phase_ticks": 45,
+  "magnet_ticks": 80,
+  "slow_ticks": 45,
+  "magnet_range": 4,
+  "snip_points": 50,
+
+  "hazard_start": 150,
+  "hazard_every": 120,
+  "hazard_warn": 15,
+  "hazard_life": 70,
+  "hazard_max": 6,
+  "hazard_safe": 4,
+
+  "bug_start": 300,
+  "bug_every": 200,
+  "bug_step": 3,
+  "bug_life": 150,
+  "bug_points": 500,
+  "bug_safe": 6,
+
+  "max_ticks": 30000
+}

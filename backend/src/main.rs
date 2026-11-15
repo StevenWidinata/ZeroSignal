@@ -1,5 +1,6 @@
 mod achievements;
 mod sling_squad;
+mod snake_signal;
 mod auth;
 mod birds;
 mod birds_api;
@@ -18,6 +19,7 @@ mod minefield;
 mod online;
 mod physics;
 mod quests;
+mod rng;
 mod scores;
 mod sonar;
 mod state;
