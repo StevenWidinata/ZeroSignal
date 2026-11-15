@@ -11,6 +11,7 @@ import { opponentFace } from "./items";
 import { type Cells, emptyCells } from "./logic";
 import Scoreboard from "./Scoreboard";
 import { SaveScorePrompt } from "../../components/Guest";
+import { VersusBar, ZERO_BOT, gameResult } from "../../character/Live";
 
 export const DIFFICULTY_LABEL: Record<TttDifficulty, string> = {
   easy: "Easy",
@@ -130,6 +131,12 @@ export default function AiGame({ initial, onExit, onSpin, onRematch }: Props) {
         draws={match.draws}
         bestOf={match.best_of}
         turn={!active || match.game_over ? null : busy ? 2 : 1}
+      />
+      <VersusBar
+        opponent={ZERO_BOT}
+        opponentName="Zero-Bot"
+        turn={!active || match.game_over ? null : busy ? "them" : "me"}
+        result={gameResult(match)}
       />
       <div className="c4-bar">
         <div className="status-bar" role="status" aria-live="polite">

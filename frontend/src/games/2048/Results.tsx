@@ -3,6 +3,7 @@ import { TENTHS } from "./engine";
 import { MODE_INFO } from "./modes";
 import { digitsClass, formatPlayTime, tileClass } from "./tiles";
 import { SaveScorePrompt } from "../../components/Guest";
+import { MyReaction } from "../../character/Live";
 
 const fmt = (n: number) => n.toLocaleString();
 
@@ -21,6 +22,7 @@ export default function Results({ result, playMs, onAgain, onMenu }: Props) {
 
   return (
     <div className="panel wam-results">
+      <MyReaction pose={result.new_best || s.max_tile >= 2048 ? "cheer" : "wave"} />
       <div className="wam-results-head">
         <small>
           {MODE_INFO[result.mode].icon} {MODE_INFO[result.mode].name} · {s.game_over ? "No moves left" : "Ended early"}

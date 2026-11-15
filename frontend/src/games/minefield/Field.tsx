@@ -6,6 +6,7 @@ import { currentAction } from "../../platform/keymap";
 import { playSfx } from "../../platform/sound";
 import { vibrate } from "../../store/settings";
 import { SaveScorePrompt } from "../../components/Guest";
+import { MyReaction } from "../../character/Live";
 import { useWallet } from "../../store/wallet";
 import {
   EXPLODED,
@@ -301,6 +302,7 @@ export default function Field({ initial, onNew, onMenu }: Props) {
 
       {over && res && (
         <div className="panel mf-result" role="status">
+          <MyReaction pose={res.won ? "cheer" : "sad"} />
           <h2>{res.won ? "Cleared! 🎉" : "Boom! 💥"}</h2>
           {res.won && (
             <p className="mf-score">

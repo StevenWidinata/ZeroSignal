@@ -3,6 +3,7 @@ import { KINDS } from "./engine";
 import { itemName } from "./items";
 import Mole, { KIND_LABEL } from "./Mole";
 import { SaveScorePrompt } from "../../components/Guest";
+import { MyReaction } from "../../character/Live";
 
 const fmt = (n: number) => n.toLocaleString();
 
@@ -34,6 +35,7 @@ export default function Results({ result, grid, onAgain, onMenu }: Props) {
 
   return (
     <div className="panel wam-results">
+      <MyReaction pose={result.new_best || s.fever ? "cheer" : "wave"} />
       <div className="wam-results-head">
         <small>{survival ? `Survived ${(s.ended_ms / 1000).toFixed(1)}s` : "Final score"}</small>
         <strong className="wam-final">{fmt(s.score)}</strong>

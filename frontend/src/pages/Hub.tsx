@@ -2,13 +2,13 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api/client";
 import type { StatsView } from "../api/types";
-import Avatar from "../character/Avatar";
 import QuestList from "../components/QuestList";
 import WeeklyPrizes from "../components/WeeklyPrizes";
 import { recentGames } from "../platform/recent";
 import { GAMES, LIVE_GAMES, findGame } from "../platform/registry";
 import type { GameModule } from "../platform/types";
 import { isMember, useAuth } from "../store/auth";
+import { LiveAvatar } from "../character/Live";
 import { rewardWaiting, useDailyLogin } from "../store/dailyLogin";
 import { useCharacter } from "../store/character";
 import { useWallet } from "../store/wallet";
@@ -77,6 +77,12 @@ function WelcomeStrip({ continueId }: { continueId: string | undefined }) {
     if (!loadout) void loadCharacter();
   }, [loadout, loadCharacter]);
   const next = continueId ? findGame(continueId) : undefined;
+  // Wave hello for a few seconds when you arrive.
+  const [greeting, setGreeting] = useState(true);
+  useEffect(() => {
+    const id = window.setTimeout(() => setGreeting(false), 3500);
+    return () => window.clearTimeout(id);
+  }, []);
   const dailyStatus = useDailyLogin((s) => s.status);
   const openDaily = useDailyLogin((s) => s.open);
   const pct = wallet?.xp_for_next ? Math.min(100, (wallet.xp_into_level / wallet.xp_for_next) * 100) : 0;
@@ -84,7 +90,7 @@ function WelcomeStrip({ continueId }: { continueId: string | undefined }) {
   return (
     <section className="welcome panel" aria-label="Your progress">
       <Link to="/profile" className="welcome-avatar" aria-label="Your character">
-        {loadout ? <Avatar loadout={loadout} size={72} crop="head" /> : <span aria-hidden="true">🙂</span>}
+        {loadout ? <LiveAvatar loadout={loadout} size={72} pose={greeting ? "wave" : "idle"} bubble={greeting} /> : <span aria-hidden="true">🙂</span>}
       </Link>
       <div className="welcome-main">
         <h1>Welcome back, {user?.username}!</h1>

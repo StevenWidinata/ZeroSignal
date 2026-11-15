@@ -180,7 +180,7 @@ export default function Leaderboard() {
                 </td>
                 <td>
                   <Link to={`/u/${encodeURIComponent(e.username)}`} className="board-player">
-                    <Avatar loadout={e.avatar} size={32} crop="head" />
+                    <Avatar loadout={e.avatar} size={32} crop="head" animated={e.rank <= 3} />
                     <strong>{e.username}</strong>
                     <TitleBadge id={normalizeLoadout(e.avatar).title} small />
                   </Link>

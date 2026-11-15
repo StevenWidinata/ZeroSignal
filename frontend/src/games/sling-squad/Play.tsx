@@ -11,6 +11,7 @@ import { LEVELS, findLevel, findWorld, type Level } from "./levels";
 import LevelSelect, { Stars } from "./LevelSelect";
 import { SaveScorePrompt } from "../../components/Guest";
 import BackButton from "../../components/BackButton";
+import { MyReaction } from "../../character/Live";
 
 const fmt = (n: number) => n.toLocaleString();
 
@@ -203,6 +204,7 @@ function Game({ level, onLevels, onPlay }: { level: Level; onLevels: () => void;
 
           {result && (
             <div className="result-card">
+              <MyReaction pose={result.cleared ? "cheer" : "sad"} />
               <h3>
                 {result.cleared ? (result.first_clear ? "🎉 Level cleared!" : "Level cleared!") : "Some gobbos survived"}
                 {isBest && " · ★ New best"}
