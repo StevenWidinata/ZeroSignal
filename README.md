@@ -114,6 +114,18 @@ A slingshot physics game with its own cast: **Pip** (balanced), **Zip** (dash), 
 - **4 free tile styles** (Classic, Pastel, Neon, Mono), picked on the setup screen; colorblind mode still wins.
 - Slide and merge animations (off with Light graphics), merge sounds, colorblind tile colors (numbers are always shown), and a results screen with points, biggest tile, moves, undos and time.
 
+## Online play (two devices)
+
+Connect Four and Tic-Tac-Toe can be played against a friend on another phone or laptop: pick **🌐 Online** in the game's menu, **Create room** (best of 1, 3 or 5) and send the 6-character code or the invite link (`/play/<game>?room=CODE`). Guests can play too.
+
+- **The server checks every move** with the same rules as the AI games and only accepts a move from the player whose turn it is. Players move first in turn, game by game.
+- **No sockets needed:** each screen asks the server for news and the server holds the request up to 20 seconds, so the other player's move shows up within about a second (this works on Vercel).
+- Both players' characters are shown live (thinking, cheering, sad), and the emote bar (👋 😀 😮 😢 🔥) plays on the other screen too.
+- **Fair play:** a player away for 2 minutes forfeits; **Leave room** gives the series to the other player; both can ask for a **rematch**.
+- **Rewards:** XP only (series win 30, draw 15, loss 10), so two accounts can't farm coins from each other. An **Online champions** board ranks the most series won.
+
+API: `POST /api/rooms` `{game, best_of}`, `POST /api/rooms/:code/{join,move,next,emote,leave,rematch}`, `GET /api/rooms/:code?since=<version>` (waits up to 20 s for a newer version), `GET /api/rooms/leaderboard?game=`.
+
 ## Coins, tokens and levels
 
 Only the server pays rewards, and only for results it verified itself, inside the same database transaction that records the result. Local 2-player games pay nothing.

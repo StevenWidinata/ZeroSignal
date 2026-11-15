@@ -289,7 +289,7 @@ Commits go to `main` step by step (each step live once tested); owner is the onl
   character (idle, wave, cheer, sad, think) + emotes; shown on the Hub,
   results, leaderboard top 3, and both sides of Connect Four / Tic-Tac-Toe
   (AI = "Zero-Bot").
-- **E. Online play** (`feat/online-play`): turn-based Connect Four and
+- **E. Online play** (`feat/online-play`, done): turn-based Connect Four and
   Tic-Tac-Toe between two devices via room code/link; server checks every
   move; polling/long-poll (Vercel has no sockets); forfeit after 2 min away;
   XP only (no coins); "Online" leaderboard by wins.
