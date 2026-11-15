@@ -8,6 +8,7 @@ mod character;
 mod chess;
 mod config;
 mod connect_four;
+mod dailies;
 mod daily;
 mod daily_login;
 mod db;
@@ -95,6 +96,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/me/daily-login", get(daily_login::status))
         .route("/api/me/daily-login/claim", post(daily_login::claim))
         // Daily quests.
+        .route("/api/me/dailies", get(dailies::today))
         .route("/api/me/quests", get(quests::api::get_quests))
         .route("/api/me/quests/:slot/claim", post(quests::api::claim))
         .route("/api/me/quests/:slot/reroll", post(quests::api::reroll))

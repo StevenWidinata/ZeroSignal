@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { wantsDaily } from "../../components/dailies/logic";
 
 import { game2048 } from "../../api/client";
 import type { G2048Finish, G2048Mode, G2048Run } from "../../api/types";
@@ -39,7 +40,8 @@ function rebuild(run: G2048Run): Game | null {
 
 export default function Play() {
   const [screen, setScreen] = useState<Screen>({ kind: "setup" });
-  const [mode, setMode] = useState<G2048Mode>(loadMode);
+  // ?daily=1 (from the Hub's "Today's Dailies") opens on the Daily.
+  const [mode, setMode] = useState<G2048Mode>(() => (wantsDaily() ? "daily" : loadMode()));
   const [tileStyle, setTileStyle] = useState<TileStyle>(loadTileStyle);
   const [active, setActive] = useState<G2048Run | null | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);

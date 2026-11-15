@@ -1,4 +1,5 @@
 import type {
+  DailyView,
   SnakeCollection,
   SnakeFinish,
   SnakeItemKind,
@@ -195,6 +196,10 @@ export const api = {
   },
   stats() {
     return request<StatsView>("/api/me/stats");
+  },
+  /** Every game's Daily today: played?, your score and rank. */
+  dailies() {
+    return request<DailyView[]>("/api/me/dailies");
   },
   weeklyPrizes() {
     return request<WeeklyPrizes>("/api/me/weekly-prizes");

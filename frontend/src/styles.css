@@ -4220,6 +4220,12 @@ html[data-text="xl"] { font-size: 20px; }
 .recent-text small {
   color: var(--muted);
 }
+.recent-item.daily-done {
+  background: var(--surface-2);
+}
+.hub-dailies .hub-quests-head .section-title {
+  margin-bottom: 12px;
+}
 .ribbon-new {
   background: var(--green);
   color: var(--on-green);

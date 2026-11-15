@@ -573,6 +573,16 @@ export interface StatsBoard {
   average: number;
 }
 
+/** One game's Daily on the Hub ("Today's Dailies"). */
+export interface DailyView {
+  game_id: string;
+  board: number;
+  status: "new" | "playing" | "done";
+  score: number | null;
+  rank: number | null;
+  players: number;
+}
+
 export interface StatsView {
   joined: string;
   level: number;

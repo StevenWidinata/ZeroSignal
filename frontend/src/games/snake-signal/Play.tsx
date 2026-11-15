@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { wantsDaily } from "../../components/dailies/logic";
 import { snakeSignal } from "../../api/client";
 import type { SnakeCollection, SnakeFinish, SnakeItemKind, SnakeMode, SnakeSize, SnakeStart } from "../../api/types";
 import GameHeader from "../../components/GameHeader";
@@ -115,7 +116,9 @@ function Picker({
 const valid = (kind: SnakeItemKind, id: string) => LISTS[kind].some((i) => i.id === id);
 
 function initialPrefs(): Prefs {
-  const p = loadPrefs(valid);
+  const saved = loadPrefs(valid);
+  // ?daily=1 (from the Hub's "Today's Dailies") opens on the Daily.
+  const p = wantsDaily() ? { ...saved, mode: "daily" as const } : saved;
   // First visit on a touch screen: show the D-pad.
   if (p === DEFAULT_PREFS && typeof window !== "undefined" && window.matchMedia?.("(pointer: coarse)").matches) {
     return { ...p, dpad: true };

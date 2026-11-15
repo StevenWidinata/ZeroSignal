@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, NavLink, Navigate, useParams } from "react-router-dom";
+import { Link, NavLink, Navigate, useParams, useSearchParams } from "react-router-dom";
 import { api } from "../api/client";
 import WeeklyPrizes from "../components/WeeklyPrizes";
 import { formatCountdown, nextWeekReset } from "../platform/week";
@@ -27,8 +27,14 @@ export default function Leaderboard() {
   // Daily boards are always "today"; the rest follow the period switch.
   const effectivePeriod: LeaderboardPeriod = board?.period ?? period;
 
-  // Each game starts on its first board.
-  useEffect(() => setBoardIdx(0), [gameId]);
+  // Each game starts on its first board (or its Daily with ?board=daily).
+  const [params] = useSearchParams();
+  const wantDaily = params.get("board") === "daily";
+  useEffect(() => {
+    const daily = wantDaily ? (boards?.findIndex((b) => b.period === "today") ?? -1) : -1;
+    setBoardIdx(Math.max(0, daily));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameId, wantDaily]);
 
   useEffect(() => {
     if (!game) return;

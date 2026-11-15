@@ -85,7 +85,7 @@ export default function Play() {
   const [params, setParams] = useSearchParams();
   const roomParam = params.get("room");
   const [screen, setScreen] = useState<Screen>(roomParam ? { kind: "online", code: roomParam.toUpperCase() } : { kind: "menu" });
-  const [mode, setMode] = useState<Mode>(roomParam ? "online" : "ai");
+  const [mode, setMode] = useState<Mode>(roomParam ? "online" : params.get("daily") ? "daily" : "ai");
   const [level, setLevel] = useState<SonarLevel>("easy");
   const [look, setLook] = useLook();
   const [collection, setCollection] = useState<SonarCollection | null>(null);

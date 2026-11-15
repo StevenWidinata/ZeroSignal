@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { wantsDaily } from "../../components/dailies/logic";
 
 import { whackAMole } from "../../api/client";
 import type { WamCollection, WamFinish, WamMode, WamStart, WamTap } from "../../api/types";
@@ -129,7 +130,8 @@ function ItemPicker({
 
 export default function Play() {
   const [screen, setScreen] = useState<Screen>({ kind: "setup" });
-  const [prefs, setPrefs] = useState<Prefs>(loadPrefs);
+  // ?daily=1 (from the Hub's "Today's Dailies") opens on the Daily.
+  const [prefs, setPrefs] = useState<Prefs>(() => (wantsDaily() ? { ...loadPrefs(), mode: "daily" } : loadPrefs()));
   const [error, setError] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
   const [collection, setCollection] = useState<WamCollection | null>(null);
