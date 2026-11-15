@@ -285,7 +285,7 @@ Commits go to `main` step by step (each step live once tested); owner is the onl
   and purple one-eyed **gobbos** instead of pigs. Migration 0019 renames the
   game id and bird ids in saved scores; old `/play/angry-bird` links redirect.
   Themed chips in other games got the new names and art; their ids stay.
-- **D. Living characters** (`feat/living-characters`): animated 2D pixel
+- **D. Living characters** (`feat/living-characters`, done): animated 2D pixel
   character (idle, wave, cheer, sad, think) + emotes; shown on the Hub,
   results, leaderboard top 3, and both sides of Connect Four / Tic-Tac-Toe
   (AI = "Zero-Bot").

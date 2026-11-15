@@ -230,6 +230,8 @@ Titles show in the wardrobe, on public profiles and next to names on leaderboard
 
 ## Character, shop and profiles
 
+**Living characters:** your character breathes and blinks, waves hello on the Hub, cheers on a win or new best, slumps on a loss and thinks while waiting. Connect Four and Tic-Tac-Toe show you versus **Zero-Bot** (the AI's own robot character), with an emote bar (👋 😀 😮 😢 🔥) that makes your character react. The leaderboard's top 3 are animated too. Reduced motion and Light graphics keep the pose but stop the movement.
+
 Every player has a pixel-art character with **23 slots** and **216 items** (67 free starters), drawn in code (no image files). The catalog lives in `shared/character_items.json`, and both the backend and the frontend read that same file, so prices and unlock rules can't drift apart.
 
 | Group | Slots |
