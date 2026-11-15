@@ -15,8 +15,9 @@ A hub of fun browser games with a retro arcade UI and real, **server-verified le
 | Tic-Tac-Toe  | Live        | vs AI (Easy, Medium, unbeatable Hard) or vs a friend; boards, faces, your photo as a face |
 | Whack-a-Mole | Live        | 4 modes, 6 kinds of moles, combos and FEVER; the server replays every tap |
 | Minefield    | Live        | No-guess boards in 3 sizes + a Daily; the server keeps the mines |
-| 10 more      | Coming soon | Snake Signal, Brick Breaker, Signal Flap, Memory Match, Pixel Picross, Block Drop, Sudoku, Pong Online, Sonar, Checkers (see `/roadmap`) |
 | 2048         | Live        | Classic 4×4, Big 5×5, Tiny 3×3 + a Daily; saved as you play; the server replays every move |
+| Chess        | Live        | vs Zero-Bot (4 levels), online vs a friend, same device, a Daily "mate in 2"; 12 boards and 8 piece sets |
+| 10 more      | Coming soon | Snake Signal, Brick Breaker, Signal Flap, Memory Match, Pixel Picross, Block Drop, Sudoku, Pong Online, Sonar, Checkers (see `/roadmap`) |
 
 ## Features
 
@@ -115,9 +116,21 @@ A slingshot physics game with its own cast: **Pip** (balanced), **Zip** (dash), 
 - **4 free tile styles** (Classic, Pastel, Neon, Mono), picked on the setup screen; colorblind mode still wins.
 - Slide and merge animations (off with Light graphics), merge sounds, colorblind tile colors (numbers are always shown), and a results screen with points, biggest tile, moves, undos and time.
 
+## Chess
+
+- **Modes:** 🤖 vs **Zero-Bot** (Easy, Medium, Hard, Master; pick White, Black or random), 📅 **Daily puzzle**, 🌐 **Online** vs a friend (rooms, below), 👥 **Same device** (pass and play; the board turns for each player).
+- **Rules:** `cozy-chess` on the server and `chess.js` in the browser (same-device games): castling, en passant, promotion (picker), check, checkmate, stalemate, threefold repetition, the 50-move rule and insufficient material. Moves are standard UCI (`e2e4`, `e7e8q`, castling `e1g1`). Perft tests check the move generator.
+- **Zero-Bot** thinks on the server (negamax with alpha-beta, quiescence search, piece-square tables; about 1.5 s at most). Easy and Medium sometimes pick a weaker move on purpose; Hard searches 3 moves deep, Master deeper. It never misses a mate in one.
+- **Board:** tap or drag; dots show legal moves, rings show captures; last move and check are highlighted; the move list is in SAN; arrow keys + Enter work too. Undo vs Zero-Bot: up to 3 per game (it cancels the win bonus and token). Resign any time; starting a new game resigns an unfinished one, which you can otherwise resume on any device.
+- **Daily puzzle:** the same "mate in 2" for everyone each WIB day, from 180 puzzles found by Zero-Bot self-play and checked by a mate solver (`shared/chess_puzzles.json`). The server keeps your try: any move that still forces mate counts, Zero-Bot answers with its most stubborn defence, and a wrong move isn't played but costs one of 3 tries. Solving pays 40 / 25 / 15 coins and 30 / 20 / 10 points (0 / 1 / 2 mistakes); after a fail you can step through the solution.
+- **Rewards vs Zero-Bot:** win 8 / 20 / 40 / 90 coins (Easy → Master) with a token chance of 5–40% (no undo), XP for every finished game (more for harder levels); a win vs Hard or Master has a 20% **lucky drop** of a board or piece set you don't own. Online games pay XP only.
+- **Leaderboard:** all points added up (wins 10× level + 5 without undo, draws 3× level, puzzles), plus a **Today's puzzle** board.
+- **Looks:** 12 board styles (6 free: Classic Green, Wood, Ocean, Slate, Sakura, Mint) and 8 piece sets (4 free: Classic, Outline, Pixel Art, Animals; paid: Neon, Candy, Space, Food), all drawn in code; try them on in the shop.
+- **Fast:** chess and `chess.js` load only on the chess page (about 25 kB gzipped).
+
 ## Online play (two devices)
 
-Connect Four and Tic-Tac-Toe can be played against a friend on another phone or laptop: pick **🌐 Online** in the game's menu, **Create room** (best of 1, 3 or 5) and send the 6-character code or the invite link (`/play/<game>?room=CODE`). Guests can play too.
+Connect Four, Tic-Tac-Toe and chess can be played against a friend on another phone or laptop: pick **🌐 Online** in the game's menu, **Create room** (best of 1, 3 or 5) and send the 6-character code or the invite link (`/play/<game>?room=CODE`). Guests can play too.
 
 - **The server checks every move** with the same rules as the AI games and only accepts a move from the player whose turn it is. Players move first in turn, game by game.
 - **No sockets needed:** each screen asks the server for news and the server holds the request up to 20 seconds, so the other player's move shows up within about a second (this works on Vercel).
@@ -125,7 +138,9 @@ Connect Four and Tic-Tac-Toe can be played against a friend on another phone or 
 - **Fair play:** a player away for 2 minutes forfeits; **Leave room** gives the series to the other player; both can ask for a **rematch**.
 - **Rewards:** XP only (series win 30, draw 15, loss 10), so two accounts can't farm coins from each other. An **Online champions** board ranks the most series won.
 
-API: `POST /api/rooms` `{game, best_of}`, `POST /api/rooms/:code/{join,move,next,emote,leave,rematch}`, `GET /api/rooms/:code?since=<version>` (waits up to 20 s for a newer version), `GET /api/rooms/leaderboard?game=`.
+Chess rooms: whoever moves first in a game plays White (so colours swap game by game), moves are sent as UCI, either player can **offer a draw** (it lapses when the other player moves), and **Resign & leave** gives the series to the friend. Chess rooms default to one game.
+
+API: `POST /api/rooms` `{game, best_of}`, `POST /api/rooms/:code/{join,move,next,emote,leave,rematch}` (chess moves: `{uci}`), `POST /api/rooms/:code/draw` `{action: offer|accept|decline}`, `GET /api/rooms/:code?since=<version>` (waits up to 20 s for a newer version), `GET /api/rooms/leaderboard?game=`.
 
 ## Coins, tokens and levels
 
@@ -155,7 +170,7 @@ A pop-up offers the reward when you open the site. Claim once per day (days star
 
 ### Daily quests
 
-Every day (00:00 WIB) you get 3 different random quests, shown on the Hub and on the **Quests** page (`/quests`). The nav shows a badge when one is ready to claim. Only results the server verified count: AI games, Sling Squad, Whack-a-Mole, Minefield and 2048 results, and mystery boxes. Local 2-player games don't count.
+Every day (00:00 WIB) you get 3 different random quests, shown on the Hub and on the **Quests** page (`/quests`). The nav shows a badge when one is ready to claim. Only results the server verified count: AI games, Sling Squad, Whack-a-Mole, Minefield, 2048 and chess results (vs Zero-Bot and the Daily puzzle), and mystery boxes. Local 2-player games don't count.
 
 - Press **Claim** on a finished quest to get its coins + XP. Claiming all 3 pays a bonus **1 token**.
 - **Reroll:** once per day, swap one unfinished quest for a new random one.
@@ -184,10 +199,13 @@ Every day (00:00 WIB) you get 3 different random quests, shown on the Hub and on
 | Play 3 games of 2048 | 20 | 30 |
 | Make a 512 tile in 2048 | 40 | 60 |
 | Score 10,000 in one game of 2048 | 40 | 60 |
+| Finish 3 chess games | 20 | 30 |
+| Beat Zero-Bot at chess on Medium or harder | 40 | 60 |
+| Solve today's chess puzzle | 30 | 40 |
 
 ## Achievements
 
-The `/achievements` page lists 40 one-time achievements with progress bars; locked ones are visible too. The server works out progress from results it already verified (matches, scores, the coin ledger, owned items, login and quest history), so progress made before achievements existed counts as well. Press **Claim** to get the coins, the same amount of XP, and a **title** to wear. Achievement coins don't count toward the daily cap. Claimed achievements show on your public profile.
+The `/achievements` page lists 44 one-time achievements with progress bars; locked ones are visible too. The server works out progress from results it already verified (matches, scores, the coin ledger, owned items, login and quest history), so progress made before achievements existed counts as well. Press **Claim** to get the coins, the same amount of XP, and a **title** to wear. Achievement coins don't count toward the daily cap. Claimed achievements show on your public profile.
 
 | Achievement | Coins | Title |
 |-------------|-------|-------|
@@ -227,6 +245,10 @@ The `/achievements` page lists 40 one-time achievements with progress bars; lock
 | Reach a 7-day login streak | 100 | Loyal |
 | Claim 10 daily quests | 60 | Adventurer |
 | Finish all 3 daily quests in one day, 7 times | 200 | Quest Master |
+| Checkmate Zero-Bot in chess | 30 | Checkmate! |
+| Beat Zero-Bot on Master in chess | 300 | Grandmaster |
+| Solve the Daily chess puzzle 7 days in a row | 150 | Puzzle Sage |
+| Checkmate Zero-Bot in under 20 of your moves | 120 | Lightning Mate |
 
 ### Title looks
 
@@ -361,6 +383,8 @@ zero_signal/
 ├── docker-compose.yml          # local Postgres
 ├── shared/
 │   ├── character_items.json    # character slots + items (read by backend AND frontend)
+│   ├── chess_items.json        # chess boards + piece sets
+│   ├── chess_puzzles.json      # 180 checked "mate in 2" daily puzzles
 │   └── tic_tac_toe_items.json  # boards + faces (read by backend AND frontend)
 ├── backend/                    # Rust + Axum API
 │   ├── migrations/             # sqlx SQL migrations
@@ -371,7 +395,8 @@ zero_signal/
 │       ├── daily.rs            # WIB (UTC+7) day boundary for everything daily
 │       ├── daily_login.rs      # 7-day login streak reward
 │       ├── quests/             # daily quest pool, progress hooks, claim/reroll API
-│       ├── achievements.rs     # 40 achievements, live progress, claim + titles
+│       ├── achievements.rs     # 44 achievements, live progress, claim + titles
+│       ├── chess/              # rules (cozy-chess), Zero-Bot AI, games API, items, daily puzzles
 │       ├── character/          # item catalog, outfits, presets, shop, profiles
 │       ├── tic_tac_toe/        # rules, perfect AI, matches, boards/faces, photo
 │       ├── whack_a_mole/       # seeded mole schedule, tap replay scorer, runs API
@@ -410,7 +435,7 @@ zero_signal/
 | GET  | `/api/me/quests` | today's 3 quests, progress, reroll and bonus status (auth) |
 | POST | `/api/me/quests/:slot/claim` | claim a finished quest; the 3rd claim adds the bonus token (auth) |
 | POST | `/api/me/quests/:slot/reroll` | swap one unfinished quest, once per day (auth) |
-| GET  | `/api/me/achievements` | all 40 achievements with live progress (auth) |
+| GET  | `/api/me/achievements` | all 44 achievements with live progress (auth) |
 | POST | `/api/me/achievements/:id/claim` | claim an unlocked achievement: coins + XP + title (auth) |
 | GET  | `/api/me/character` | outfit, owned items, presets, wallet (auth) |
 | PUT  | `/api/me/character/loadout` | wear an outfit (server checks ownership) (auth) |
@@ -427,7 +452,7 @@ zero_signal/
 | POST | `/api/games/tic-tac-toe/spins` | spend a reward spin (auth) |
 | GET/PUT/DELETE | `/api/me/photo` | your private photo face (raw image body) (auth) |
 | GET  | `/api/games` | catalog |
-| GET  | `/api/games/:id/leaderboard` | top 20 for that game; `?period=` `all`, `today`, `week` or `last_week`; `?level=` picks one board (Whack-a-Mole: 1 Classic, 2 Frenzy, 3 Survival, 4 Daily; Minefield: 1 Beginner, 2 Intermediate, 3 Expert, 4 Daily; 2048: 1 Classic, 2 Big, 3 Tiny, 4 Daily), `period=today` keeps today only; entries may carry a `detail` (2048: biggest tile) |
+| GET  | `/api/games/:id/leaderboard` | top 20 for that game; `?period=` `all`, `today`, `week` or `last_week`; `?level=` picks one board (Whack-a-Mole: 1 Classic, 2 Frenzy, 3 Survival, 4 Daily; Minefield: 1 Beginner, 2 Intermediate, 3 Expert, 4 Daily; 2048: 1 Classic, 2 Big, 3 Tiny, 4 Daily; chess: 5 Daily puzzle), `period=today` keeps today only; entries may carry a `detail` (2048: biggest tile) |
 | GET  | `/api/games/:id/scores/me` | your history (auth) |
 | POST | `/api/games/sling-squad/scores` | shot inputs only; server computes score (auth) |
 | GET  | `/api/games/sling-squad/birds` | bird catalog + unlocks |
@@ -444,6 +469,14 @@ zero_signal/
 | GET  | `/api/games/2048/runs/active` | your unfinished game with its saved moves, or null (auth) |
 | POST | `/api/games/2048/runs/:id/save` | `{moves}` save progress; must extend the saved moves (auth) |
 | POST | `/api/games/2048/runs/:id/finish` | `{moves}`; server replays and scores, pays rewards (auth) |
+| POST | `/api/games/chess/games` | `{level, color, board, pieces}` start a game vs Zero-Bot (resigns an unfinished one) (auth) |
+| GET  | `/api/games/chess/games/active` | your unfinished game, or null (auth) |
+| POST | `/api/games/chess/games/:id/move` | `{uci}`; the server checks it and plays Zero-Bot's reply (auth) |
+| POST | `/api/games/chess/games/:id/{undo,resign}` | take back your last move (max 3) / resign (auth) |
+| GET  | `/api/games/chess/collection` | boards and piece sets with ownership (auth) |
+| POST | `/api/games/chess/buy` | `{kind: board|pieces, id}` buy with coins (auth) |
+| GET  | `/api/games/chess/puzzle` | today's puzzle and your try (auth) |
+| POST | `/api/games/chess/puzzle/move` | `{uci}`; right → Zero-Bot's reply or solved; wrong → costs a try (auth) |
 | POST | `/api/games/connect-four/matches` | start an AI series `{difficulty, best_of, skin}` (auth) |
 | GET  | `/api/games/connect-four/matches/active` | resume your unfinished series (auth) |
 | POST | `/api/games/connect-four/matches/:id/move` | `{column}`; server replies with the AI move (auth) |

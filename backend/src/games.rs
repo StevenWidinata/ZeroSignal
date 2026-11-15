@@ -92,7 +92,7 @@ pub const GAMES: &[GameInfo] = &[
     GameInfo {
         id: "chess",
         title: "Chess",
-        status: GameStatus::ComingSoon,
+        status: GameStatus::Live,
         ranking: Ranking::Total,
         prize_boards: &[],
     },

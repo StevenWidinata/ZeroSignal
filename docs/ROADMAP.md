@@ -304,7 +304,7 @@ Commits go to `main` step by step (each step live once tested); owner is the onl
   cards, Chiptune Jukebox, Weekend tournaments.
 - Then: language (English / Bahasa Indonesia).
 
-### Chess (`feat/chess`; agreed 2026-11-15, building)
+### Chess (`feat/chess`; agreed and done 2026-11-15, live)
 - **Modes:** 🌐 Online vs a friend (existing rooms: code/link, guests ok, the
   server checks every move, 2-minute away forfeit, rematch, emotes);
   🤖 vs Zero-Bot in 4 levels (Easy makes mistakes, Medium, Hard, Master =
@@ -333,6 +333,11 @@ Commits go to `main` step by step (each step live once tested); owner is the onl
   Daily puzzle coins. Quests (+3): play 3 games, win vs Medium or harder,
   solve the Daily. Achievements (+4): First Checkmate, Beat Master, Puzzle
   Streak (7 Dailies), Lightning Mate (checkmate in under 20 moves).
+- **Built:** all four modes; 180 Daily puzzles, all "mate in 2", found by
+  Zero-Bot self-play and checked by the mate solver ("win material" puzzles
+  are left for later); online chess uses the rooms with UCI moves and draw
+  offers (resigning online = leaving the room, so it ends the series);
+  chess loads only on its page (~25 kB gzipped).
 
 ## Phase 3b (planned)
 
