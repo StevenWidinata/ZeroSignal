@@ -19,6 +19,7 @@ mod online;
 mod physics;
 mod quests;
 mod scores;
+mod sonar;
 mod state;
 mod stats;
 mod tic_tac_toe;

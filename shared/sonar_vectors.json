@@ -1,0 +1,41 @@
+{
+  "fleets": [
+    { "code": "a1h a3h a5h a7h a9h", "error": null },
+    { "code": "a1v c1v e1v g1v i1v", "error": null },
+    { "code": "A1H A3H A5H A7H I9V", "error": null },
+    { "code": "a1h a2h a5h a7h a9h", "error": "touching" },
+    { "code": "a1h f2h a5h a7h a9h", "error": "touching" },
+    { "code": "a1h a1h a5h a7h a9h", "error": "overlap" },
+    { "code": "g1h a3h a5h a7h a9h", "error": "off_grid" },
+    { "code": "a1h a3h a5h a7h a10v", "error": "off_grid" },
+    { "code": "a1h a3h a5h a7h", "error": "wrong_count" },
+    { "code": "a1x a3h a5h a7h a9h", "error": "bad_code" },
+    { "code": "a1h a3h a5h a7h a11h", "error": "bad_code" }
+  ],
+  "games": [
+    {
+      "fleet": "a1h a3h a5h a7h a9h",
+      "moves": "f0 f5 f80 f81 p11 f99",
+      "results": ["hit", "miss", "hit", "sunk:destroyer", "ping:6", "miss"],
+      "all_sunk": false
+    },
+    {
+      "fleet": "a1h a3h a5h a7h a9h",
+      "moves": "f0 f1 f2 f3 f4 f20 f21 f22 f23 f40 f41 f42 f60 f61 f62 f80 f81",
+      "results": [
+        "hit", "hit", "hit", "hit", "sunk:carrier",
+        "hit", "hit", "hit", "sunk:battleship",
+        "hit", "hit", "sunk:cruiser",
+        "hit", "hit", "sunk:submarine",
+        "hit", "sunk:destroyer"
+      ],
+      "all_sunk": true
+    },
+    {
+      "fleet": "a1v c1v e1v g1v i1v",
+      "moves": "p0 p99 f2",
+      "results": ["ping:2", "ping:0", "hit"],
+      "all_sunk": false
+    }
+  ]
+}

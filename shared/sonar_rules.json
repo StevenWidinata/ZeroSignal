@@ -1,0 +1,11 @@
+{
+  "size": 10,
+  "pings": 2,
+  "fleet": [
+    { "id": "carrier", "name": "Carrier", "len": 5 },
+    { "id": "battleship", "name": "Battleship", "len": 4 },
+    { "id": "cruiser", "name": "Cruiser", "len": 3 },
+    { "id": "submarine", "name": "Submarine", "len": 3 },
+    { "id": "destroyer", "name": "Destroyer", "len": 2 }
+  ]
+}
