@@ -7,7 +7,7 @@ import type { LeaderboardEntry, LeaderboardPeriod, MyScoresResponse } from "../a
 import Avatar from "../character/Avatar";
 import { normalizeLoadout } from "../character/catalog";
 import TitleBadge from "../components/TitleBadge";
-import { GAMES, findGame } from "../platform/registry";
+import { GAMES, LIVE_GAMES, findGame } from "../platform/registry";
 import { useAuth } from "../store/auth";
 import BackButton from "../components/BackButton";
 
@@ -89,7 +89,7 @@ export default function Leaderboard() {
       <WeeklyPrizes />
 
       <nav className="tabs" aria-label="Choose game leaderboard">
-        {GAMES.map((g) => (
+        {LIVE_GAMES.map((g) => (
           <NavLink
             key={g.meta.id}
             to={`/leaderboard/${g.meta.id}`}

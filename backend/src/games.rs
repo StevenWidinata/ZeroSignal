@@ -89,6 +89,77 @@ pub const GAMES: &[GameInfo] = &[
         // Classic, Big, Tiny (not the Daily board).
         prize_boards: &[1, 2, 3],
     },
+    // Planned (docs/ROADMAP.md, docs/GAME_KIT.md): shown as "Coming soon".
+    GameInfo {
+        id: "snake-signal",
+        title: "Snake Signal",
+        status: GameStatus::ComingSoon,
+        ranking: Ranking::Best,
+        prize_boards: &[],
+    },
+    GameInfo {
+        id: "brick-breaker",
+        title: "Brick Breaker",
+        status: GameStatus::ComingSoon,
+        ranking: Ranking::Best,
+        prize_boards: &[],
+    },
+    GameInfo {
+        id: "signal-flap",
+        title: "Signal Flap",
+        status: GameStatus::ComingSoon,
+        ranking: Ranking::Best,
+        prize_boards: &[],
+    },
+    GameInfo {
+        id: "memory-match",
+        title: "Memory Match",
+        status: GameStatus::ComingSoon,
+        ranking: Ranking::Best,
+        prize_boards: &[],
+    },
+    GameInfo {
+        id: "pixel-picross",
+        title: "Pixel Picross",
+        status: GameStatus::ComingSoon,
+        ranking: Ranking::Best,
+        prize_boards: &[],
+    },
+    GameInfo {
+        id: "block-drop",
+        title: "Block Drop",
+        status: GameStatus::ComingSoon,
+        ranking: Ranking::Best,
+        prize_boards: &[],
+    },
+    GameInfo {
+        id: "sudoku",
+        title: "Sudoku",
+        status: GameStatus::ComingSoon,
+        ranking: Ranking::Best,
+        prize_boards: &[],
+    },
+    GameInfo {
+        id: "pong-online",
+        title: "Pong Online",
+        status: GameStatus::ComingSoon,
+        ranking: Ranking::Best,
+        prize_boards: &[],
+    },
+    GameInfo {
+        id: "sonar",
+        title: "Sonar",
+        status: GameStatus::ComingSoon,
+        ranking: Ranking::Best,
+        prize_boards: &[],
+    },
+    GameInfo {
+        id: "checkers",
+        title: "Checkers",
+        status: GameStatus::ComingSoon,
+        ranking: Ranking::Best,
+        prize_boards: &[],
+    },
 ];
 
 pub fn find(id: &str) -> Option<&'static GameInfo> {

@@ -20,6 +20,7 @@ import Profile from "./pages/Profile";
 import PublicProfile from "./pages/PublicProfile";
 import Quests from "./pages/Quests";
 import Register from "./pages/Register";
+import Roadmap from "./pages/Roadmap";
 import Shop from "./pages/Shop";
 import Stats from "./pages/Stats";
 import { isMember, useAuth } from "./store/auth";
@@ -245,6 +246,7 @@ export default function App() {
               </RequireMember>
             }
           />
+          <Route path="/roadmap" element={<Roadmap />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="*" element={<Navigate to="/" replace />} />
@@ -252,7 +254,8 @@ export default function App() {
       </main>
 
       <footer className="footer">
-        ZERO SIGNAL · Scores are verified server-side. No cheats, just skill.
+        ZERO SIGNAL · Scores are verified server-side. No cheats, just skill. ·{" "}
+        <Link to="/roadmap">Roadmap</Link>
       </footer>
       <SettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} />
       <DailyLoginDialog />

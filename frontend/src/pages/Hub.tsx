@@ -255,8 +255,24 @@ export default function Hub() {
           Choose your game
         </h2>
         <div className="game-grid">
-          {GAMES.map((g) => (
+          {LIVE_GAMES.map((g) => (
             <GameCard key={g.meta.id} game={g} best={bestOf(stats, g.meta.id)} />
+          ))}
+        </div>
+      </section>
+
+      <section aria-labelledby="soon-heading" className="hub-soon">
+        <div className="hub-quests-head">
+          <h2 id="soon-heading" className="section-title">
+            🛠️ Coming soon
+          </h2>
+          <Link to="/roadmap" className="btn btn-ghost btn-sm">
+            Roadmap →
+          </Link>
+        </div>
+        <div className="game-grid">
+          {GAMES.filter((g) => g.meta.status !== "live").map((g) => (
+            <GameCard key={g.meta.id} game={g} best={0} />
           ))}
         </div>
       </section>

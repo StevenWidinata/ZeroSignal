@@ -4497,3 +4497,59 @@ kbd.key {
 .online-play .status-bar {
   margin-bottom: 10px;
 }
+
+/* ---------- Roadmap and coming soon ---------- */
+.hub-soon .game-card {
+  opacity: 0.85;
+}
+.roadmap-page {
+  display: grid;
+  gap: 22px;
+}
+.roadmap-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.roadmap-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 2px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.roadmap-item > span:nth-child(2) {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+.roadmap-item small {
+  color: var(--muted);
+}
+.roadmap-icon {
+  font-size: 1.6rem;
+}
+.roadmap-ideas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.roadmap-ideas li {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+}
+.roadmap-ideas li > span {
+  font-size: 1.5rem;
+}
+.roadmap-ideas small {
+  color: var(--muted);
+}
