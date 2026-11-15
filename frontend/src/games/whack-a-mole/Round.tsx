@@ -44,6 +44,7 @@ export default function Round({ game, showKeys, hammer, theme, onDone, onQuit }:
   const [shake, setShake] = useState(0);
   const [whacked, setWhacked] = useState<Record<number, Kind>>({});
   const [mood, setMood] = useState<Mood>("idle");
+  const [confirmQuit, setConfirmQuit] = useState(false);
   const taps = useRef<WamTap[]>([]);
   const lastT = useRef(0);
   const done = useRef(false);
@@ -257,7 +258,16 @@ export default function Round({ game, showKeys, hammer, theme, onDone, onQuit }:
           <button className="btn-ghost btn-sm" onClick={paused ? resume : pause} disabled={!countdown.done}>
             {paused ? "▶ Resume" : "⏸ Pause"}
           </button>
-          <button className="btn-ghost btn-sm" onClick={onQuit}>
+          <button
+            className="btn-ghost btn-sm"
+            onClick={() => {
+              // The Daily is one try a day: quitting uses it up, so ask first.
+              if (game.mode === "daily" && countdown.done && !game.over) {
+                pause();
+                setConfirmQuit(true);
+              } else onQuit();
+            }}
+          >
             ✕ Quit
           </button>
         </div>
@@ -343,7 +353,31 @@ export default function Round({ game, showKeys, hammer, theme, onDone, onQuit }:
             );
           })}
 
-          <RunOverlay countdown={countdown.label} paused={paused} onResume={resume} />
+          {confirmQuit ? (
+            <div className="wam-overlay">
+              <div className="wam-paused">
+                <strong>Quit the Daily?</strong>
+                <small>It's one try a day: quitting uses up today's try without a score.</small>
+                <div className="game-controls">
+                  <button className="btn-ghost" onClick={onQuit}>
+                    ✕ Quit
+                  </button>
+                  <button
+                    className="btn-green"
+                    autoFocus
+                    onClick={() => {
+                      setConfirmQuit(false);
+                      resume();
+                    }}
+                  >
+                    Keep playing
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <RunOverlay countdown={countdown.label} paused={paused} onResume={resume} />
+          )}
         </div>
       </div>
     </div>

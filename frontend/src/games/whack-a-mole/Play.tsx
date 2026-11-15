@@ -250,7 +250,12 @@ export default function Play() {
     return (
       <>
         {header}
-        <Results result={screen.result} grid={screen.grid} onAgain={() => void start()} onMenu={() => setScreen({ kind: "setup" })} />
+        <Results
+          result={screen.result}
+          grid={screen.grid}
+          onAgain={screen.result.mode === "daily" ? null : () => void start()}
+          onMenu={() => setScreen({ kind: "setup" })}
+        />
       </>
     );
   }

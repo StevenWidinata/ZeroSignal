@@ -19,7 +19,8 @@ export function heat(value: number, max: number): number {
 interface Props {
   result: WamFinish;
   grid: 3 | 4;
-  onAgain: () => void;
+  /** Null for the Daily (one try a day). */
+  onAgain: (() => void) | null;
   onMenu: () => void;
 }
 

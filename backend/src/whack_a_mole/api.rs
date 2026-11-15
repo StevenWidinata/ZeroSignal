@@ -57,12 +57,22 @@ pub async fn start(
     if req.grid != 3 && req.grid != 4 {
         return Err(AppError::Validation("grid must be 3 or 4".into()));
     }
-    // The Daily Challenge is the same 3x3 board for everyone.
-    let (seed, grid) = if mode == Mode::Daily {
+    // The Daily Challenge is the same 3x3 board for everyone, one try a day.
+    let (seed, grid, day) = if mode == Mode::Daily {
         let d = daily::wib_date(Utc::now());
-        (engine::daily_seed(d.year(), d.month(), d.day()), 3)
+        let played: bool = sqlx::query_scalar(
+            "SELECT EXISTS (SELECT 1 FROM wam_runs WHERE user_id = $1 AND mode = 'daily' AND day = $2)",
+        )
+        .bind(user.user_id)
+        .bind(d)
+        .fetch_one(&state.pool)
+        .await?;
+        if played {
+            return Err(AppError::Conflict("you already played today's Daily. Come back tomorrow!".into()));
+        }
+        (engine::daily_seed(d.year(), d.month(), d.day()), 3, Some(d))
     } else {
-        (rand::thread_rng().gen::<u32>(), req.grid)
+        (rand::thread_rng().gen::<u32>(), req.grid, None)
     };
 
     let cat = items::items();
@@ -77,7 +87,7 @@ pub async fn start(
     }
 
     let run_id: Uuid = sqlx::query_scalar(
-        "INSERT INTO wam_runs (user_id, mode, grid, seed, hammer, theme) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id",
+        "INSERT INTO wam_runs (user_id, mode, grid, seed, hammer, theme, day) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id",
     )
     .bind(user.user_id)
     .bind(mode.as_str())
@@ -85,8 +95,15 @@ pub async fn start(
     .bind(i64::from(seed))
     .bind(&hammer)
     .bind(&theme)
+    .bind(day)
     .fetch_one(&state.pool)
-    .await?;
+    .await
+    .map_err(|e| match &e {
+        sqlx::Error::Database(d) if d.is_unique_violation() => {
+            AppError::Conflict("you already played today's Daily. Come back tomorrow!".into())
+        }
+        _ => AppError::from(e),
+    })?;
 
     Ok(Json(StartResponse { run_id, seed, mode, grid }))
 }
