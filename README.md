@@ -15,6 +15,7 @@ A hub of fun browser games with a retro arcade UI and real, **server-verified le
 | Tic-Tac-Toe  | Live        | vs AI (Easy, Medium, unbeatable Hard) or vs a friend; boards, faces, your photo as a face |
 | Whack-a-Mole | Live        | 4 modes, 6 kinds of moles, combos and FEVER; the server replays every tap |
 | Minefield    | Live        | No-guess boards in 3 sizes + a Daily; the server keeps the mines |
+| 10 more      | Coming soon | Snake Signal, Brick Breaker, Signal Flap, Memory Match, Pixel Picross, Block Drop, Sudoku, Pong Online, Sonar, Checkers (see `/roadmap`) |
 | 2048         | Live        | Classic 4×4, Big 5×5, Tiny 3×3 + a Daily; saved as you play; the server replays every move |
 
 ## Features
@@ -455,6 +456,9 @@ zero_signal/
 Guests (`is_guest`) get **403** from account-only endpoints: wardrobe and presets, shop, mystery box, item wheel, daily login claim, quest claim/reroll, achievement claim, weekly prize claim and the photo upload.
 
 ## Adding a game
+
+Every game follows the **Game Kit** checklist in [`docs/GAME_KIT.md`](docs/GAME_KIT.md) (shared header, setup and results screens, Daily, quests, achievements, cosmetics, accessibility), so they all feel like one arcade. The `/roadmap` page lists live games, the 10 planned ones and ideas.
+
 
 1. Backend: add a `GameInfo` to `backend/src/games.rs` (`ComingSoon` first).
 2. Frontend: create `frontend/src/games/<id>/index.ts` exporting a `GameModule`, and add it to `GAMES` in `src/platform/registry.ts`. It appears on the hub as "coming soon"; its leaderboard already works.

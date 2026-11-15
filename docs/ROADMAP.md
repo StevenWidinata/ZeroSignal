@@ -293,7 +293,7 @@ Commits go to `main` step by step (each step live once tested); owner is the onl
   Tic-Tac-Toe between two devices via room code/link; server checks every
   move; polling/long-poll (Vercel has no sockets); forfeit after 2 min away;
   XP only (no coins); "Online" leaderboard by wins.
-- **F. Game Kit** (`feat/game-kit`): `docs/GAME_KIT.md` rules so every game
+- **F. Game Kit** (`feat/game-kit`, done): `docs/GAME_KIT.md` rules so every game
   feels the same; shared ModeSelect / ResultsPanel / GameHeader used by all
   games; "Coming soon" cards and a /roadmap page.
 - **Planned games:** Snake Signal, Brick Breaker, Signal Flap, Memory Match,
