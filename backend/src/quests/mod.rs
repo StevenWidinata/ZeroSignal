@@ -34,6 +34,9 @@ pub enum Event {
     /// A finished 2048 game (20+ moves): leaderboard points, biggest tile.
     Game2048 { points: i64, max_tile: i64 },
     MysteryBox,
+    /// A finished chess game vs Zero-Bot (`level` 1 Easy … 4 Master) or online (0).
+    ChessGame { level: i64, result: GameResult },
+    ChessPuzzleSolved,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -52,6 +55,9 @@ enum Goal {
     WhackGoldenHits,
     MinefieldWins { min_level: i64, no_hints: bool },
     Games2048,
+    ChessGames,
+    ChessWins { min_level: i64 },
+    ChessPuzzle,
     Tile2048(i64),
     Score2048(i64),
 }
@@ -102,6 +108,9 @@ impl QuestDef {
                 hit(level >= min_level && !(no_hints && hints > 0))
             }
             (Goal::Games2048, Game2048 { .. }) => 1,
+            (Goal::ChessGames, ChessGame { .. }) => 1,
+            (Goal::ChessWins { min_level }, ChessGame { level, result }) => hit(level >= min_level && result == GameResult::Win),
+            (Goal::ChessPuzzle, ChessPuzzleSolved) => 1,
             (Goal::Tile2048(min), Game2048 { max_tile, .. }) => hit(max_tile >= min),
             (Goal::Score2048(min), Game2048 { points, .. }) => hit(points >= min),
             _ => 0,
@@ -115,7 +124,7 @@ const fn q(id: &'static str, title: &'static str, goal: Goal, target: i32, coins
 
 use Game::{ConnectFour as CF, TicTacToe as TTT};
 
-pub const POOL: [QuestDef; 22] = [
+pub const POOL: [QuestDef; 25] = [
     q("cf_play_3", "Play 3 Connect Four games vs the AI", Goal::PlayAi(CF), 3, 20, 30),
     q("cf_win_2_medium", "Win 2 Connect Four games vs Medium or harder",
         Goal::WinAi { game: Some(CF), min_level: 2 }, 2, 40, 60),
@@ -143,6 +152,9 @@ pub const POOL: [QuestDef; 22] = [
     q("mf_no_hints", "Clear a Minefield board without hints",
         Goal::MinefieldWins { min_level: 1, no_hints: true }, 1, 30, 40),
     q("g2048_play_3", "Play 3 games of 2048", Goal::Games2048, 3, 20, 30),
+    q("chess_play_3", "Finish 3 chess games", Goal::ChessGames, 3, 20, 30),
+    q("chess_win_medium", "Beat Zero-Bot at chess on Medium or harder", Goal::ChessWins { min_level: 2 }, 1, 40, 60),
+    q("chess_puzzle", "Solve today's chess puzzle", Goal::ChessPuzzle, 1, 30, 40),
     q("g2048_tile_512", "Make a 512 tile in 2048", Goal::Tile2048(512), 1, 40, 60),
     q("g2048_score_10000", "Score 10,000 in one game of 2048", Goal::Score2048(10_000), 1, 40, 60),
 ];
@@ -253,6 +265,17 @@ mod tests {
         assert_eq!(quest("mf_no_hints").progress(&win(2, 1)), 0);
         assert_eq!(quest("mf_no_hints").progress(&win(1, 0)), 1);
         assert_eq!(quest("wam_play_3").progress(&win(1, 0)), 0);
+    }
+
+    #[test]
+    fn chess_quests() {
+        let game = |level, result| Event::ChessGame { level, result };
+        assert_eq!(quest("chess_play_3").progress(&game(1, GameResult::Loss)), 1);
+        assert_eq!(quest("chess_win_medium").progress(&game(1, GameResult::Win)), 0);
+        assert_eq!(quest("chess_win_medium").progress(&game(3, GameResult::Win)), 1);
+        assert_eq!(quest("chess_win_medium").progress(&game(4, GameResult::Draw)), 0);
+        assert_eq!(quest("chess_puzzle").progress(&Event::ChessPuzzleSolved), 1);
+        assert_eq!(quest("chess_puzzle").progress(&game(4, GameResult::Win)), 0);
     }
 
     #[test]

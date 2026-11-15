@@ -164,6 +164,14 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/rooms/:code/emote", post(online::api::emote))
         .route("/api/rooms/:code/leave", post(online::api::leave))
         .route("/api/rooms/:code/rematch", post(online::api::rematch))
+        // Chess vs Zero-Bot: the server checks every move and replies.
+        .route("/api/games/chess/games", post(chess::api::create))
+        .route("/api/games/chess/games/active", get(chess::api::active))
+        .route("/api/games/chess/games/:id/move", post(chess::api::make_move))
+        .route("/api/games/chess/games/:id/undo", post(chess::api::undo))
+        .route("/api/games/chess/games/:id/resign", post(chess::api::resign))
+        .route("/api/games/chess/collection", get(chess::api::collection))
+        .route("/api/games/chess/buy", post(chess::api::buy))
         .route("/api/games/connect-four/skins", get(cf::list_skins))
         .route("/api/games/connect-four/spins", post(cf::spin))
         // Legacy aliases (Sling Squad) for older clients.

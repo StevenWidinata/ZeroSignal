@@ -6,6 +6,7 @@
 
 pub mod ai;
 pub mod api;
+pub mod items;
 pub mod puzzles;
 
 use cozy_chess::util::{display_san_move, display_uci_move, parse_uci_move};

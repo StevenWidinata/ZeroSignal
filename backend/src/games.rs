@@ -89,6 +89,13 @@ pub const GAMES: &[GameInfo] = &[
         // Classic, Big, Tiny (not the Daily board).
         prize_boards: &[1, 2, 3],
     },
+    GameInfo {
+        id: "chess",
+        title: "Chess",
+        status: GameStatus::ComingSoon,
+        ranking: Ranking::Total,
+        prize_boards: &[],
+    },
     // Planned (docs/ROADMAP.md, docs/GAME_KIT.md): shown as "Coming soon".
     GameInfo {
         id: "snake-signal",

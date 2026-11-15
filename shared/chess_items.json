@@ -1,0 +1,26 @@
+{
+  "boards": [
+    { "id": "classic", "name": "Classic Green", "rarity": "common", "price": null, "art": { "light": "#eeeed2", "dark": "#769656", "border": "#4b6b33", "style": "plain" } },
+    { "id": "wood", "name": "Wood", "rarity": "common", "price": null, "art": { "light": "#f0d9b5", "dark": "#b58863", "border": "#7a5230", "style": "wood" } },
+    { "id": "ocean", "name": "Ocean", "rarity": "common", "price": null, "art": { "light": "#dceefc", "dark": "#4a7fb5", "border": "#2c5580", "style": "plain" } },
+    { "id": "slate", "name": "Slate", "rarity": "common", "price": null, "art": { "light": "#dee3e6", "dark": "#8ca2ad", "border": "#5b6f7a", "style": "plain" } },
+    { "id": "sakura", "name": "Sakura", "rarity": "common", "price": null, "art": { "light": "#fde2e4", "dark": "#e08ea3", "border": "#a85a70", "style": "plain" } },
+    { "id": "mint", "name": "Mint", "rarity": "common", "price": null, "art": { "light": "#e8f8f0", "dark": "#5cb88a", "border": "#357a57", "style": "plain" } },
+    { "id": "marble", "name": "Marble", "rarity": "rare", "price": 200, "art": { "light": "#f4f4f4", "dark": "#a0a0a0", "border": "#5e5e5e", "style": "marble" } },
+    { "id": "candy", "name": "Candy", "rarity": "rare", "price": 250, "art": { "light": "#ffe4f1", "dark": "#c98bdb", "border": "#8a4fa0", "style": "candy" } },
+    { "id": "pixel", "name": "Pixel", "rarity": "rare", "price": 300, "art": { "light": "#c4cf8a", "dark": "#5e7f2e", "border": "#2f4a12", "style": "pixel" } },
+    { "id": "neon", "name": "Neon", "rarity": "epic", "price": 300, "art": { "light": "#1d2b4f", "dark": "#121a33", "border": "#00e5ff", "style": "neon" } },
+    { "id": "midnight", "name": "Midnight", "rarity": "epic", "price": 400, "art": { "light": "#3a3f63", "dark": "#1c1f38", "border": "#9b8cff", "style": "plain" } },
+    { "id": "gold", "name": "Golden Throne", "rarity": "legendary", "price": 1200, "art": { "light": "#fff4c2", "dark": "#c8a13a", "border": "#7a5a10", "style": "gold" } }
+  ],
+  "pieces": [
+    { "id": "classic", "name": "Classic", "rarity": "common", "price": null, "art": { "kind": "glyph", "style": "classic" } },
+    { "id": "outline", "name": "Outline", "rarity": "common", "price": null, "art": { "kind": "glyph", "style": "outline" } },
+    { "id": "pixel", "name": "Pixel Art", "rarity": "common", "price": null, "art": { "kind": "pixel" } },
+    { "id": "animals", "name": "Animals", "rarity": "common", "price": null, "art": { "kind": "emoji", "k": "🦁", "q": "🦄", "r": "🐘", "b": "🦉", "n": "🐴", "p": "🐣" } },
+    { "id": "neon", "name": "Neon", "rarity": "rare", "price": 300, "art": { "kind": "glyph", "style": "neon" } },
+    { "id": "candy", "name": "Candy", "rarity": "rare", "price": 250, "art": { "kind": "glyph", "style": "candy" } },
+    { "id": "space", "name": "Space", "rarity": "epic", "price": 400, "art": { "kind": "emoji", "k": "🪐", "q": "🌟", "r": "🛸", "b": "☄️", "n": "🚀", "p": "👾" } },
+    { "id": "food", "name": "Food", "rarity": "epic", "price": 400, "art": { "kind": "emoji", "k": "🎂", "q": "🍰", "r": "🧁", "b": "🍦", "n": "🍩", "p": "🍬" } }
+  ]
+}
