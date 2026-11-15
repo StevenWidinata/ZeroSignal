@@ -2,10 +2,7 @@ import type { WamFinish } from "../../api/types";
 import { KINDS } from "./engine";
 import { itemName } from "./items";
 import Mole, { KIND_LABEL } from "./Mole";
-import { SaveScorePrompt } from "../../components/Guest";
-import { MyReaction } from "../../character/Live";
-
-const fmt = (n: number) => n.toLocaleString();
+import ResultsCard from "../../components/run/ResultsCard";
 
 /** Accuracy in %: hits out of every counted tap. */
 export function accuracy(hits: number, misses: number): number {
@@ -34,26 +31,26 @@ export default function Results({ result, grid, onAgain, onMenu }: Props) {
   const survival = result.mode === "survival";
 
   return (
-    <div className="panel wam-results">
-      <MyReaction pose={result.new_best || s.fever ? "cheer" : "wave"} />
-      <div className="wam-results-head">
-        <small>{survival ? `Survived ${(s.ended_ms / 1000).toFixed(1)}s` : "Final score"}</small>
-        <strong className="wam-final">{fmt(s.score)}</strong>
-        {result.new_best ? (
-          <span className="tag tag-yellow wam-best">★ New best!</span>
-        ) : (
-          result.previous_best > 0 && <span className="tag">Best: {fmt(result.previous_best)}</span>
-        )}
-        {s.fever && <span className="tag tag-blue">🔥 FEVER reached</span>}
-        {s.bosses_beaten > 0 && <span className="tag">👑 {s.bosses_beaten} boss{s.bosses_beaten > 1 ? "es" : ""} knocked out</span>}
-      </div>
-
-      {result.drop && (
-        <div className="wam-drop" role="status">
-          🎁 <strong>Lucky drop!</strong> You got the <strong>{itemName(result.drop)}</strong>. Pick it on the setup screen.
-        </div>
-      )}
-
+    <ResultsCard
+      pose={result.new_best || s.fever ? "cheer" : "wave"}
+      label={survival ? `Survived ${(s.ended_ms / 1000).toFixed(1)}s` : "Final score"}
+      score={s.score}
+      newBest={result.new_best}
+      previousBest={result.previous_best}
+      tags={
+        <>
+          {s.fever && <span className="tag tag-blue">🔥 FEVER reached</span>}
+          {s.bosses_beaten > 0 && (
+            <span className="tag">
+              👑 {s.bosses_beaten} boss{s.bosses_beaten > 1 ? "es" : ""} knocked out
+            </span>
+          )}
+        </>
+      }
+      drop={result.drop ? itemName(result.drop) : null}
+      onAgain={onAgain}
+      onMenu={onMenu}
+    >
       <dl className="wam-stats">
         <div>
           <dt>Accuracy</dt>
@@ -109,17 +106,6 @@ export default function Results({ result, grid, onAgain, onMenu }: Props) {
           </div>
         </section>
       </div>
-
-      <SaveScorePrompt />
-
-      <div className="game-controls">
-        <button className="btn-green" onClick={onAgain} autoFocus>
-          ↻ Play again
-        </button>
-        <button className="btn-ghost" onClick={onMenu}>
-          Change mode
-        </button>
-      </div>
-    </div>
+    </ResultsCard>
   );
 }

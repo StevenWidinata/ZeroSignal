@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { WamTap } from "../../api/types";
 import Avatar from "../../character/Avatar";
+import { RunOverlay, useCountdown } from "../../components/run/Countdown";
 import { useGuardWhile } from "../../platform/leaveGuard";
+import { useRunClock } from "../../platform/runClock";
 import { playSfx } from "../../platform/sound";
 import { useCharacter } from "../../store/character";
 import { useSettings, vibrate } from "../../store/settings";
@@ -31,24 +33,17 @@ interface Props {
   onQuit: () => void;
 }
 
-const COUNTDOWN = ["3", "2", "1", "GO!"];
-
 /** One live round: countdown, game clock, taps, HUD. */
 export default function Round({ game, showKeys, hammer, theme, onDone, onQuit }: Props) {
   const keyOverrides = useSettings((s) => s.keys);
   const grid = game.grid as 3 | 4;
   const hammerArt = findHammer(hammer).art;
   const themeArt = findTheme(theme).art;
-  const [count, setCount] = useState(0); // index into COUNTDOWN; >= length = playing
   const [, setFrame] = useState(0);
-  const [paused, setPaused] = useState(false);
   const [pops, setPops] = useState<Pop[]>([]);
   const [shake, setShake] = useState(0);
   const [whacked, setWhacked] = useState<Record<number, Kind>>({});
   const [mood, setMood] = useState<Mood>("idle");
-  // Game clock: real time, at half speed while Slow-mo is on, frozen while paused.
-  const clock = useRef<{ game: number; real: number | null }>({ game: 0, real: null });
-  const pausedRef = useRef(false);
   const taps = useRef<WamTap[]>([]);
   const lastT = useRef(0);
   const done = useRef(false);
@@ -57,25 +52,21 @@ export default function Round({ game, showKeys, hammer, theme, onDone, onQuit }:
   const boardRef = useRef<HTMLDivElement>(null);
   const onDoneRef = useRef(onDone);
   onDoneRef.current = onDone;
-  const playing = count >= COUNTDOWN.length && !paused;
+  // Game clock: real time, at half speed while Slow-mo is on, frozen while paused.
+  const { now, start, pause, resume, paused } = useRunClock(
+    (t) => (t < game.slowUntil ? 0.5 : 1),
+    () => done.current,
+  );
+  const countdown = useCountdown(start);
+  const playing = countdown.done && !paused;
   const shakeOn = useSettings((s) => s.screenShake);
   const loadout = useCharacter((s) => s.view?.loadout);
   const loadCharacter = useCharacter((s) => s.load);
-  useGuardWhile("whack-a-mole", count >= COUNTDOWN.length && !game.over);
+  useGuardWhile("whack-a-mole", countdown.done && !game.over);
 
   useEffect(() => {
     if (!loadout) void loadCharacter();
   }, [loadout, loadCharacter]);
-
-  const now = useCallback(() => {
-    const c = clock.current;
-    if (c.real === null || pausedRef.current) return Math.round(c.game);
-    const r = performance.now();
-    const rate = c.game < game.slowUntil ? 0.5 : 1;
-    c.game += (r - c.real) * rate;
-    c.real = r;
-    return Math.round(c.game);
-  }, [game]);
 
   const react = useCallback((m: Mood, ms = 700) => {
     window.clearTimeout(moodTimer.current);
@@ -87,17 +78,6 @@ export default function Round({ game, showKeys, hammer, theme, onDone, onQuit }:
   useEffect(() => {
     boardRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
   }, []);
-
-  // Countdown, then start the clock.
-  useEffect(() => {
-    if (count >= COUNTDOWN.length) return;
-    playSfx(count === COUNTDOWN.length - 1 ? "win" : "tick");
-    const id = window.setTimeout(() => {
-      if (count === COUNTDOWN.length - 1) clock.current.real = performance.now();
-      setCount((c) => c + 1);
-    }, count === COUNTDOWN.length - 1 ? 450 : 700);
-    return () => window.clearTimeout(id);
-  }, [count]);
 
   // Game loop: let moles escape, redraw, notice the end.
   useEffect(() => {
@@ -123,26 +103,6 @@ export default function Round({ game, showKeys, hammer, theme, onDone, onQuit }:
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
   }, [playing, game, now, react]);
-
-  // Pause when the tab is hidden (pausing only makes the round take longer,
-  // which the server allows).
-  const pause = useCallback(() => {
-    if (clock.current.real === null || pausedRef.current || done.current) return;
-    now();
-    pausedRef.current = true;
-    setPaused(true);
-  }, [now]);
-  const resume = useCallback(() => {
-    if (!pausedRef.current) return;
-    clock.current.real = performance.now();
-    pausedRef.current = false;
-    setPaused(false);
-  }, []);
-  useEffect(() => {
-    const onVis = () => document.hidden && pause();
-    document.addEventListener("visibilitychange", onVis);
-    return () => document.removeEventListener("visibilitychange", onVis);
-  }, [pause]);
 
   const addPop = useCallback((hole: number, text: string, tone: Pop["tone"], ms = 650) => {
     const id = ++popId.current;
@@ -294,7 +254,7 @@ export default function Round({ game, showKeys, hammer, theme, onDone, onQuit }:
           {game.shields > 0 && <span className="wam-power">🛡️×{game.shields}</span>}
         </div>
         <div className="wam-hud-btns">
-          <button className="btn-ghost btn-sm" onClick={paused ? resume : pause} disabled={!(count >= COUNTDOWN.length)}>
+          <button className="btn-ghost btn-sm" onClick={paused ? resume : pause} disabled={!countdown.done}>
             {paused ? "▶ Resume" : "⏸ Pause"}
           </button>
           <button className="btn-ghost btn-sm" onClick={onQuit}>
@@ -383,23 +343,7 @@ export default function Round({ game, showKeys, hammer, theme, onDone, onQuit }:
             );
           })}
 
-          {count < COUNTDOWN.length && (
-            <div className="wam-overlay" aria-live="assertive">
-              <span key={count} className="wam-count">
-                {COUNTDOWN[count]}
-              </span>
-            </div>
-          )}
-          {paused && (
-            <div className="wam-overlay">
-              <div className="wam-paused">
-                <strong>Paused</strong>
-                <button className="btn-green" onClick={resume}>
-                  ▶ Resume
-                </button>
-              </div>
-            </div>
-          )}
+          <RunOverlay countdown={countdown.label} paused={paused} onResume={resume} />
         </div>
       </div>
     </div>

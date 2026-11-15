@@ -2,8 +2,7 @@ import type { G2048Finish } from "../../api/types";
 import { TENTHS } from "./engine";
 import { MODE_INFO } from "./modes";
 import { digitsClass, formatPlayTime, tileClass } from "./tiles";
-import { SaveScorePrompt } from "../../components/Guest";
-import { MyReaction } from "../../character/Live";
+import ResultsCard from "../../components/run/ResultsCard";
 
 const fmt = (n: number) => n.toLocaleString();
 
@@ -21,25 +20,29 @@ export default function Results({ result, playMs, onAgain, onMenu }: Props) {
   const mult = TENTHS[result.mode] / 10;
 
   return (
-    <div className="panel wam-results">
-      <MyReaction pose={result.new_best || s.max_tile >= 2048 ? "cheer" : "wave"} />
-      <div className="wam-results-head">
-        <small>
+    <ResultsCard
+      pose={result.new_best || s.max_tile >= 2048 ? "cheer" : "wave"}
+      label={
+        <>
           {MODE_INFO[result.mode].icon} {MODE_INFO[result.mode].name} · {s.game_over ? "No moves left" : "Ended early"}
-        </small>
-        <strong className="wam-final">{fmt(s.points)}</strong>
-        {result.new_best ? (
-          <span className="tag tag-yellow wam-best">★ New best!</span>
-        ) : (
-          result.previous_best > 0 && <span className="tag">Best: {fmt(result.previous_best)}</span>
-        )}
-        {s.max_tile >= 2048 && <span className="tag tag-blue">🏆 {fmt(s.max_tile)} reached</span>}
-        {mult !== 1 && (
-          <small>
-            {fmt(s.score)} merge points × {mult} ({MODE_INFO[result.mode].name})
-          </small>
-        )}
-      </div>
+        </>
+      }
+      score={s.points}
+      newBest={result.new_best}
+      previousBest={result.previous_best}
+      tags={
+        <>
+          {s.max_tile >= 2048 && <span className="tag tag-blue">🏆 {fmt(s.max_tile)} reached</span>}
+          {mult !== 1 && (
+            <small>
+              {fmt(s.score)} merge points × {mult} ({MODE_INFO[result.mode].name})
+            </small>
+          )}
+        </>
+      }
+      onAgain={onAgain}
+      onMenu={onMenu}
+    >
 
       <div className="g2048-best">
         <span className="wam-hint">Biggest tile</span>
@@ -63,18 +66,6 @@ export default function Results({ result, playMs, onAgain, onMenu }: Props) {
         </div>
       </dl>
       {s.moves < 20 && <p className="wam-hint">Games shorter than 20 moves don't pay rewards or count for quests.</p>}
-      <SaveScorePrompt />
-
-      <div className="game-controls">
-        {onAgain && (
-          <button className="btn-green" onClick={onAgain} autoFocus>
-            ↻ Play again
-          </button>
-        )}
-        <button className={onAgain ? "btn-ghost" : "btn-green"} onClick={onMenu} autoFocus={!onAgain}>
-          Change mode
-        </button>
-      </div>
-    </div>
+    </ResultsCard>
   );
 }
