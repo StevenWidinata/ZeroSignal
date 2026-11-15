@@ -24,6 +24,5 @@ export const UPCOMING: GameModule[] = [
   soon("block-drop", "Block Drop", "🟪", "yellow", "Stack falling blocks and clear lines. The server replays it.", ["Puzzle", "Solo", "Replay"]),
   soon("sudoku", "Sudoku", "🔢", "green", "The classic number puzzle, with a fresh Daily.", ["Logic", "Solo", "Daily"]),
   soon("pong-online", "Pong Online", "🏓", "blue", "Paddles, a ball and a friend on another device.", ["Online", "2 players"]),
-  soon("sonar", "Sonar", "🚢", "yellow", "Hide your fleet, ping the grid, sink theirs first.", ["Strategy", "Online"]),
   soon("checkers", "Checkers", "⚫", "green", "Jump, crown and clear the board vs the AI or a friend.", ["Strategy", "AI", "Online"]),
 ];

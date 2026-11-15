@@ -156,7 +156,7 @@ pub const GAMES: &[GameInfo] = &[
     GameInfo {
         id: "sonar",
         title: "Sonar",
-        status: GameStatus::ComingSoon,
+        status: GameStatus::Live,
         ranking: Ranking::Total,
         prize_boards: &[],
     },

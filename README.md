@@ -17,7 +17,8 @@ A hub of fun browser games with a retro arcade UI and real, **server-verified le
 | Minefield    | Live        | No-guess boards in 3 sizes + a Daily; the server keeps the mines |
 | 2048         | Live        | Classic 4×4, Big 5×5, Tiny 3×3 + a Daily; saved as you play; the server replays every move |
 | Chess        | Live        | vs Zero-Bot (4 levels), online vs a friend, same device, a Daily "mate in 2"; 12 boards and 8 piece sets |
-| 10 more      | Coming soon | Snake Signal, Brick Breaker, Signal Flap, Memory Match, Pixel Picross, Block Drop, Sudoku, Pong Online, Sonar, Checkers (see `/roadmap`) |
+| Sonar        | Live        | Battleship-style with sonar pings: vs Zero-Bot (4 levels), online, same device and a Daily Hunt; 8 fleets and 8 seas |
+| 9 more       | Coming soon | Snake Signal, Brick Breaker, Signal Flap, Memory Match, Pixel Picross, Block Drop, Sudoku, Pong Online, Checkers (see `/roadmap`) |
 
 ## Features
 
@@ -128,9 +129,19 @@ A slingshot physics game with its own cast: **Pip** (balanced), **Zip** (dash), 
 - **Looks:** 12 board styles (6 free: Classic Green, Wood, Ocean, Slate, Sakura, Mint) and 8 piece sets (4 free: Classic, Outline, Pixel Art, Animals; paid: Neon, Candy, Space, Food), all drawn in code; try them on in the shop.
 - **Fast:** chess and `chess.js` load only on the chess page (about 25 kB gzipped).
 
+## Sonar
+
+- **Rules:** a 10×10 grid and a fleet of 5 ships (Carrier 5, Battleship 4, Cruiser 3, Submarine 3, Destroyer 2) in straight lines that **can't touch, not even corner to corner**. Players take turns: one shot per turn answers miss, hit or sunk; a sunk ship shows with the water around it. Each player also has **2 sonar pings**: instead of firing, ping a square to learn how many ship squares are in the 3×3 area around it.
+- **Modes:** 🤖 vs **Zero-Bot** (Easy fires all over, Medium hunts around hits, Hard keeps a map of where ships can still be, Master adds clever pings), 📅 **Daily Hunt** (the same hidden fleet for everyone each WIB day; sink it in as few shots as you can, pings count as shots, one try), 🌐 **Online** (rooms, below) and 👥 **Same device** (each player hides a fleet, then a cover screen hides the boards between turns).
+- **Fair play:** the server keeps every fleet secret (Zero-Bot's, the Daily fleet and both online fleets) and only sends what you've found; the rules are shared by Rust and TypeScript and checked against the same test vectors (`shared/sonar_rules.json`, `shared/sonar_vectors.json`).
+- **Placing ships:** tap a ship then a square, tap or drag a placed ship to move it, R to turn it, or **Shuffle**. Keys: arrows + Enter/Space to fire, P for ping mode (rebindable in Settings → Controls).
+- **Rewards vs Zero-Bot:** win 6 / 15 / 30 / 60 coins (Easy → Master) with a 5–40% token chance, XP for every finished game, and a 20% **lucky drop** of a fleet or sea after a win vs Hard or Master. Daily Hunt: 40 coins for 30 shots or fewer, 25 for 45 or fewer, else 15. Online games pay XP only.
+- **Leaderboard:** all points added up (a win = 10 × level, +5 if you lost no ship; a Daily Hunt = 101 − shots), plus a **Today's hunt** board.
+- **Looks:** 8 fleets (free: Navy, Submarine, Rubber Ducks, Pixel; paid: Pirate, Candy, Neon, Space) and 8 seas (free: Ocean, Lagoon, Arctic, Night; paid: Sunset, Lava, Deep Space, Treasure Gold), all drawn in code. Sonar loads only on its page (about 12 kB gzipped).
+
 ## Online play (two devices)
 
-Connect Four, Tic-Tac-Toe and chess can be played against a friend on another phone or laptop: pick **🌐 Online** in the game's menu, **Create room** (best of 1, 3 or 5) and send the 6-character code or the invite link (`/play/<game>?room=CODE`). Guests can play too.
+Connect Four, Tic-Tac-Toe, chess and Sonar can be played against a friend on another phone or laptop: pick **🌐 Online** in the game's menu, **Create room** (best of 1, 3 or 5) and send the 6-character code or the invite link (`/play/<game>?room=CODE`). Guests can play too.
 
 - **The server checks every move** with the same rules as the AI games and only accepts a move from the player whose turn it is. Players move first in turn, game by game.
 - **No sockets needed:** each screen asks the server for news and the server holds the request up to 20 seconds, so the other player's move shows up within about a second (this works on Vercel).
@@ -140,7 +151,9 @@ Connect Four, Tic-Tac-Toe and chess can be played against a friend on another ph
 
 Chess rooms: whoever moves first in a game plays White (so colours swap game by game), moves are sent as UCI, either player can **offer a draw** (it lapses when the other player moves), and **Resign & leave** gives the series to the friend. Chess rooms default to one game.
 
-API: `POST /api/rooms` `{game, best_of}`, `POST /api/rooms/:code/{join,move,next,emote,leave,rematch}` (chess moves: `{uci}`), `POST /api/rooms/:code/draw` `{action: offer|accept|decline}`, `GET /api/rooms/:code?since=<version>` (waits up to 20 s for a newer version), `GET /api/rooms/leaderboard?game=`.
+Sonar rooms: both players hide a fleet first (the server never sends one player's fleet to the other until the game ends), then take turns firing or pinging; whoever moves first that game fires first. Sonar rooms default to one game too.
+
+API: `POST /api/rooms` `{game, best_of}`, `POST /api/rooms/:code/{join,move,next,emote,leave,rematch}` (chess moves: `{uci}`; Sonar: `{cell, ping}`), `POST /api/rooms/:code/draw` `{action: offer|accept|decline}`, `POST /api/rooms/:code/fleet` `{fleet}` (Sonar), `GET /api/rooms/:code?since=<version>` (waits up to 20 s for a newer version), `GET /api/rooms/leaderboard?game=`.
 
 ## Coins, tokens and levels
 
@@ -170,7 +183,7 @@ A pop-up offers the reward when you open the site. Claim once per day (days star
 
 ### Daily quests
 
-Every day (00:00 WIB) you get 3 different random quests, shown on the Hub and on the **Quests** page (`/quests`). The nav shows a badge when one is ready to claim. Only results the server verified count: AI games, Sling Squad, Whack-a-Mole, Minefield, 2048 and chess results (vs Zero-Bot and the Daily puzzle), and mystery boxes. Local 2-player games don't count.
+Every day (00:00 WIB) you get 3 different random quests, shown on the Hub and on the **Quests** page (`/quests`). The nav shows a badge when one is ready to claim. Only results the server verified count: AI games, Sling Squad, Whack-a-Mole, Minefield, 2048, chess and Sonar results (vs Zero-Bot, the Daily puzzle and the Daily Hunt), and mystery boxes. Local 2-player games don't count.
 
 - Press **Claim** on a finished quest to get its coins + XP. Claiming all 3 pays a bonus **1 token**.
 - **Reroll:** once per day, swap one unfinished quest for a new random one.
@@ -202,10 +215,13 @@ Every day (00:00 WIB) you get 3 different random quests, shown on the Hub and on
 | Finish 3 chess games | 20 | 30 |
 | Beat Zero-Bot at chess on Medium or harder | 40 | 60 |
 | Solve today's chess puzzle | 30 | 40 |
+| Finish 3 Sonar games vs Zero-Bot | 20 | 30 |
+| Beat Zero-Bot at Sonar on Medium or harder | 40 | 60 |
+| Finish today's Sonar Daily Hunt | 30 | 40 |
 
 ## Achievements
 
-The `/achievements` page lists 44 one-time achievements with progress bars; locked ones are visible too. The server works out progress from results it already verified (matches, scores, the coin ledger, owned items, login and quest history), so progress made before achievements existed counts as well. Press **Claim** to get the coins, the same amount of XP, and a **title** to wear. Achievement coins don't count toward the daily cap. Claimed achievements show on your public profile.
+The `/achievements` page lists 48 one-time achievements with progress bars; locked ones are visible too. The server works out progress from results it already verified (matches, scores, the coin ledger, owned items, login and quest history), so progress made before achievements existed counts as well. Press **Claim** to get the coins, the same amount of XP, and a **title** to wear. Achievement coins don't count toward the daily cap. Claimed achievements show on your public profile.
 
 | Achievement | Coins | Title |
 |-------------|-------|-------|
@@ -249,6 +265,10 @@ The `/achievements` page lists 44 one-time achievements with progress bars; lock
 | Beat Zero-Bot on Master in chess | 300 | Grandmaster |
 | Solve the Daily chess puzzle 7 days in a row | 150 | Puzzle Sage |
 | Checkmate Zero-Bot in under 20 of your moves | 120 | Lightning Mate |
+| Sink Zero-Bot's whole fleet in Sonar | 30 | Sea Legs |
+| Beat Zero-Bot on Master in Sonar | 300 | Fleet Admiral |
+| Finish a Sonar Daily Hunt in 30 shots or fewer | 120 | Eagle Eye |
+| Beat Zero-Bot on Medium or harder in Sonar without losing a ship | 150 | Untouchable |
 
 ### Title looks
 
@@ -385,6 +405,7 @@ zero_signal/
 │   ├── character_items.json    # character slots + items (read by backend AND frontend)
 │   ├── chess_items.json        # chess boards + piece sets
 │   ├── chess_puzzles.json      # 180 checked "mate in 2" daily puzzles
+│   ├── sonar_rules.json        # Sonar grid, fleet and pings (+ sonar_vectors.json, sonar_items.json)
 │   └── tic_tac_toe_items.json  # boards + faces (read by backend AND frontend)
 ├── backend/                    # Rust + Axum API
 │   ├── migrations/             # sqlx SQL migrations
@@ -395,8 +416,9 @@ zero_signal/
 │       ├── daily.rs            # WIB (UTC+7) day boundary for everything daily
 │       ├── daily_login.rs      # 7-day login streak reward
 │       ├── quests/             # daily quest pool, progress hooks, claim/reroll API
-│       ├── achievements.rs     # 44 achievements, live progress, claim + titles
+│       ├── achievements.rs     # 48 achievements, live progress, claim + titles
 │       ├── chess/              # rules (cozy-chess), Zero-Bot AI, games API, items, daily puzzles
+│       ├── sonar/              # rules, Zero-Bot (probability map + pings), games API, Daily Hunt, items
 │       ├── character/          # item catalog, outfits, presets, shop, profiles
 │       ├── tic_tac_toe/        # rules, perfect AI, matches, boards/faces, photo
 │       ├── whack_a_mole/       # seeded mole schedule, tap replay scorer, runs API
@@ -435,7 +457,7 @@ zero_signal/
 | GET  | `/api/me/quests` | today's 3 quests, progress, reroll and bonus status (auth) |
 | POST | `/api/me/quests/:slot/claim` | claim a finished quest; the 3rd claim adds the bonus token (auth) |
 | POST | `/api/me/quests/:slot/reroll` | swap one unfinished quest, once per day (auth) |
-| GET  | `/api/me/achievements` | all 44 achievements with live progress (auth) |
+| GET  | `/api/me/achievements` | all 48 achievements with live progress (auth) |
 | POST | `/api/me/achievements/:id/claim` | claim an unlocked achievement: coins + XP + title (auth) |
 | GET  | `/api/me/character` | outfit, owned items, presets, wallet (auth) |
 | PUT  | `/api/me/character/loadout` | wear an outfit (server checks ownership) (auth) |
@@ -452,7 +474,7 @@ zero_signal/
 | POST | `/api/games/tic-tac-toe/spins` | spend a reward spin (auth) |
 | GET/PUT/DELETE | `/api/me/photo` | your private photo face (raw image body) (auth) |
 | GET  | `/api/games` | catalog |
-| GET  | `/api/games/:id/leaderboard` | top 20 for that game; `?period=` `all`, `today`, `week` or `last_week`; `?level=` picks one board (Whack-a-Mole: 1 Classic, 2 Frenzy, 3 Survival, 4 Daily; Minefield: 1 Beginner, 2 Intermediate, 3 Expert, 4 Daily; 2048: 1 Classic, 2 Big, 3 Tiny, 4 Daily; chess: 5 Daily puzzle), `period=today` keeps today only; entries may carry a `detail` (2048: biggest tile) |
+| GET  | `/api/games/:id/leaderboard` | top 20 for that game; `?period=` `all`, `today`, `week` or `last_week`; `?level=` picks one board (Whack-a-Mole: 1 Classic, 2 Frenzy, 3 Survival, 4 Daily; Minefield: 1 Beginner, 2 Intermediate, 3 Expert, 4 Daily; 2048: 1 Classic, 2 Big, 3 Tiny, 4 Daily; chess: 5 Daily puzzle; Sonar: 5 Daily Hunt), `period=today` keeps today only; entries may carry a `detail` (2048: biggest tile) |
 | GET  | `/api/games/:id/scores/me` | your history (auth) |
 | POST | `/api/games/sling-squad/scores` | shot inputs only; server computes score (auth) |
 | GET  | `/api/games/sling-squad/birds` | bird catalog + unlocks |
@@ -477,6 +499,14 @@ zero_signal/
 | POST | `/api/games/chess/buy` | `{kind: board|pieces, id}` buy with coins (auth) |
 | GET  | `/api/games/chess/puzzle` | today's puzzle and your try (auth) |
 | POST | `/api/games/chess/puzzle/move` | `{uci}`; right → Zero-Bot's reply or solved; wrong → costs a try (auth) |
+| POST | `/api/games/sonar/games` | `{level, fleet, fleet_skin, sea}` start a battle vs Zero-Bot (gives up an unfinished one) (auth) |
+| GET  | `/api/games/sonar/games/active` | your unfinished battle, or null (auth) |
+| POST | `/api/games/sonar/games/:id/fire` | `{cell, ping?}`; your result, then Zero-Bot's move (auth) |
+| POST | `/api/games/sonar/games/:id/resign` | give up (auth) |
+| GET  | `/api/games/sonar/collection` | fleets and seas with ownership (auth) |
+| POST | `/api/games/sonar/buy` | `{kind: fleet|sea, id}` buy with coins (auth) |
+| GET  | `/api/games/sonar/daily` | today's Daily Hunt and your shots (auth) |
+| POST | `/api/games/sonar/daily/fire` | `{cell, ping?}` one shot or ping at today's fleet (auth) |
 | POST | `/api/games/connect-four/matches` | start an AI series `{difficulty, best_of, skin}` (auth) |
 | GET  | `/api/games/connect-four/matches/active` | resume your unfinished series (auth) |
 | POST | `/api/games/connect-four/matches/:id/move` | `{column}`; server replies with the AI move (auth) |

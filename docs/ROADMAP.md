@@ -339,6 +339,19 @@ Commits go to `main` step by step (each step live once tested); owner is the onl
   offers (resigning online = leaving the room, so it ends the series);
   chess loads only on its page (~25 kB gzipped).
 
+### Sonar (`feat/sonar`; agreed and done 2026-11-15, live)
+- **Rules:** 10×10, fleet 5-4-3-3-2, ships can't touch, one shot per turn,
+  2 sonar pings each (count ship squares in a 3×3). Rules shared by Rust and
+  TypeScript with shared test vectors.
+- **Modes:** vs Zero-Bot (Easy / Medium / Hard probability map / Master with
+  smart pings), Daily Hunt (same hidden fleet for everyone, fewest shots
+  wins, one try), online rooms with secret fleets, same device with a cover
+  screen between turns.
+- **Rewards:** vs Zero-Bot coins + XP by level, lucky drops on Hard+ wins;
+  Daily Hunt coins by shots; online XP only. 3 quests, 4 achievements
+  (First Splash, Fleet Admiral, Eagle Eye, Untouchable).
+- **Looks:** 8 fleets and 8 seas (4 free each). Loads only on its page.
+
 ## Phase 3b (planned)
 
 - Weekly leaderboards (reset each week, all-time board stays) — done.
