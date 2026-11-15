@@ -1,4 +1,8 @@
 import type {
+  SonarCollection,
+  SonarDaily,
+  SonarGame,
+  SonarLevel,
   ChessCollection,
   ChessGame,
   ChessLevel,
@@ -436,6 +440,36 @@ export const minefield = {
   },
 };
 
+const SONAR = "/api/games/sonar";
+
+/** Sonar vs Zero-Bot, the Daily Hunt and the fleet / sea shop. */
+export const sonar = {
+  create(level: SonarLevel, fleet: string, fleetSkin: string, sea: string) {
+    return post<SonarGame>(`${SONAR}/games`, { level, fleet, fleet_skin: fleetSkin, sea });
+  },
+  active() {
+    return request<SonarGame | null>(`${SONAR}/games/active`);
+  },
+  fire(id: string, cell: number, ping = false) {
+    return post<SonarGame>(`${SONAR}/games/${encodeURIComponent(id)}/fire`, { cell, ping });
+  },
+  resign(id: string) {
+    return post<SonarGame>(`${SONAR}/games/${encodeURIComponent(id)}/resign`);
+  },
+  collection() {
+    return request<SonarCollection>(`${SONAR}/collection`);
+  },
+  buy(kind: "fleet" | "sea", id: string) {
+    return post<SonarCollection>(`${SONAR}/buy`, { kind, id });
+  },
+  daily() {
+    return request<SonarDaily>(`${SONAR}/daily`);
+  },
+  dailyFire(cell: number, ping = false) {
+    return post<SonarDaily>(`${SONAR}/daily/fire`, { cell, ping });
+  },
+};
+
 const CHESS = "/api/games/chess";
 
 /** Chess vs Zero-Bot, the daily puzzle and the board / piece shop. */
@@ -489,6 +523,14 @@ export const rooms = {
     return post<RoomView>(`/api/rooms/${encodeURIComponent(code)}/move`, { uci });
   },
   /** Chess: offer a draw, or accept / decline the other player's offer. */
+  /** Sonar: hide your fleet for this game. */
+  fleet(code: string, fleet: string) {
+    return post<RoomView>(`/api/rooms/${encodeURIComponent(code)}/fleet`, { fleet });
+  },
+  /** Sonar: fire at a square, or ping the 3×3 area around it. */
+  fire(code: string, cell: number, ping = false) {
+    return post<RoomView>(`/api/rooms/${encodeURIComponent(code)}/move`, { cell, ping });
+  },
   draw(code: string, action: "offer" | "accept" | "decline") {
     return post<RoomView>(`/api/rooms/${encodeURIComponent(code)}/draw`, { action });
   },

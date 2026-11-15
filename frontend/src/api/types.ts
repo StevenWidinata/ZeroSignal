@@ -613,7 +613,7 @@ export interface WeeklyClaim {
 // Online rooms (two devices)
 // ---------------------------------------------------------------------------
 
-export type OnlineGame = "connect-four" | "tic-tac-toe" | "chess";
+export type OnlineGame = "connect-four" | "tic-tac-toe" | "chess" | "sonar";
 
 export interface RoomPlayer {
   username: string;
@@ -637,7 +637,7 @@ export interface RoomView {
   first_seat: 1 | 2;
   board: {
     /** Connect Four: columns bottom-up; Tic-Tac-Toe: 9 cells; chess: the FEN. 1 = whoever moved first. */
-    cells: number[][] | number[] | string;
+    cells: number[][] | number[] | string | SonarRoomCells;
     outcome: CfOutcome;
     highlight: [number, number][] | [number, number, number] | ChessRoomInfo | null;
     next: "p1" | "p2";
@@ -739,4 +739,74 @@ export interface ChessPuzzle {
   reply: string | null;
   rewards: Granted | null;
   points: number | null;
+}
+
+// ---------------------------------------------------------------------------
+// Sonar
+// ---------------------------------------------------------------------------
+
+export type SonarLevel = "easy" | "medium" | "hard" | "master";
+
+export type SonarResult = { kind: "miss" } | { kind: "hit" } | { kind: "sunk"; ship: number } | { kind: "ping"; count: number };
+
+/** What a shooter knows about a sea. */
+export interface SonarSea {
+  /** 100 chars: '.' unknown, 'o' miss, 'x' hit, 's' sunk, '-' water next to a sunk ship. */
+  marks: string;
+  sunk: { ship: number; cells: number[] }[];
+  pings: { center: number; count: number }[];
+  pings_left: number;
+  shots: number;
+  all_sunk: boolean;
+}
+
+export interface SonarLogEntry {
+  mine: boolean;
+  move: string;
+  cell: number;
+  ping: boolean;
+  result: SonarResult;
+}
+
+export interface SonarGame {
+  id: string;
+  level: SonarLevel;
+  status: "active" | "won" | "lost" | "resigned";
+  fleet: string;
+  your_sea: SonarSea;
+  target: SonarSea;
+  log: SonarLogEntry[];
+  your_turn: boolean;
+  ai_fleet: string | null;
+  fleet_skin: string;
+  sea: string;
+  rewards: Granted | null;
+  points: number | null;
+  drop: string | null;
+}
+
+export interface SonarDaily {
+  day: string;
+  target: SonarSea;
+  status: "new" | "playing" | "done";
+  fleet: string | null;
+  last: SonarResult | null;
+  points: number | null;
+  rewards: Granted | null;
+}
+
+export interface SonarCollection {
+  fleets: ChessItemView[];
+  seas: ChessItemView[];
+}
+
+/** Online Sonar: the board as your seat may see it. */
+export interface SonarRoomCells {
+  phase: "placing" | "firing";
+  placed: [boolean, boolean];
+  your_fleet: string | null;
+  your_sea?: SonarSea;
+  target?: SonarSea;
+  log?: SonarLogEntry[];
+  their_fleet?: string | null;
 }

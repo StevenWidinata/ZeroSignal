@@ -1,0 +1,389 @@
+/* Sonar (loaded only on the Sonar page). */
+
+.c4-play.sonar-play {
+  max-width: 1000px;
+}
+.sonar-boards {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+.sonar-boards > section {
+  display: grid;
+  gap: 8px;
+}
+.sonar-boards h3 {
+  margin: 0;
+  font-size: 0.8rem;
+}
+@media (max-width: 760px) {
+  .sonar-boards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ---------- Grid ---------- */
+.sonar-grid {
+  --cell-line: rgba(255, 255, 255, 0.18);
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 6px;
+  border: var(--bw) solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-off) var(--shadow-off) 0 var(--line);
+  background: var(--surface);
+}
+.sonar-grid.small {
+  max-width: 380px;
+}
+.sonar-cells {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1.5em repeat(10, minmax(0, 1fr));
+  grid-template-rows: 1.5em repeat(10, auto);
+  background:
+    linear-gradient(var(--water), var(--deep)) no-repeat 1.5em 1.5em / calc(100% - 1.5em) calc(100% - 1.5em);
+  user-select: none;
+  -webkit-user-select: none;
+}
+.sonar-head {
+  display: grid;
+  place-items: center;
+  font: 700 0.62rem/1 var(--font-pixel);
+  color: var(--muted);
+}
+.sonar-cells .sonar-cell,
+.sonar-cells .sonar-cell:hover:not(:disabled),
+.sonar-cells .sonar-cell:active:not(:disabled) {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  min-width: 0;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  border-right: 1px solid var(--cell-line);
+  border-bottom: 1px solid var(--cell-line);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  transform: none;
+  filter: none;
+  transition: none;
+  cursor: default;
+  font: 700 clamp(0.7rem, 2.6vw, 1.1rem) / 1 var(--font-body);
+}
+.sonar-cells .sonar-cell.pickable {
+  cursor: crosshair;
+}
+.sonar-cells .sonar-cell.pickable:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+.sonar-cell:focus-visible {
+  outline: 3px solid #ffd23f;
+  outline-offset: -3px;
+  z-index: 4;
+}
+.sonar-cell .mk {
+  pointer-events: none;
+}
+.sonar-cell.miss .mk {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 1.4em;
+}
+.sonar-cell.hit {
+  background: rgba(255, 59, 59, 0.35);
+}
+.sonar-cell.hit .mk,
+.sonar-cell.sunk .mk {
+  color: #ff3b3b;
+  text-shadow: 0 0 2px #000, 0 0 4px #000;
+}
+.sonar-cell.sunk {
+  background: rgba(0, 0, 0, 0.35);
+}
+.sonar-cell.empty {
+  background: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.12) 0 2px, transparent 2px 6px);
+}
+.sonar-cell.last {
+  box-shadow: inset 0 0 0 3px #ffd23f;
+}
+.sonar-cells .sonar-cell.last,
+.sonar-cells .sonar-cell.last:hover:not(:disabled) {
+  box-shadow: inset 0 0 0 3px #ffd23f;
+}
+.sonar-cell.ping-preview {
+  background: rgba(123, 97, 255, 0.35);
+}
+.sonar-cell.place-ok {
+  background: rgba(47, 191, 113, 0.45);
+}
+.sonar-cell.place-bad {
+  background: rgba(255, 59, 59, 0.45);
+}
+
+.sonar-ship {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  padding: 2px;
+  pointer-events: none;
+}
+.sonar-ship.ghost {
+  opacity: 0.45;
+}
+.sonar-ship-art {
+  width: 100%;
+  height: 100%;
+}
+.sonar-ship-art.sunk {
+  filter: grayscale(0.85) brightness(0.55);
+}
+
+.sonar-ping {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  border: 2px dashed #b9a7ff;
+  border-radius: 4px;
+  background: rgba(123, 97, 255, 0.12);
+  pointer-events: none;
+}
+.sonar-ping span {
+  display: grid;
+  place-items: center;
+  min-width: 1.6em;
+  height: 1.6em;
+  border-radius: 999px;
+  background: #7b61ff;
+  color: #fff;
+  font: 700 0.85rem/1 var(--font-pixel);
+  box-shadow: 0 0 0 2px #fff;
+}
+.sonar-ping.zero {
+  border-color: rgba(255, 255, 255, 0.6);
+}
+.sonar-ping.zero span {
+  background: #445;
+}
+
+/* A slow sonar sweep in ping mode (off with reduced motion / light graphics). */
+.sonar-grid.ping-mode .sonar-cells::after {
+  content: "";
+  position: absolute;
+  inset: 1.5em 0 0 1.5em;
+  background: conic-gradient(from 0deg, rgba(123, 97, 255, 0.28), transparent 25%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 3;
+  animation: sonar-sweep 3s linear infinite;
+}
+@keyframes sonar-sweep {
+  to {
+    transform: rotate(1turn);
+  }
+}
+[data-motion="reduced"] .sonar-grid.ping-mode .sonar-cells::after {
+  animation: none;
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sonar-grid.ping-mode .sonar-cells::after {
+    animation: none;
+    display: none;
+  }
+}
+
+/* Sea textures. */
+.sea-waves .sonar-cells {
+  background:
+    repeating-radial-gradient(ellipse at 0 0, transparent 0 10px, rgba(255, 255, 255, 0.07) 10px 12px) no-repeat 1.5em 1.5em / calc(100% - 1.5em) calc(100% - 1.5em),
+    linear-gradient(var(--water), var(--deep)) no-repeat 1.5em 1.5em / calc(100% - 1.5em) calc(100% - 1.5em);
+}
+.sea-ice .sonar-cells {
+  background:
+    linear-gradient(120deg, transparent 48%, rgba(255, 255, 255, 0.5) 49%, transparent 51%) no-repeat 1.5em 1.5em / calc(100% - 1.5em) calc(100% - 1.5em),
+    linear-gradient(var(--water), var(--deep)) no-repeat 1.5em 1.5em / calc(100% - 1.5em) calc(100% - 1.5em);
+}
+.sea-ice {
+  --cell-line: rgba(255, 255, 255, 0.45);
+}
+.sea-stars .sonar-cells {
+  background:
+    radial-gradient(1px 1px at 20% 30%, #fff, transparent) no-repeat 1.5em 1.5em / calc(100% - 1.5em) calc(100% - 1.5em),
+    radial-gradient(1px 1px at 70% 60%, #fff, transparent) no-repeat 1.5em 1.5em / calc(100% - 1.5em) calc(100% - 1.5em),
+    radial-gradient(1.5px 1.5px at 45% 85%, #b9a7ff, transparent) no-repeat 1.5em 1.5em / calc(100% - 1.5em) calc(100% - 1.5em),
+    linear-gradient(var(--water), var(--deep)) no-repeat 1.5em 1.5em / calc(100% - 1.5em) calc(100% - 1.5em);
+}
+.sea-lava .sonar-cells {
+  background:
+    radial-gradient(circle at 30% 70%, rgba(255, 106, 43, 0.35), transparent 40%) no-repeat 1.5em 1.5em / calc(100% - 1.5em) calc(100% - 1.5em),
+    linear-gradient(var(--water), var(--deep)) no-repeat 1.5em 1.5em / calc(100% - 1.5em) calc(100% - 1.5em);
+}
+.sea-lava,
+.sea-stars,
+.sea-gold {
+  --cell-line: color-mix(in srgb, var(--wline) 35%, transparent);
+}
+.sea-gold {
+  box-shadow: 0 0 0 2px var(--wline), var(--shadow-off) var(--shadow-off) 0 var(--line);
+}
+.sea-gold .sonar-cells {
+  background:
+    linear-gradient(135deg, rgba(242, 193, 78, 0.18), transparent 40%, rgba(242, 193, 78, 0.18)) no-repeat 1.5em 1.5em / calc(100% - 1.5em) calc(100% - 1.5em),
+    linear-gradient(var(--water), var(--deep)) no-repeat 1.5em 1.5em / calc(100% - 1.5em) calc(100% - 1.5em);
+}
+
+/* ---------- Placement ---------- */
+.sonar-placement {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(220px, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+@media (max-width: 760px) {
+  .sonar-placement {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.sonar-dock {
+  display: grid;
+  gap: 10px;
+}
+.sonar-dock h3 {
+  margin: 0;
+}
+.sonar-dock-ships {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.sonar-dock-ship {
+  width: 100%;
+  justify-content: flex-start;
+  gap: 10px;
+  --btn-bg: var(--surface);
+  --btn-fg: var(--ink);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  padding: 6px 10px;
+}
+.sonar-dock-ship.selected {
+  --btn-bg: var(--yellow);
+  --btn-fg: var(--on-yellow);
+}
+.sonar-dock-ship.placed:not(.selected) {
+  opacity: 0.7;
+}
+.sonar-dock-art {
+  display: inline-flex;
+  height: 16px;
+  flex: none;
+}
+
+/* ---------- Status ---------- */
+.sonar-fleet-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.8rem;
+}
+.sonar-fleet-status li.sunk {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+.sonar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.sonar-cover {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  padding: 40px 16px;
+  text-align: center;
+}
+.sonar-swatch {
+  display: block;
+  border: 3px solid;
+  border-radius: 4px;
+}
+.sonar-fleet-swatch {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 4px;
+  background: linear-gradient(#1f6aa5, #17507e);
+  padding: 0 3px;
+}
+
+/* Shared with the chess page (chess.css isn't loaded here). */
+.chess-side {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+.chess-side h3 {
+  margin: 0;
+}
+.chess-puzzle-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: center;
+  justify-content: space-between;
+}
+.chess-shop {
+  display: grid;
+  gap: 16px;
+}
+.chess-shop-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.chess-shop-item {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 10px;
+  text-align: center;
+  background: var(--surface);
+  border: var(--bw) solid var(--line);
+  border-radius: var(--radius);
+}
+.chess-shop-item.selected {
+  outline: 3px solid var(--yellow, #ffd23f);
+}
+.chess-shop-item small {
+  color: var(--muted);
+}
+.chess-shop-preview {
+  padding: 4px;
+  background: transparent;
+  box-shadow: none;
+}
+.sonar-mode-blurb h3 {
+  margin: 0 0 4px;
+}
+.sonar-mode-blurb p {
+  margin: 0;
+  color: var(--muted);
+}
+.chess-levels {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}

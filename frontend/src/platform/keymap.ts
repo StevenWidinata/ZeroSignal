@@ -119,6 +119,23 @@ export const KEYMAPS: GameKeymap[] = [
     ],
     note: "Or swipe on the board.",
   },
+  {
+    gameId: "sonar",
+    groups: [
+      {
+        actions: [
+          { id: "up", label: "Move up", keys: ["ArrowUp"] },
+          { id: "down", label: "Move down", keys: ["ArrowDown"] },
+          { id: "left", label: "Move left", keys: ["ArrowLeft"] },
+          { id: "right", label: "Move right", keys: ["ArrowRight"] },
+          { id: "fire", label: "Fire / place ship", keys: ["Space", "Enter"] },
+          { id: "ping", label: "Sonar ping mode on / off", keys: ["KeyP"] },
+          { id: "rotate", label: "Turn the ship (placing)", keys: ["KeyR"] },
+        ],
+      },
+    ],
+    note: "Or click / tap the squares. Click the grid first to use the keys.",
+  },
 ];
 
 export const SHORTCUTS: KeyAction[] = [
