@@ -136,12 +136,27 @@ export const KEYMAPS: GameKeymap[] = [
     ],
     note: "Or click / tap the squares. Click the grid first to use the keys.",
   },
+  {
+    gameId: "snake-signal",
+    groups: [
+      {
+        actions: [
+          { id: "up", label: "Turn up", keys: ["ArrowUp", "KeyW"] },
+          { id: "down", label: "Turn down", keys: ["ArrowDown", "KeyS"] },
+          { id: "left", label: "Turn left", keys: ["ArrowLeft", "KeyA"] },
+          { id: "right", label: "Turn right", keys: ["ArrowRight", "KeyD"] },
+          { id: "pause", label: "Pause / resume", keys: ["Escape", "KeyP"] },
+        ],
+      },
+    ],
+    note: "Or swipe on the board, or turn on the on-screen D-pad.",
+  },
 ];
 
 export const SHORTCUTS: KeyAction[] = [
   { id: "mute", label: "Mute / unmute everything", keys: ["KeyM"] },
   { id: "fullscreen", label: "Fullscreen on / off", keys: ["KeyF"] },
-  { id: "close", label: "Close a window (and pause Whack-a-Mole)", keys: ["Escape"] },
+  { id: "close", label: "Close a window (and pause Whack-a-Mole or Snake Signal)", keys: ["Escape"] },
 ];
 
 /** Most keys one action can have. */

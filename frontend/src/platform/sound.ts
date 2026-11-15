@@ -26,7 +26,10 @@ export type Sfx =
   | "zap"
   | "chime"
   | "slide"
-  | "merge";
+  | "merge"
+  | "chomp"
+  | "powerup"
+  | "glitch";
 
 interface Note {
   /** Hz at start (and optional end, for slides). */
@@ -93,6 +96,20 @@ export const RECIPES: Record<Sfx, Note[]> = {
   chime: [
     { freq: 1319, at: 0, dur: 0.12, type: "triangle", gain: 0.25 },
     { freq: 1976, at: 0.05, dur: 0.16, type: "triangle", gain: 0.2 },
+  ],
+  // Snake Signal
+  chomp: [
+    { freq: 440, to: 660, at: 0, dur: 0.05, type: "square", gain: 0.16 },
+    { freq: 880, at: 0.04, dur: 0.04, type: "triangle", gain: 0.12 },
+  ],
+  powerup: [
+    { freq: 392, to: 784, at: 0, dur: 0.12, type: "triangle", gain: 0.22 },
+    { freq: 988, to: 1568, at: 0.1, dur: 0.16, type: "square", gain: 0.14 },
+  ],
+  glitch: [
+    { freq: 140, to: 90, at: 0, dur: 0.08, type: "sawtooth", gain: 0.16 },
+    { freq: 1700, at: 0.05, dur: 0.03, type: "square", gain: 0.1 },
+    { freq: 220, to: 60, at: 0.09, dur: 0.1, type: "sawtooth", gain: 0.14 },
   ],
   // 2048
   slide: [{ freq: 300, to: 240, at: 0, dur: 0.05, type: "triangle", gain: 0.12 }],

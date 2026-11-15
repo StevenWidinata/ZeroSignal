@@ -36,6 +36,7 @@ describe("music", () => {
     expect(trackForPath("/")).toBe("hub");
     expect(trackForPath("/shop")).toBe("hub");
     expect(trackForPath("/play/sling-squad")).toBe("upbeat");
+    expect(trackForPath("/play/snake-signal")).toBe("upbeat");
     expect(trackForPath("/play/connect-four")).toBe("calm");
     expect(trackForPath("/play/tic-tac-toe")).toBe("calm");
   });

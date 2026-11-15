@@ -1,0 +1,202 @@
+/* ---------- Snake Signal ---------- */
+.snake-round {
+  display: grid;
+  gap: 12px;
+  /* Keep the whole board on screen on short windows too. */
+  max-width: min(600px, 100%, calc(100vh - 170px));
+  margin: 0 auto;
+}
+.snake-hud {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 20px;
+  padding: 10px 14px;
+}
+.snake-hud .wam-stat {
+  min-width: 64px;
+}
+.snake-combo.hot strong {
+  color: var(--yellow-deep);
+}
+.snake-signal.low strong {
+  color: var(--red);
+}
+.snake-bar {
+  display: block;
+  width: 72px;
+  height: 6px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--surface-2);
+}
+.snake-bar > span {
+  display: block;
+  height: 100%;
+  background: var(--yellow);
+  transition: width 0.1s linear;
+}
+.snake-bar.signal > span {
+  background: var(--green);
+}
+.snake-signal.low .snake-bar > span {
+  background: var(--red);
+}
+.snake-powers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.snake-hud .wam-hud-btns {
+  margin-left: auto;
+}
+
+.snake-board {
+  position: relative;
+  aspect-ratio: 1;
+  width: 100%;
+  overflow: hidden;
+  border: var(--bw) solid var(--line);
+  border-radius: var(--radius);
+  background: #0b1020;
+  box-shadow: var(--shadow-off) var(--shadow-off) 0 var(--line);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.snake-board canvas {
+  display: block;
+}
+.snake-pop {
+  position: absolute;
+  z-index: 4;
+  transform: translate(-50%, -50%);
+  font-family: var(--font-pixel);
+  font-size: clamp(0.5rem, 2vw, 0.72rem);
+  white-space: nowrap;
+  color: #fff;
+  text-shadow: 2px 2px 0 #000;
+  pointer-events: none;
+  animation: snake-pop 0.8s ease-out forwards;
+}
+.snake-pop.gold { color: #ffd23f; }
+.snake-pop.power { color: #9ad8ff; }
+.snake-pop.bad { color: #ff8a8d; }
+.snake-pop.combo { color: #ffb0e0; }
+@keyframes snake-pop {
+  to { transform: translate(-50%, -190%); opacity: 0; }
+}
+[data-motion="reduced"] .snake-pop {
+  animation: none;
+}
+.snake-ko strong {
+  font-family: var(--font-pixel);
+  font-size: clamp(0.8rem, 3.5vw, 1.2rem);
+  color: #ff8a8d;
+  text-shadow: 3px 3px 0 #000;
+  text-align: center;
+  padding: 0 12px;
+}
+.wam-paused small {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  text-align: center;
+  max-width: 280px;
+}
+
+/* D-pad: a plus shape of big buttons. */
+.snake-dpad {
+  display: grid;
+  grid-template-columns: repeat(3, 64px);
+  grid-template-rows: repeat(2, 56px);
+  gap: 6px;
+  justify-content: center;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.snake-pad {
+  justify-content: center;
+  font-size: 1.3rem;
+  padding: 0;
+}
+.snake-pad.d0 { grid-column: 2; grid-row: 1; }
+.snake-pad.d3 { grid-column: 1; grid-row: 2; }
+.snake-pad.d2 { grid-column: 2; grid-row: 2; }
+.snake-pad.d1 { grid-column: 3; grid-row: 2; }
+.snake-help {
+  text-align: center;
+}
+
+/* Shop swatches */
+.snake-swatch {
+  display: grid;
+  place-items: center;
+}
+.snake-swatch.skin {
+  position: relative;
+  width: 36px;
+  height: 14px;
+  border-radius: 8px;
+}
+.snake-swatch.skin.pixel {
+  border-radius: 2px;
+}
+.snake-swatch.skin.ghost {
+  opacity: 0.75;
+}
+.snake-swatch.skin > span {
+  position: absolute;
+  right: -3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.35);
+}
+.snake-swatch.skin.pixel > span {
+  border-radius: 3px;
+}
+.snake-swatch.arena {
+  width: 34px;
+  height: 34px;
+  border: 3px solid;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+.snake-swatch.trail {
+  font-size: 0.85rem;
+  white-space: nowrap;
+  text-shadow: 0 0 4px currentColor;
+  filter: drop-shadow(0 0 1px #000);
+}
+.snake-legend {
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+}
+.snake-legend > div {
+  justify-items: start;
+  grid-template-columns: 26px 1fr;
+  align-items: center;
+  text-align: left;
+}
+.snake-legend-icon {
+  font-size: 1.1rem;
+  text-align: center;
+}
+
+@media (max-width: 520px) {
+  .snake-hud {
+    gap: 8px 12px;
+    padding: 8px 10px;
+  }
+  .snake-hud .wam-stat {
+    min-width: 54px;
+  }
+  .snake-bar {
+    width: 56px;
+  }
+  .snake-hud .wam-hud-btns {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
