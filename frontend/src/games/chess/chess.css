@@ -1,0 +1,338 @@
+/* Chess (loaded only on the chess page). */
+
+.c4-play.chess-play {
+  max-width: 940px;
+}
+.chess-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 560px) minmax(200px, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+@media (max-width: 760px) {
+  .chess-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ---------- Board ---------- */
+.chess-board {
+  position: relative;
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 6px;
+  background: var(--board-border);
+  border: var(--bw) solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-off) var(--shadow-off) 0 var(--line);
+}
+.chess-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  aspect-ratio: 1;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.chess-sq {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  aspect-ratio: 1;
+  cursor: default;
+  transform: none;
+}
+/* Squares are buttons, but shouldn't lift like the site's buttons. */
+.chess-grid .chess-sq,
+.chess-grid .chess-sq:hover:not(:disabled),
+.chess-grid .chess-sq:active:not(:disabled) {
+  transform: none;
+  box-shadow: none;
+  filter: none;
+  transition: none;
+}
+.chess-grid .chess-sq.target:hover::after {
+  background: rgba(0, 0, 0, 0.45);
+}
+.chess-sq.light {
+  background: var(--sq-light);
+}
+.chess-sq.dark {
+  background: var(--sq-dark);
+}
+.chess-sq:focus-visible {
+  outline: 3px solid var(--yellow, #ffd23f);
+  outline-offset: -3px;
+  z-index: 2;
+}
+.chess-sq.last::before,
+.chess-sq.sel::before,
+.chess-sq.hint::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 210, 63, 0.45);
+  pointer-events: none;
+}
+.chess-sq.sel::before {
+  background: rgba(58, 134, 255, 0.45);
+}
+.chess-sq.hint::before {
+  background: rgba(47, 191, 113, 0.45);
+}
+.chess-sq.check {
+  background: radial-gradient(circle, #ff3b3b 0%, rgba(255, 59, 59, 0.6) 45%, transparent 75%), var(--sq-dark);
+}
+.chess-sq.flash {
+  animation: chess-flash 0.7s ease;
+}
+@keyframes chess-flash {
+  0%,
+  60% {
+    box-shadow: inset 0 0 0 100px rgba(255, 59, 59, 0.6);
+  }
+  100% {
+    box-shadow: inset 0 0 0 100px transparent;
+  }
+}
+.chess-sq.target {
+  cursor: pointer;
+}
+.chess-sq.target::after {
+  content: "";
+  position: absolute;
+  width: 30%;
+  height: 30%;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.28);
+  pointer-events: none;
+}
+.chess-sq.target.capture::after {
+  width: 92%;
+  height: 92%;
+  background: transparent;
+  border: 5px solid rgba(0, 0, 0, 0.28);
+}
+.chess-sq.lifted .chess-piece {
+  opacity: 0.3;
+}
+.chess-piece {
+  position: relative;
+  z-index: 1;
+  pointer-events: none;
+}
+.chess-piece.pop {
+  animation: chess-pop 0.22s var(--ease);
+}
+@keyframes chess-pop {
+  from {
+    transform: scale(0.8);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+.chess-coord {
+  position: absolute;
+  font: 700 0.62rem/1 var(--font-body);
+  opacity: 0.75;
+  pointer-events: none;
+  z-index: 1;
+}
+.chess-sq.light .chess-coord {
+  color: var(--sq-dark);
+}
+.chess-sq.dark .chess-coord {
+  color: var(--sq-light);
+}
+.chess-coord.coord-rank {
+  top: 3px;
+  left: 3px;
+}
+.chess-coord.coord-file {
+  bottom: 3px;
+  right: 4px;
+}
+.chess-drag {
+  position: fixed;
+  width: 64px;
+  height: 64px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 50;
+}
+
+/* Board textures. */
+.board-wood .chess-sq {
+  background-image: repeating-linear-gradient(100deg, rgba(0, 0, 0, 0.05) 0 2px, transparent 2px 7px);
+}
+.board-marble .chess-sq {
+  background-image: radial-gradient(ellipse at 30% 20%, rgba(255, 255, 255, 0.35), transparent 60%),
+    linear-gradient(135deg, transparent 45%, rgba(0, 0, 0, 0.08) 50%, transparent 55%);
+}
+.board-candy .chess-sq.dark {
+  background-image: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.18) 0 6px, transparent 6px 12px);
+}
+.board-pixel .chess-grid .chess-sq {
+  box-shadow: inset -3px -3px 0 rgba(0, 0, 0, 0.18), inset 3px 3px 0 rgba(255, 255, 255, 0.18);
+}
+.board-pixel .chess-grid .chess-sq:hover:not(:disabled) {
+  box-shadow: inset -3px -3px 0 rgba(0, 0, 0, 0.18), inset 3px 3px 0 rgba(255, 255, 255, 0.18);
+}
+.board-neon {
+  box-shadow: 0 0 14px var(--board-border), var(--shadow-off) var(--shadow-off) 0 var(--line);
+}
+.board-neon .chess-grid .chess-sq {
+  box-shadow: inset 0 0 0 1px rgba(0, 229, 255, 0.22);
+}
+.board-neon .chess-grid .chess-sq:hover:not(:disabled) {
+  box-shadow: inset 0 0 0 1px rgba(0, 229, 255, 0.22);
+}
+.board-gold {
+  background: linear-gradient(135deg, #f7e08a, #a07a1c 50%, #f7e08a);
+}
+.board-gold .chess-sq.dark {
+  background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.25), transparent 60%);
+}
+
+/* Promotion picker. */
+.chess-promo {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  z-index: 10;
+}
+.chess-promo > div {
+  display: flex;
+  gap: 8px;
+}
+.chess-promo > div button {
+  padding: 6px;
+  background: var(--surface);
+}
+
+/* ---------- Side panel ---------- */
+.chess-side {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+.chess-side h3 {
+  margin: 0;
+}
+.chess-you {
+  margin: 0;
+}
+.chess-ending {
+  margin: 0;
+  font-weight: 700;
+}
+.chess-moves {
+  max-height: 320px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0 0 0 2.6em;
+  font: 600 0.95rem/1.6 var(--font-body);
+}
+.chess-moves li span {
+  display: inline-block;
+  min-width: 4.5em;
+}
+.chess-moves li.empty {
+  list-style: none;
+  margin-left: -2.6em;
+  color: var(--muted);
+}
+@media (max-width: 760px) {
+  .chess-moves {
+    max-height: 140px;
+  }
+}
+
+.chess-levels {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+.chess-mode-blurb h3 {
+  margin: 0 0 4px;
+}
+.chess-mode-blurb p {
+  margin: 0;
+  color: var(--muted);
+}
+.chess-puzzle-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* ---------- Swatches + shop ---------- */
+.chess-swatch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border: 3px solid;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.chess-pieces-swatch {
+  display: inline-flex;
+  align-items: flex-end;
+  justify-content: center;
+  border-radius: 4px;
+  background: linear-gradient(135deg, #eeeed2 50%, #769656 50%);
+}
+.chess-shop {
+  display: grid;
+  gap: 16px;
+}
+.chess-shop-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.chess-shop-item {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 10px;
+  text-align: center;
+  background: var(--surface);
+  border: var(--bw) solid var(--line);
+  border-radius: var(--radius);
+}
+.chess-shop-item.selected {
+  outline: 3px solid var(--yellow, #ffd23f);
+}
+.chess-shop-item small {
+  color: var(--muted);
+}
+.chess-shop-item.rarity-rare small {
+  color: #3a86ff;
+}
+.chess-shop-item.rarity-epic small {
+  color: #9b5de5;
+}
+.chess-shop-item.rarity-legendary small {
+  color: #e8a33d;
+}
+.chess-shop-preview {
+  padding: 4px;
+  background: transparent;
+  box-shadow: none;
+}

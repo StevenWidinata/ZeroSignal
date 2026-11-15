@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { rooms } from "../api/client";
-import type { OnlineGame } from "../api/types";
+import type { OnlineGame, RoomView } from "../api/types";
 import { EMOTES, EmoteBar, LiveAvatar } from "../character/Live";
 import type { Pose } from "../character/Avatar";
 import C4Board from "../games/connect-four/Board";
@@ -10,7 +10,7 @@ import type { Cells as TttCells } from "../games/tic-tac-toe/logic";
 import { playSfx } from "../platform/sound";
 import { useRoom } from "./useRoom";
 
-const GAME_NAME: Record<OnlineGame, string> = { "connect-four": "Connect Four", "tic-tac-toe": "Tic-Tac-Toe" };
+const GAME_NAME: Record<OnlineGame, string> = { "connect-four": "Connect Four", "tic-tac-toe": "Tic-Tac-Toe", chess: "Chess" };
 /** Each seat's look: seat 1 (host) and seat 2 (friend). */
 const C4_SKIN = ["red", "blue"];
 const TTT_FACE = ["x", "o"];
@@ -29,7 +29,25 @@ function emoteOf(id: string | null) {
   return EMOTES.find((e) => e.id === id);
 }
 
-export default function OnlineMatch({ game, code, onExit }: { game: OnlineGame; code: string; onExit: () => void }) {
+/** A game's own board for a room (chess brings its own, so its code loads only on the chess page). */
+export type RoomBoard = (room: RoomView, act: (fn: () => Promise<RoomView>) => Promise<boolean>) => ReactNode;
+
+export default function OnlineMatch({
+  game,
+  code,
+  onExit,
+  renderBoard,
+  renderControls,
+  leaveLabel = "✕ Leave room",
+}: {
+  game: OnlineGame;
+  code: string;
+  onExit: () => void;
+  renderBoard?: RoomBoard;
+  /** Extra buttons under the board (chess: offer a draw). */
+  renderControls?: RoomBoard;
+  leaveLabel?: string;
+}) {
   const { room, error, fatal, act } = useRoom(code);
   const [myEmote, setMyEmote] = useState<{ emoji: string; pose: Pose; at: number } | null>(null);
   const [confirmLeave, setConfirmLeave] = useState(false);
@@ -111,7 +129,9 @@ export default function OnlineMatch({ game, code, onExit }: { game: OnlineGame; 
   };
 
   let board: React.ReactNode;
-  if (game === "connect-four") {
+  if (renderBoard) {
+    board = renderBoard(room, act);
+  } else if (game === "connect-four") {
     const cells = room.board.cells as C4Cells;
     const lastMove: [number, number] | null =
       lastCell === null ? null : [lastCell, cells[lastCell].filter(Boolean).length - 1];
@@ -167,7 +187,7 @@ export default function OnlineMatch({ game, code, onExit }: { game: OnlineGame; 
   })();
 
   return (
-    <div className="c4-play online-play">
+    <div className={`c4-play online-play${game === "chess" ? " chess-play" : ""}`}>
       <div className="versus-bar">
         <div className="versus-side">
           <LiveAvatar loadout={mine?.avatar} pose={myPose} emote={myEmote} size={72} label="You" bubble={room.game_over || seriesDone} />
@@ -211,6 +231,7 @@ export default function OnlineMatch({ game, code, onExit }: { game: OnlineGame; 
       )}
 
       <div className="game-controls">
+        {renderControls?.(room, act)}
         {room.status === "playing" && room.game_over && (
           <button className="btn-green" onClick={() => void act(() => rooms.next(room.code))}>
             ▶ Next game
@@ -237,7 +258,7 @@ export default function OnlineMatch({ game, code, onExit }: { game: OnlineGame; 
             </span>
           ) : (
             <button className="btn-ghost" onClick={() => setConfirmLeave(true)}>
-              ✕ Leave room
+              {leaveLabel}
             </button>
           ))}
         {seriesDone && (

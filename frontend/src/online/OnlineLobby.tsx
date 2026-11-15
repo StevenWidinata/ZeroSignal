@@ -6,7 +6,8 @@ import { playSfx } from "../platform/sound";
 
 /** Online menu: start a room for a friend, or join theirs with a code. */
 export default function OnlineLobby({ game, onEnter }: { game: OnlineGame; onEnter: (code: string) => void }) {
-  const [bestOf, setBestOf] = useState(3);
+  // Chess games are long, so one game is the default there.
+  const [bestOf, setBestOf] = useState(game === "chess" ? 1 : 3);
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);

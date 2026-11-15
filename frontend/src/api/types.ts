@@ -613,7 +613,7 @@ export interface WeeklyClaim {
 // Online rooms (two devices)
 // ---------------------------------------------------------------------------
 
-export type OnlineGame = "connect-four" | "tic-tac-toe";
+export type OnlineGame = "connect-four" | "tic-tac-toe" | "chess";
 
 export interface RoomPlayer {
   username: string;
@@ -636,10 +636,10 @@ export interface RoomView {
   game_no: number;
   first_seat: 1 | 2;
   board: {
-    /** Connect Four: columns bottom-up; Tic-Tac-Toe: 9 cells. 1 = whoever moved first. */
-    cells: number[][] | number[];
+    /** Connect Four: columns bottom-up; Tic-Tac-Toe: 9 cells; chess: the FEN. 1 = whoever moved first. */
+    cells: number[][] | number[] | string;
     outcome: CfOutcome;
-    highlight: [number, number][] | [number, number, number] | null;
+    highlight: [number, number][] | [number, number, number] | ChessRoomInfo | null;
     next: "p1" | "p2";
   };
   moves: string;
@@ -648,7 +648,19 @@ export interface RoomView {
   wins: [number, number];
   draws: number;
   winner: number | null;
+  /** Chess: the seat offering a draw right now. */
+  draw_offer: number | null;
   version: number;
+}
+
+/** Chess rooms: what the server adds about the position. */
+export interface ChessRoomInfo {
+  san: string[];
+  last: string | null;
+  check: boolean;
+  legal: string[];
+  /** "checkmate", "stalemate", … or "" while playing. */
+  ending: string;
 }
 
 export interface OnlineEntry {
@@ -657,4 +669,74 @@ export interface OnlineEntry {
   wins: number;
   played: number;
   avatar: Record<string, string> | null;
+}
+
+// ---------------------------------------------------------------------------
+// Chess
+// ---------------------------------------------------------------------------
+
+export type ChessLevel = "easy" | "medium" | "hard" | "master";
+export type ChessSide = "white" | "black";
+
+export type ChessOutcome =
+  | { kind: "ongoing" }
+  | { kind: "checkmate"; winner: ChessSide }
+  | { kind: "stalemate" | "repetition" | "fifty_moves" | "insufficient_material" };
+
+/** A game vs Zero-Bot; the server checks every move and plays the reply. */
+export interface ChessGame {
+  id: string;
+  level: ChessLevel;
+  color: ChessSide;
+  fen: string;
+  moves: string[];
+  san: string[];
+  /** Your legal moves now (UCI); empty when it isn't your turn. */
+  legal: string[];
+  in_check: boolean;
+  outcome: ChessOutcome;
+  status: "active" | "won" | "lost" | "drawn" | "resigned";
+  ending: string | null;
+  undos_left: number;
+  board_style: string;
+  piece_set: string;
+  ai_move: string | null;
+  rewards: Granted | null;
+  /** Lucky drop ("board:neon"). */
+  drop: string | null;
+}
+
+export interface ChessItemView {
+  id: string;
+  name: string;
+  rarity: "common" | "rare" | "epic" | "legendary";
+  price: number | null;
+  owned: boolean;
+}
+
+export interface ChessCollection {
+  boards: ChessItemView[];
+  pieces: ChessItemView[];
+}
+
+export interface ChessPuzzle {
+  day: string;
+  number: number;
+  start_fen: string;
+  fen: string;
+  mate_in: number;
+  color: ChessSide;
+  moves: string[];
+  san: string[];
+  legal: string[];
+  in_check: boolean;
+  status: "new" | "playing" | "solved" | "failed";
+  mistakes: number;
+  mistakes_left: number;
+  streak: number;
+  solution: string[] | null;
+  correct: boolean | null;
+  reply: string | null;
+  rewards: Granted | null;
+  points: number | null;
 }

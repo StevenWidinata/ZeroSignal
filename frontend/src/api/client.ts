@@ -1,4 +1,9 @@
 import type {
+  ChessCollection,
+  ChessGame,
+  ChessLevel,
+  ChessPuzzle,
+  ChessSide,
   OnlineEntry,
   OnlineGame,
   RoomView,
@@ -431,6 +436,39 @@ export const minefield = {
   },
 };
 
+const CHESS = "/api/games/chess";
+
+/** Chess vs Zero-Bot, the daily puzzle and the board / piece shop. */
+export const chess = {
+  create(level: ChessLevel, color: ChessSide | "random", board: string, pieces: string) {
+    return post<ChessGame>(`${CHESS}/games`, { level, color, board, pieces });
+  },
+  active() {
+    return request<ChessGame | null>(`${CHESS}/games/active`);
+  },
+  move(id: string, uci: string) {
+    return post<ChessGame>(`${CHESS}/games/${encodeURIComponent(id)}/move`, { uci });
+  },
+  undo(id: string) {
+    return post<ChessGame>(`${CHESS}/games/${encodeURIComponent(id)}/undo`);
+  },
+  resign(id: string) {
+    return post<ChessGame>(`${CHESS}/games/${encodeURIComponent(id)}/resign`);
+  },
+  collection() {
+    return request<ChessCollection>(`${CHESS}/collection`);
+  },
+  buy(kind: "board" | "pieces", id: string) {
+    return post<ChessCollection>(`${CHESS}/buy`, { kind, id });
+  },
+  puzzle() {
+    return request<ChessPuzzle>(`${CHESS}/puzzle`);
+  },
+  puzzleMove(uci: string) {
+    return post<ChessPuzzle>(`${CHESS}/puzzle/move`, { uci });
+  },
+};
+
 /** Online rooms: the server checks every move; `get` waits up to 20 s for news. */
 export const rooms = {
   create(game: OnlineGame, bestOf: number) {
@@ -445,6 +483,14 @@ export const rooms = {
   },
   move(code: string, cell: number) {
     return post<RoomView>(`/api/rooms/${encodeURIComponent(code)}/move`, { cell });
+  },
+  /** Chess: a UCI move ("e2e4", "e7e8q"). */
+  moveUci(code: string, uci: string) {
+    return post<RoomView>(`/api/rooms/${encodeURIComponent(code)}/move`, { uci });
+  },
+  /** Chess: offer a draw, or accept / decline the other player's offer. */
+  draw(code: string, action: "offer" | "accept" | "decline") {
+    return post<RoomView>(`/api/rooms/${encodeURIComponent(code)}/draw`, { action });
   },
   next(code: string) {
     return post<RoomView>(`/api/rooms/${encodeURIComponent(code)}/next`);
