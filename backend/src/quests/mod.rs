@@ -126,10 +126,10 @@ pub const POOL: [QuestDef; 22] = [
         Goal::WinOrDrawAi { game: TTT, min_level: 3 }, 2, 40, 60),
     q("ttt_series_medium", "Win a Tic-Tac-Toe series vs Medium",
         Goal::WinSeries { game: Some(TTT), min_level: 2, no_undo: false }, 1, 40, 60),
-    q("ab_play_3", "Play 3 Angry Bird rounds", Goal::AngryBirdRounds, 3, 20, 30),
-    q("ab_clear_2", "Clear 2 Angry Bird levels (every pig gone)", Goal::AngryBirdClears, 2, 40, 60),
-    q("ab_score_5000", "Score 5,000 in one Angry Bird round", Goal::AngryBirdSingleScore(5_000), 1, 40, 60),
-    q("ab_total_15000", "Score 15,000 in total in Angry Bird today", Goal::AngryBirdTotalScore, 15_000, 50, 80),
+    q("ab_play_3", "Play 3 Sling Squad rounds", Goal::AngryBirdRounds, 3, 20, 30),
+    q("ab_clear_2", "Clear 2 Sling Squad levels (every pig gone)", Goal::AngryBirdClears, 2, 40, 60),
+    q("ab_score_5000", "Score 5,000 in one Sling Squad round", Goal::AngryBirdSingleScore(5_000), 1, 40, 60),
+    q("ab_total_15000", "Score 15,000 in total in Sling Squad today", Goal::AngryBirdTotalScore, 15_000, 50, 80),
     q("series_no_undo", "Win any series without using undo",
         Goal::WinSeries { game: None, min_level: 1, no_undo: true }, 1, 50, 80),
     q("open_box", "Open a mystery box", Goal::OpenMysteryBox, 1, 30, 40),
@@ -267,7 +267,7 @@ mod tests {
     }
 
     #[test]
-    fn angry_bird_quests() {
+    fn sling_squad_quests() {
         let round = |score| Event::AngryBirdRound { score, cleared: false };
         assert_eq!(quest("ab_play_3").progress(&round(0)), 1);
         assert_eq!(quest("ab_score_5000").progress(&round(4_999)), 0);

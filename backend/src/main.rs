@@ -1,5 +1,5 @@
 mod achievements;
-mod angry_bird;
+mod sling_squad;
 mod auth;
 mod birds;
 mod birds_api;
@@ -125,9 +125,9 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/games/:game_id/leaderboard", get(scores::leaderboard))
         .route("/api/games/:game_id/scores/me", get(scores::my_scores))
         // Per-game authoritative score submission.
-        .route("/api/games/angry-bird/scores", post(scores::submit_angry_bird))
-        .route("/api/games/angry-bird/birds", get(birds_api::list))
-        .route("/api/games/angry-bird/levels", get(angry_bird::progress))
+        .route("/api/games/sling-squad/scores", post(scores::submit_sling_squad))
+        .route("/api/games/sling-squad/birds", get(birds_api::list))
+        .route("/api/games/sling-squad/levels", get(sling_squad::progress))
         // Connect Four: server-authoritative AI matches + skins.
         .route("/api/games/connect-four/matches", post(cf::create_match))
         .route("/api/games/connect-four/matches/active", get(cf::active_match))
@@ -154,8 +154,8 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/games/2048/runs/:id/finish", post(game_2048::api::finish))
         .route("/api/games/connect-four/skins", get(cf::list_skins))
         .route("/api/games/connect-four/spins", post(cf::spin))
-        // Legacy aliases (Angry Bird) for older clients.
-        .route("/api/scores", post(scores::submit_angry_bird))
+        // Legacy aliases (Sling Squad) for older clients.
+        .route("/api/scores", post(scores::submit_sling_squad))
         .route("/api/scores/leaderboard", get(scores::legacy_leaderboard))
         .route("/api/scores/me", get(scores::legacy_my_scores))
         .route("/api/birds", get(birds_api::list))

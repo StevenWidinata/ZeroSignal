@@ -25,7 +25,7 @@ pub struct SeriesRow {
 #[derive(Serialize, sqlx::FromRow)]
 pub struct BoardRow {
     pub game_id: String,
-    /// Board within the game (Whack-a-Mole mode, Minefield size, Angry Bird level).
+    /// Board within the game (Whack-a-Mole mode, Minefield size, Sling Squad level).
     pub level: i32,
     pub rounds: i64,
     pub best: i32,

@@ -36,7 +36,7 @@ pub struct Stats {
     pub ttt_items_total: i64,
     pub has_photo: bool,
     pub ab_rounds: i64,
-    /// Angry Bird campaign score: best of every level added up.
+    /// Sling Squad campaign score: best of every level added up.
     pub ab_best: i64,
     pub ab_levels_cleared: i64,
     pub ab_three_star_levels: i64,
@@ -112,11 +112,11 @@ pub static ACHIEVEMENTS: [Achievement; 40] = [
     ach!("ttt_all_items", "Board Collector", "Own every Tic-Tac-Toe board and face", 200, "title-board-baron", 1,
         |s| i64::from(s.ttt_items_total > 0 && s.ttt_items_owned >= s.ttt_items_total)),
     ach!("photo_face", "Say Cheese", "Add a photo face", 20, "title-say-cheese", 1, |s| i64::from(s.has_photo)),
-    ach!("ab_first_round", "First Flight", "Finish your first Angry Bird round", 20, "title-fledgling", 1, |s| s.ab_rounds),
-    ach!("ab_10000", "Big Score", "Reach a 10,000 Angry Bird campaign score (best of each level added up)", 80, "title-sharpshooter", 10_000, |s| s.ab_best),
-    ach!("ab_25000", "Pig Slayer", "Reach a 25,000 Angry Bird campaign score", 200, "title-pig-slayer", 25_000, |s| s.ab_best),
-    ach!("ab_world_tour", "World Tour", "Clear all 12 Angry Bird levels", 250, "title-world-tour", 12, |s| s.ab_levels_cleared),
-    ach!("ab_three_star", "Three-Star General", "Get 3 stars on 6 Angry Bird levels", 200, "title-three-star", 6, |s| s.ab_three_star_levels),
+    ach!("ab_first_round", "First Flight", "Finish your first Sling Squad round", 20, "title-fledgling", 1, |s| s.ab_rounds),
+    ach!("ab_10000", "Big Score", "Reach a 10,000 Sling Squad campaign score (best of each level added up)", 80, "title-sharpshooter", 10_000, |s| s.ab_best),
+    ach!("ab_25000", "Gobbo Smasher", "Reach a 25,000 Sling Squad campaign score", 200, "title-pig-slayer", 25_000, |s| s.ab_best),
+    ach!("ab_world_tour", "World Tour", "Clear all 12 Sling Squad levels", 250, "title-world-tour", 12, |s| s.ab_levels_cleared),
+    ach!("ab_three_star", "Three-Star General", "Get 3 stars on 6 Sling Squad levels", 200, "title-three-star", 6, |s| s.ab_three_star_levels),
     ach!("ab_all_birds", "Full Flock", "Unlock every bird", 150, "title-flock-leader", 1,
         |s| i64::from(s.ab_best >= all_birds_score())),
     ach!("level_5", "Level 5", "Reach level 5", 50, "title-rising-star", 5, |s| s.level),
@@ -181,12 +181,12 @@ pub async fn load_stats(pool: &sqlx::PgPool, user_id: Uuid) -> AppResult<Stats> 
     .fetch_one(pool)
     .await?;
     let ab: (i64, Option<i32>) = sqlx::query_as(
-        "SELECT COUNT(*), MAX(score) FROM scores WHERE user_id = $1 AND game_id = 'angry-bird'",
+        "SELECT COUNT(*), MAX(score) FROM scores WHERE user_id = $1 AND game_id = 'sling-squad'",
     )
     .bind(user_id)
     .fetch_one(pool)
     .await?;
-    let campaign = crate::angry_bird::campaign(&crate::angry_bird::level_bests(pool, user_id).await?);
+    let campaign = crate::sling_squad::campaign(&crate::sling_squad::level_bests(pool, user_id).await?);
     let ledger: (i64, i64, Option<i64>) = sqlx::query_as(
         r#"SELECT COUNT(*) FILTER (WHERE reason = 'token_wheel'),
                   COUNT(*) FILTER (WHERE reason = 'mystery_box'),

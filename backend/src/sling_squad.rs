@@ -1,4 +1,4 @@
-//! Angry Bird campaign: level progress, unlocks, stars and the campaign
+//! Sling Squad campaign: level progress, unlocks, stars and the campaign
 //! score (best score of every level added up), all worked out from the
 //! server-verified rows in `scores` (a cleared round has `detail = 'clear'`).
 
@@ -9,7 +9,7 @@ use uuid::Uuid;
 
 use crate::auth::jwt::AuthUser;
 use crate::error::AppResult;
-use crate::games::ANGRY_BIRD;
+use crate::games::SLING_SQUAD;
 use crate::physics::level::{self, all_meta, stars_for};
 use crate::state::AppState;
 
@@ -37,7 +37,7 @@ pub async fn level_bests(ex: impl sqlx::PgExecutor<'_>, user_id: Uuid) -> AppRes
            GROUP BY level"#,
     )
     .bind(user_id)
-    .bind(ANGRY_BIRD)
+    .bind(SLING_SQUAD)
     .fetch_all(ex)
     .await?)
 }
@@ -87,7 +87,7 @@ pub struct ProgressView {
     pub levels: Vec<LevelView>,
 }
 
-/// `GET /api/games/angry-bird/levels`: every level with your best and stars.
+/// `GET /api/games/sling-squad/levels`: every level with your best and stars.
 pub async fn progress(State(state): State<AppState>, user: AuthUser) -> AppResult<Json<ProgressView>> {
     let bests = level_bests(&state.pool, user.user_id).await?;
     let c = campaign(&bests);

@@ -41,12 +41,12 @@ pub struct GameInfo {
     pub prize_boards: &'static [i32],
 }
 
-pub const ANGRY_BIRD: &str = "angry-bird";
+pub const SLING_SQUAD: &str = "sling-squad";
 
 pub const GAMES: &[GameInfo] = &[
     GameInfo {
-        id: ANGRY_BIRD,
-        title: "Angry Bird",
+        id: SLING_SQUAD,
+        title: "Sling Squad",
         status: GameStatus::Live,
         ranking: Ranking::Best,
         prize_boards: &[],
@@ -122,7 +122,7 @@ mod tests {
 
     #[test]
     fn unknown_games_are_rejected() {
-        assert!(require(ANGRY_BIRD).is_ok());
+        assert!(require(SLING_SQUAD).is_ok());
         assert!(require("connect-four").is_ok());
         assert!(require("tic-tac-toe").is_ok());
         assert!(require("whack-a-mole").is_ok());

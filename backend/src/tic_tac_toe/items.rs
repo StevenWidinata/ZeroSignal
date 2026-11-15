@@ -184,7 +184,7 @@ mod tests {
         for id in ["classic", "notebook", "ocean", "sunny", "mint"] {
             assert!(it.find(Kind::Board, id).unwrap().free(), "{id} should be free");
         }
-        assert_eq!(it.find_key("face:pig").unwrap().name, "Piggy");
+        assert_eq!(it.find_key("face:pig").unwrap().name, "Gobbo");
         assert_eq!(it.find_key("board:neon").unwrap().kind, Some(Kind::Board));
         assert!(it.find_key("hat:pig").is_none());
     }

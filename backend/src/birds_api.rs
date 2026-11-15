@@ -60,8 +60,8 @@ async fn resolve_best_score(state: &AppState, headers: &HeaderMap) -> i32 {
         return 0;
     };
     // Birds unlock with the campaign score (best of every level added up).
-    crate::angry_bird::level_bests(&state.pool, claims.sub)
+    crate::sling_squad::level_bests(&state.pool, claims.sub)
         .await
-        .map(|b| crate::angry_bird::campaign(&b).score.clamp(0, i32::MAX as i64) as i32)
+        .map(|b| crate::sling_squad::campaign(&b).score.clamp(0, i32::MAX as i64) as i32)
         .unwrap_or(0)
 }

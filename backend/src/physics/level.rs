@@ -1,4 +1,4 @@
-//! Level layouts, loaded from `shared/angry_bird_levels.json`. The browser
+//! Level layouts, loaded from `shared/sling_squad_levels.json`. The browser
 //! reads the same file for visuals, but only the server's simulation counts.
 //!
 //! Coordinate system: world units, origin at bottom-left, +x right, +y up.
@@ -42,7 +42,7 @@ pub struct Level {
 // Shared catalog
 // ---------------------------------------------------------------------------
 
-const JSON: &str = include_str!("../../../shared/angry_bird_levels.json");
+const JSON: &str = include_str!("../../../shared/sling_squad_levels.json");
 
 #[derive(Debug, Deserialize)]
 struct RawBlock {
@@ -98,7 +98,7 @@ struct Catalog {
 fn catalog() -> &'static Catalog {
     static CATALOG: OnceLock<Catalog> = OnceLock::new();
     CATALOG.get_or_init(|| {
-        let raw: RawCatalog = serde_json::from_str(JSON).expect("shared/angry_bird_levels.json is invalid");
+        let raw: RawCatalog = serde_json::from_str(JSON).expect("shared/sling_squad_levels.json is invalid");
         let levels = raw
             .levels
             .iter()

@@ -7,15 +7,15 @@ use crate::auth::jwt::AuthUser;
 use crate::birds;
 use crate::economy::{self, Granted, Reward};
 use crate::error::{AppError, AppResult};
-use crate::games::{self, ANGRY_BIRD};
+use crate::games::{self, SLING_SQUAD};
 use crate::physics::engine::{score_shots, ShotInput};
 use crate::physics::level;
-use crate::angry_bird;
+use crate::sling_squad;
 use crate::quests;
 use crate::state::AppState;
 
 // ---------------------------------------------------------------------------
-// Angry Bird: authoritative submit. The client sends only shot *inputs*; the
+// Sling Squad: authoritative submit. The client sends only shot *inputs*; the
 // server re-simulates them and computes the real score.
 // ---------------------------------------------------------------------------
 
@@ -51,7 +51,7 @@ pub struct SubmitResponse {
 /// Must match the client's birds-per-round (frontend engine.ts MAX_SHOTS).
 const MAX_SHOTS: usize = 5;
 
-pub async fn submit_angry_bird(
+pub async fn submit_sling_squad(
     State(state): State<AppState>,
     user: AuthUser,
     Json(req): Json<SubmitRequest>,
@@ -66,8 +66,8 @@ pub async fn submit_angry_bird(
     let lvl_meta = level::meta(req.level).ok_or_else(|| AppError::Validation("unknown level".into()))?;
     // Campaign BEFORE this run: levels must be cleared in order, and the
     // campaign score (best of every level added up) unlocks birds.
-    let bests = angry_bird::level_bests(&state.pool, user.user_id).await?;
-    let before = angry_bird::campaign(&bests);
+    let bests = sling_squad::level_bests(&state.pool, user.user_id).await?;
+    let before = sling_squad::campaign(&bests);
     if req.level > before.unlocked_up_to {
         return Err(AppError::Validation("clear the previous level first".into()));
     }
@@ -107,20 +107,20 @@ pub async fn submit_angry_bird(
            VALUES ($1, $2, $3, $4, $5, $3, $6)"#,
     )
     .bind(user.user_id)
-    .bind(ANGRY_BIRD)
+    .bind(SLING_SQUAD)
     .bind(result.score)
     .bind(req.level)
     .bind(&primary_bird)
-    .bind(cleared.then_some(angry_bird::CLEAR))
+    .bind(cleared.then_some(sling_squad::CLEAR))
     .execute(&mut *tx)
     .await?;
     let mut reward = score_round_reward(result.score, &mut rand::thread_rng());
     if first_clear {
-        reward.xp += angry_bird::FIRST_CLEAR_XP;
+        reward.xp += sling_squad::FIRST_CLEAR_XP;
     }
     let round = quests::Event::AngryBirdRound { score: result.score as i64, cleared };
     quests::api::record(&mut tx, user.user_id, &[round]).await?;
-    let rewards = economy::grant(&mut tx, user.user_id, reward, "angry_bird_round", true).await?;
+    let rewards = economy::grant(&mut tx, user.user_id, reward, "sling_squad_round", true).await?;
     tx.commit().await?;
 
     let improved = (result.score - level_best_before).max(0);
@@ -153,7 +153,7 @@ pub async fn submit_angry_bird(
     }))
 }
 
-/// Reward for one scored round (Angry Bird, Whack-a-Mole).
+/// Reward for one scored round (Sling Squad, Whack-a-Mole).
 /// Coins: 1 per 1,000 points. XP: 10 + up to 90 more for a big score.
 /// Token: 3% chance, rising to 15% for a 20,000+ point round.
 pub fn score_round_reward(score: i32, rng: &mut impl rand::Rng) -> Reward {
@@ -314,16 +314,16 @@ pub async fn my_scores(
     }))
 }
 
-// Legacy routes (pre-platform clients) map to Angry Bird.
+// Legacy routes (pre-platform clients) map to Sling Squad.
 pub async fn legacy_leaderboard(state: State<AppState>) -> AppResult<Json<Vec<LeaderboardEntry>>> {
-    leaderboard(state, Path(ANGRY_BIRD.to_string()), None).await
+    leaderboard(state, Path(SLING_SQUAD.to_string()), None).await
 }
 
 pub async fn legacy_my_scores(
     state: State<AppState>,
     user: AuthUser,
 ) -> AppResult<Json<MyScoresResponse>> {
-    my_scores(state, Path(ANGRY_BIRD.to_string()), user).await
+    my_scores(state, Path(SLING_SQUAD.to_string()), user).await
 }
 
 pub async fn fetch_best_score(state: &AppState, game_id: &str, user_id: Uuid) -> AppResult<i32> {
