@@ -292,31 +292,40 @@ pub fn best_move(b: &Board, level: Level, budget: Duration, rng: &mut impl Rng) 
 /// Is there a forced mate for the side to move within `moves` of its own moves?
 /// Returns the mating first move (used to make and check puzzles).
 pub fn mate_in(b: &Board, moves: u8) -> Option<Move> {
-    fn attacker(b: &Board, n: u8) -> Option<Move> {
-        for m in legal_moves(b) {
+    legal_moves(b).into_iter().find(|&m| {
+        let mut c = b.clone();
+        c.play_unchecked(m);
+        forces_mate(&c, moves)
+    })
+}
+
+/// Every first move that forces mate within `moves` (a good puzzle has one or two).
+pub fn mating_moves(b: &Board, moves: u8) -> Vec<Move> {
+    legal_moves(b)
+        .into_iter()
+        .filter(|&m| {
             let mut c = b.clone();
             c.play_unchecked(m);
-            if defender_loses(&c, n) {
-                return Some(m);
-            }
-        }
-        None
-    }
-    fn defender_loses(b: &Board, n: u8) -> bool {
-        let replies = legal_moves(b);
-        if replies.is_empty() {
-            return !b.checkers().is_empty();
-        }
-        if n <= 1 {
-            return false;
-        }
-        replies.into_iter().all(|r| {
-            let mut c = b.clone();
-            c.play_unchecked(r);
-            attacker(&c, n - 1).is_some()
+            forces_mate(&c, moves)
         })
+        .collect()
+}
+
+/// The attacker has just moved: is the defender mated now, or will be within
+/// `moves` attacker moves in total (counting the one just played)?
+pub fn forces_mate(b: &Board, moves: u8) -> bool {
+    let replies = legal_moves(b);
+    if replies.is_empty() {
+        return !b.checkers().is_empty();
     }
-    attacker(b, moves)
+    if moves <= 1 {
+        return false;
+    }
+    replies.into_iter().all(|r| {
+        let mut c = b.clone();
+        c.play_unchecked(r);
+        mate_in(&c, moves - 1).is_some()
+    })
 }
 
 /// The defender's most stubborn reply (the one that delays mate the most).

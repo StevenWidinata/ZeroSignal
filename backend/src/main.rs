@@ -173,6 +173,8 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/games/chess/games/:id/resign", post(chess::api::resign))
         .route("/api/games/chess/collection", get(chess::api::collection))
         .route("/api/games/chess/buy", post(chess::api::buy))
+        .route("/api/games/chess/puzzle", get(chess::puzzle_api::today))
+        .route("/api/games/chess/puzzle/move", post(chess::puzzle_api::make_move))
         .route("/api/games/connect-four/skins", get(cf::list_skins))
         .route("/api/games/connect-four/spins", post(cf::spin))
         // Legacy aliases (Sling Squad) for older clients.

@@ -264,6 +264,10 @@
     { "id": "title-first-slide", "slot": "title", "name": "First Slide", "rarity": "common", "unlock": { "kind": "achievement" }, "art": { "text": "First Slide", "tier": "bronze", "color": "#b8860b" } },
     { "id": "title-2048", "slot": "title", "name": "2048!", "rarity": "rare", "unlock": { "kind": "achievement" }, "art": { "text": "2048!", "tier": "silver", "color": "#e8a33d", "icon": "🔢" } },
     { "id": "title-pure-skill", "slot": "title", "name": "Pure Skill", "rarity": "epic", "unlock": { "kind": "achievement" }, "art": { "text": "Pure Skill", "tier": "gold", "color": "#f65e3b", "icon": "🎯", "effect": "glow" } },
-    { "id": "title-tile-tycoon", "slot": "title", "name": "Tile Tycoon", "rarity": "legendary", "unlock": { "kind": "achievement" }, "art": { "text": "Tile Tycoon", "tier": "mythic", "color": "#edc22e", "icon": "👑", "effect": "shimmer" } }
+    { "id": "title-tile-tycoon", "slot": "title", "name": "Tile Tycoon", "rarity": "legendary", "unlock": { "kind": "achievement" }, "art": { "text": "Tile Tycoon", "tier": "mythic", "color": "#edc22e", "icon": "👑", "effect": "shimmer" } },
+    { "id": "title-checkmate", "slot": "title", "name": "Checkmate!", "rarity": "common", "unlock": { "kind": "achievement" }, "art": { "text": "Checkmate!", "tier": "bronze", "color": "#b58863", "icon": "♟️" } },
+    { "id": "title-grandmaster", "slot": "title", "name": "Grandmaster", "rarity": "legendary", "unlock": { "kind": "achievement" }, "art": { "text": "Grandmaster", "tier": "mythic", "color": "#c9a227", "icon": "♚", "effect": "shimmer" } },
+    { "id": "title-puzzle-sage", "slot": "title", "name": "Puzzle Sage", "rarity": "epic", "unlock": { "kind": "achievement" }, "art": { "text": "Puzzle Sage", "tier": "gold", "color": "#7b61ff", "icon": "🧩", "effect": "glow" } },
+    { "id": "title-lightning-mate", "slot": "title", "name": "Lightning Mate", "rarity": "epic", "unlock": { "kind": "achievement" }, "art": { "text": "Lightning Mate", "tier": "gold", "color": "#ffd23f", "icon": "⚡", "effect": "glow" } }
   ]
 }

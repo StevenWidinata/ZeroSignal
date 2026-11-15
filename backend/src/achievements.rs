@@ -1,4 +1,4 @@
-//! Achievements: 40 one-time goals. Progress is computed live from data the
+//! Achievements: 44 one-time goals. Progress is computed live from data the
 //! server already verified (matches, scores, ledger, inventory), so older
 //! progress counts too. Claiming pays coins + the same XP once, plus a title.
 
@@ -66,6 +66,12 @@ pub struct Stats {
     pub g2048_games: i64,
     pub g2048_best_tile: i64,
     pub g2048_pure: bool,
+    /// Chess vs Zero-Bot: checkmate wins, Master wins, mates in under 20 of your moves.
+    pub chess_mates: i64,
+    pub chess_master_wins: i64,
+    pub chess_fast_mates: i64,
+    /// Longest run of Daily puzzles solved on days in a row.
+    pub chess_puzzle_streak: i64,
 }
 
 pub struct Achievement {
@@ -99,7 +105,7 @@ macro_rules! ach {
     };
 }
 
-pub static ACHIEVEMENTS: [Achievement; 40] = [
+pub static ACHIEVEMENTS: [Achievement; 44] = [
     ach!("cf_first_win", "First Drop", "Win your first Connect Four series", 30, "title-chip-dropper", 1, |s| s.cf_wins),
     ach!("cf_medium", "Thinking Ahead", "Win a Connect Four series vs Medium or harder", 40, "title-four-thinker", 1, |s| s.cf_wins_medium),
     ach!("cf_hard", "Hard Hitter", "Win a Connect Four series vs Hard or harder", 80, "title-grid-breaker", 1, |s| s.cf_wins_hard),
@@ -145,6 +151,10 @@ pub static ACHIEVEMENTS: [Achievement; 40] = [
     ach!("g2048_2048", "2048!", "Make a 2048 tile", 150, "title-2048", 1, |s| i64::from(s.g2048_best_tile >= 2048)),
     ach!("g2048_4096", "Tile Tycoon", "Make a 4096 tile", 300, "title-tile-tycoon", 1, |s| i64::from(s.g2048_best_tile >= 4096)),
     ach!("g2048_pure", "Pure Skill", "Make a 2048 tile without using undo", 200, "title-pure-skill", 1, |s| i64::from(s.g2048_pure)),
+    ach!("chess_first_mate", "First Checkmate", "Checkmate Zero-Bot in chess", 30, "title-checkmate", 1, |s| s.chess_mates),
+    ach!("chess_master", "Beat Master", "Beat Zero-Bot on Master in chess", 300, "title-grandmaster", 1, |s| s.chess_master_wins),
+    ach!("chess_puzzle_streak", "Puzzle Streak", "Solve the Daily chess puzzle 7 days in a row", 150, "title-puzzle-sage", 7, |s| s.chess_puzzle_streak),
+    ach!("chess_lightning", "Lightning Mate", "Checkmate Zero-Bot in under 20 of your moves", 120, "title-lightning-mate", 1, |s| s.chess_fast_mates),
     ach!("quest_days_7", "Quest Master", "Finish all 3 daily quests in one day, 7 times", 200, "title-quest-master", 7, |s| s.quest_full_days),
 ];
 
@@ -226,6 +236,28 @@ pub async fn load_stats(pool: &sqlx::PgPool, user_id: Uuid) -> AppResult<Stats> 
     .fetch_one(pool)
     .await?;
 
+    let chess: (i64, i64, i64) = sqlx::query_as(
+        r#"SELECT COUNT(*) FILTER (WHERE ending = 'checkmate'),
+                  COUNT(*) FILTER (WHERE level = 'master'),
+                  COUNT(*) FILTER (WHERE ending = 'checkmate' AND array_length(string_to_array(moves, ' '), 1) < 40)
+           FROM chess_games WHERE user_id = $1 AND status = 'won'"#,
+    )
+    .bind(user_id)
+    .fetch_one(pool)
+    .await?;
+    // Days in a row: solved days minus their row number are equal within a run.
+    let chess_puzzle_streak = count(
+        pool,
+        r#"SELECT MAX(n) FROM (
+               SELECT COUNT(*) AS n FROM (
+                   SELECT day - (ROW_NUMBER() OVER (ORDER BY day))::INT AS run
+                   FROM chess_puzzle_runs WHERE user_id = $1 AND status = 'solved'
+               ) d GROUP BY run
+           ) r"#,
+        user_id,
+    )
+    .await?;
+
     let free_skins = SKINS.iter().filter(|s| s.free).count() as i64;
     let paid_skins = count(
         pool,
@@ -300,6 +332,10 @@ pub async fn load_stats(pool: &sqlx::PgPool, user_id: Uuid) -> AppResult<Stats> 
         g2048_games: g2048.0,
         g2048_best_tile: g2048.1.unwrap_or(0) as i64,
         g2048_pure: g2048.2.unwrap_or(false),
+        chess_mates: chess.0,
+        chess_master_wins: chess.1,
+        chess_fast_mates: chess.2,
+        chess_puzzle_streak,
     })
 }
 
@@ -453,11 +489,11 @@ mod tests {
     use super::*;
 
     #[test]
-    fn there_are_40_unique_achievements() {
+    fn there_are_44_unique_achievements() {
         let mut ids: Vec<_> = ACHIEVEMENTS.iter().map(|a| a.id).collect();
         ids.sort();
         ids.dedup();
-        assert_eq!(ids.len(), 40);
+        assert_eq!(ids.len(), 44);
         assert!(ACHIEVEMENTS.iter().all(|a| a.coins > 0 && a.target > 0 && a.id.len() <= 32));
     }
 
@@ -472,9 +508,9 @@ mod tests {
         let mut titles: Vec<_> = ACHIEVEMENTS.iter().map(|a| a.title).collect();
         titles.sort();
         titles.dedup();
-        assert_eq!(titles.len(), 40);
+        assert_eq!(titles.len(), 44);
         let achievement_items = c.items.iter().filter(|i| i.unlock == Unlock::Achievement).count();
-        assert_eq!(achievement_items, 40, "orphan achievement-only items in catalog");
+        assert_eq!(achievement_items, 44, "orphan achievement-only items in catalog");
     }
 
     #[test]
