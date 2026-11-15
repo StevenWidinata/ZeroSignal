@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::{Postgres, Transaction};
 use uuid::Uuid;
 
-use super::{clean_code, new_code, play, play_uci, replay, seat_of, series_xp, Game, GameState, Seat, Series, EMOTES};
+use super::{clean_code, new_code, play, play_sonar, play_uci, replay, seat_of, series_xp, sonar_state, Game, GameState, Seat, Series, EMOTES};
 use crate::auth::jwt::AuthUser;
 use crate::connect_four::board::Outcome;
 use crate::economy::{self, Reward};
@@ -58,11 +58,27 @@ struct Room {
     created_at: DateTime<Utc>,
     /// Chess: the seat that offered a draw.
     draw_offer: Option<i16>,
+    /// Sonar: each seat's secret fleet this game.
+    host_fleet: Option<String>,
+    guest_fleet: Option<String>,
 }
 
 impl Room {
     fn game(&self) -> Game {
         Game::parse(&self.game).unwrap_or(Game::ConnectFour)
+    }
+
+    /// The board as `viewer` may see it (0 = nobody in particular).
+    fn state(&self, viewer: Seat) -> Result<GameState, &'static str> {
+        match self.game() {
+            Game::Sonar => sonar_state(&self.moves, [self.host_fleet.as_deref(), self.guest_fleet.as_deref()], self.first_seat as u8, viewer),
+            g => replay(g, &self.moves),
+        }
+    }
+
+    /// Sonar: both fleets hidden, so firing can start.
+    fn fleets_ready(&self) -> bool {
+        self.game() != Game::Sonar || (self.host_fleet.is_some() && self.guest_fleet.is_some())
     }
 
     fn seat_of(&self, user: Uuid) -> Option<Seat> {
@@ -143,7 +159,7 @@ fn here(seen: Option<DateTime<Utc>>, now: DateTime<Utc>) -> bool {
 
 async fn view(pool: &sqlx::PgPool, r: &Room, you: Seat) -> AppResult<RoomView> {
     let now = Utc::now();
-    let board = replay(r.game(), &r.moves).map_err(|e| AppError::Internal(anyhow::anyhow!("room {}: {e}", r.code)))?;
+    let board = r.state(you).map_err(|e| AppError::Internal(anyhow::anyhow!("room {}: {e}", r.code)))?;
     let host = user_bits(pool, r.host_id).await?;
     let guest = match r.guest_id {
         Some(g) => Some(user_bits(pool, g).await?),
@@ -179,7 +195,7 @@ async fn view(pool: &sqlx::PgPool, r: &Room, you: Seat) -> AppResult<RoomView> {
         players,
         game_no: r.game_no,
         first_seat: r.first_seat,
-        your_turn: r.status == "playing" && !r.game_over && to_move == you,
+        your_turn: r.status == "playing" && !r.game_over && r.fleets_ready() && to_move == you,
         board,
         moves: r.moves.clone(),
         game_over: r.game_over,
@@ -207,7 +223,7 @@ async fn save(tx: &mut Transaction<'_, Postgres>, r: &Room) -> AppResult<()> {
                host_wins = $7, guest_wins = $8, draws = $9, game_over = $10, winner = $11, rewarded = $12,
                host_rematch = $13, guest_rematch = $14, host_emote = $15, host_emote_at = $16,
                guest_emote = $17, guest_emote_at = $18, host_seen = $19, guest_seen = $20,
-               draw_offer = $21, version = version + 1, updated_at = now()
+               draw_offer = $21, host_fleet = $22, guest_fleet = $23, version = version + 1, updated_at = now()
            WHERE id = $1"#,
     )
     .bind(r.id)
@@ -231,6 +247,8 @@ async fn save(tx: &mut Transaction<'_, Postgres>, r: &Room) -> AppResult<()> {
     .bind(r.host_seen)
     .bind(r.guest_seen)
     .bind(r.draw_offer)
+    .bind(&r.host_fleet)
+    .bind(&r.guest_fleet)
     .execute(&mut **tx)
     .await?;
     Ok(())
@@ -312,7 +330,7 @@ fn default_best_of() -> i16 {
 
 /// `POST /api/rooms`: open a room and wait for a friend.
 pub async fn create(State(state): State<AppState>, user: AuthUser, Json(req): Json<CreateRequest>) -> AppResult<Json<RoomView>> {
-    let game = Game::parse(&req.game).ok_or_else(|| AppError::Validation("game must be connect-four, tic-tac-toe or chess".into()))?;
+    let game = Game::parse(&req.game).ok_or_else(|| AppError::Validation("game must be connect-four, tic-tac-toe, chess or sonar".into()))?;
     if ![1, 3, 5].contains(&req.best_of) {
         return Err(AppError::Validation("best_of must be 1, 3 or 5".into()));
     }
@@ -421,6 +439,9 @@ pub struct MoveRequest {
     /// Chess move in UCI ("e2e4", "e7e8q", castling "e1g1").
     #[serde(default)]
     pub uci: Option<String>,
+    /// Sonar: a sonar ping centred on `cell` instead of a shot.
+    #[serde(default)]
+    pub ping: Option<bool>,
 }
 
 /// `POST /api/rooms/:code/move`
@@ -438,11 +459,21 @@ pub async fn make_move(
     if r.status != "playing" || r.game_over {
         return Err(AppError::Conflict("there's no game in progress".into()));
     }
-    let board = replay(r.game(), &r.moves).map_err(|e| AppError::Internal(anyhow::anyhow!(e)))?;
+    if !r.fleets_ready() {
+        return Err(AppError::Conflict("wait until both fleets are hidden".into()));
+    }
+    let board = r.state(0).map_err(|e| AppError::Internal(anyhow::anyhow!(e)))?;
     if seat_of(board.next, r.first_seat as u8) != seat {
         return Err(AppError::Conflict("it's your friend's turn".into()));
     }
     r.moves = match (r.game(), req.cell, req.uci.as_deref()) {
+        (Game::Sonar, Some(cell), _) => play_sonar(
+            &r.moves,
+            [r.host_fleet.as_deref().unwrap_or_default(), r.guest_fleet.as_deref().unwrap_or_default()],
+            r.first_seat as u8,
+            cell,
+            req.ping.unwrap_or(false),
+        ),
         (Game::Chess, _, Some(uci)) => play_uci(&r.moves, uci),
         (Game::Chess, _, None) => Err("send a chess move as uci"),
         (g, Some(cell), _) => play(g, &r.moves, cell),
@@ -450,7 +481,7 @@ pub async fn make_move(
     }
     .map_err(|e| AppError::Validation(e.into()))?;
     r.draw_offer = None;
-    let after = replay(r.game(), &r.moves).map_err(|e| AppError::Internal(anyhow::anyhow!(e)))?;
+    let after = r.state(0).map_err(|e| AppError::Internal(anyhow::anyhow!(e)))?;
     if after.outcome != Outcome::Ongoing {
         end_game(&mut tx, &mut r, after.outcome).await?;
     }
@@ -512,6 +543,39 @@ pub async fn draw(
     Ok(Json(view(&state.pool, &r, seat).await?))
 }
 
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct FleetRequest {
+    /// Fleet code, e.g. "a1h a3h a5h a7h a9h".
+    pub fleet: String,
+}
+
+/// `POST /api/rooms/:code/fleet`: hide your Sonar fleet for this game.
+pub async fn fleet(
+    State(state): State<AppState>,
+    user: AuthUser,
+    Path(code): Path<String>,
+    Json(req): Json<FleetRequest>,
+) -> AppResult<Json<RoomView>> {
+    let fleet = crate::sonar::rules::Fleet::parse(&req.fleet).map_err(|e| AppError::Validation(e.text().into()))?;
+    let mut tx = state.pool.begin().await?;
+    let mut r = lock(&mut tx, &code).await?;
+    let seat = r.seat_of(user.user_id).ok_or(AppError::NotFound)?;
+    if r.game() != Game::Sonar || r.status != "playing" || r.game_over {
+        return Err(AppError::Conflict("there's no Sonar game to place a fleet in".into()));
+    }
+    let slot = if seat == 1 { &mut r.host_fleet } else { &mut r.guest_fleet };
+    if slot.is_some() {
+        return Err(AppError::Conflict("your fleet is already hidden".into()));
+    }
+    *slot = Some(fleet.code());
+    mark_seen(&mut r, seat, Utc::now());
+    save(&mut tx, &r).await?;
+    tx.commit().await?;
+    let r = reload(&state.pool, r.id).await?;
+    Ok(Json(view(&state.pool, &r, seat).await?))
+}
+
 /// `POST /api/rooms/:code/next`: start the next game of the series.
 pub async fn next_game(State(state): State<AppState>, user: AuthUser, Path(code): Path<String>) -> AppResult<Json<RoomView>> {
     let mut tx = state.pool.begin().await?;
@@ -519,6 +583,8 @@ pub async fn next_game(State(state): State<AppState>, user: AuthUser, Path(code)
     let seat = r.seat_of(user.user_id).ok_or(AppError::NotFound)?;
     if r.status == "playing" && r.game_over {
         r.moves.clear();
+        r.host_fleet = None;
+        r.guest_fleet = None;
         r.game_over = false;
         r.game_no += 1;
         r.first_seat = 3 - r.first_seat;
@@ -606,6 +672,8 @@ pub async fn rematch(State(state): State<AppState>, user: AuthUser, Path(code): 
     if r.host_rematch && r.guest_rematch {
         r.status = "playing".into();
         r.moves.clear();
+        r.host_fleet = None;
+        r.guest_fleet = None;
         r.game_over = false;
         r.game_no = 1;
         r.first_seat = 3 - r.first_seat;
@@ -698,6 +766,8 @@ mod tests {
             version: 1,
             created_at: t,
             draw_offer: None,
+            host_fleet: None,
+            guest_fleet: None,
         }
     }
 

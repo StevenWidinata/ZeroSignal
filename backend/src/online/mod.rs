@@ -1,4 +1,4 @@
-//! Online play: two people on two devices play Connect Four, Tic-Tac-Toe or chess
+//! Online play: two people on two devices play Connect Four, Tic-Tac-Toe, chess or Sonar
 //! in a room joined by a 6-character code. The server keeps the moves and
 //! checks every one with the same rules as the AI games; clients only send
 //! the cell they want and poll for news (Vercel can't hold sockets open).
@@ -36,6 +36,8 @@ pub enum Game {
     TicTacToe,
     #[serde(rename = "chess")]
     Chess,
+    #[serde(rename = "sonar")]
+    Sonar,
 }
 
 impl Game {
@@ -44,6 +46,7 @@ impl Game {
             "connect-four" => Some(Game::ConnectFour),
             "tic-tac-toe" => Some(Game::TicTacToe),
             "chess" => Some(Game::Chess),
+            "sonar" => Some(Game::Sonar),
             _ => None,
         }
     }
@@ -53,6 +56,7 @@ impl Game {
             Game::ConnectFour => "connect-four",
             Game::TicTacToe => "tic-tac-toe",
             Game::Chess => "chess",
+            Game::Sonar => "sonar",
         }
     }
 }
@@ -74,6 +78,8 @@ pub struct GameState {
 /// check and the legal moves; P1 = White.
 pub fn replay(game: Game, moves: &str) -> Result<GameState, &'static str> {
     match game {
+        // Sonar needs the secret fleets: see `sonar_state`.
+        Game::Sonar => sonar_state(moves, [None, None], 1, 0),
         Game::Chess => {
             use crate::chess::{Outcome as C, Side};
             let g = crate::chess::Game::replay(crate::chess::START_FEN, moves).map_err(|_| "bad moves")?;
@@ -115,6 +121,67 @@ pub fn replay(game: Game, moves: &str) -> Result<GameState, &'static str> {
     }
 }
 
+/// Sonar fleets by seat ([host, guest]) turned into the duel's sides:
+/// side 0 = the seat that fires first this game.
+fn sonar_duel(moves: &str, fleets: [&str; 2], first_seat: Seat) -> Result<crate::sonar::rules::Duel, &'static str> {
+    use crate::sonar::rules::{Duel, Fleet};
+    let f = |seat: Seat| Fleet::parse(fleets[seat as usize - 1]).map_err(|e| e.text());
+    let (a, b) = (f(first_seat)?, f(3 - first_seat)?);
+    Duel::replay([&a, &b], 0, moves).map_err(|e| e.text())
+}
+
+/// Sonar as `viewer` (seat 1 or 2; 0 = nobody) may see it. Until both fleets
+/// are hidden the game is in its "placing" phase. Your own fleet is always
+/// yours to see; the other fleet only once the game is over.
+pub fn sonar_state(moves: &str, fleets: [Option<&str>; 2], first_seat: Seat, viewer: Seat) -> Result<GameState, &'static str> {
+    use crate::sonar::view::{log_for, SeaView};
+    let placed = [fleets[0].is_some(), fleets[1].is_some()];
+    let your_fleet = (viewer == 1 || viewer == 2).then(|| fleets[viewer as usize - 1]).flatten();
+    let (Some(h), Some(g)) = (fleets[0], fleets[1]) else {
+        return Ok(GameState {
+            cells: json!({ "phase": "placing", "placed": placed, "your_fleet": your_fleet }),
+            outcome: Outcome::Ongoing,
+            highlight: Value::Null,
+            next: Player::P1,
+        });
+    };
+    let d = sonar_duel(moves, [h, g], first_seat)?;
+    let outcome = match d.winner() {
+        Some(0) => Outcome::Win(Player::P1),
+        Some(_) => Outcome::Win(Player::P2),
+        None => Outcome::Ongoing,
+    };
+    let next = if d.to_move() == 0 { Player::P1 } else { Player::P2 };
+    let cells = if viewer == 1 || viewer == 2 {
+        let me = if viewer == first_seat { 0 } else { 1 };
+        let theirs = fleets[2 - viewer as usize];
+        json!({
+            "phase": "firing",
+            "placed": placed,
+            "your_fleet": your_fleet,
+            "your_sea": SeaView::of(&d.seas[me]),
+            "target": SeaView::of(&d.seas[1 - me]),
+            "log": log_for(&d, me),
+            "their_fleet": d.winner().map(|_| theirs),
+        })
+    } else {
+        json!({ "phase": "firing", "placed": placed })
+    };
+    Ok(GameState { cells, outcome, highlight: Value::Null, next })
+}
+
+/// Fire (or ping) in a Sonar game; returns the new move string.
+pub fn play_sonar(moves: &str, fleets: [&str; 2], first_seat: Seat, cell: u8, ping: bool) -> Result<String, &'static str> {
+    use crate::sonar::rules::{Move, CELLS};
+    if usize::from(cell) >= CELLS {
+        return Err("that isn't a square on the grid");
+    }
+    let mut d = sonar_duel(moves, fleets, first_seat)?;
+    let m = if ping { Move::Ping(cell.into()) } else { Move::Fire(cell.into()) };
+    d.play(m).map_err(|e| e.text())?;
+    Ok(d.move_string())
+}
+
 /// Play a chess move (UCI) after `moves`; returns the new move string.
 pub fn play_uci(moves: &str, uci: &str) -> Result<String, &'static str> {
     let mut g = crate::chess::Game::replay(crate::chess::START_FEN, moves).map_err(|_| "bad moves")?;
@@ -126,6 +193,7 @@ pub fn play_uci(moves: &str, uci: &str) -> Result<String, &'static str> {
 pub fn play(game: Game, moves: &str, cell: u8) -> Result<String, &'static str> {
     match game {
         Game::Chess => Err("send a chess move as uci"),
+        Game::Sonar => Err("hide your fleet first"),
         Game::ConnectFour => {
             let mut b = CfBoard::from_move_string(moves).map_err(|_| "bad moves")?;
             b.play(cell).map_err(|e| match e {
@@ -262,6 +330,38 @@ mod tests {
         let s = replay(Game::TicTacToe, &m).unwrap();
         assert_eq!(s.outcome, Outcome::Win(Player::P1));
         assert_eq!(s.highlight, json!([0, 1, 2]));
+    }
+
+    #[test]
+    fn sonar_hides_the_other_fleet_until_the_end() {
+        let host = "a1h a3h a5h a7h a9h";
+        let guest = "a1v c1v e1v g1v i1v";
+        let s = sonar_state("", [Some(host), None], 1, 2).unwrap();
+        assert_eq!(s.cells["phase"], "placing");
+        assert_eq!(s.cells["your_fleet"], Value::Null, "the guest hasn't placed yet");
+        assert!(!s.cells.to_string().contains(host), "the host's fleet never reaches the guest");
+        // Host fires first at the guest's destroyer (i1, i2 = cells 8, 18).
+        let mut m = String::new();
+        for (cell, ping) in [(8, false), (55, true), (18, false)] {
+            m = play_sonar(&m, [host, guest], 1, cell, ping).unwrap();
+        }
+        let for_guest = sonar_state(&m, [Some(host), Some(guest)], 1, 2).unwrap();
+        assert!(!for_guest.cells.to_string().contains(host));
+        assert_eq!(for_guest.cells["target"]["sunk"].as_array().unwrap().len(), 0);
+        assert_eq!(for_guest.cells["your_sea"]["sunk"][0]["ship"], 4);
+        assert_eq!(for_guest.next, Player::P2, "the guest's turn");
+        assert_eq!(play_sonar(&m, [host, guest], 1, 100, false).err(), Some("that isn't a square on the grid"));
+        // Sink everything of the guest's: the host wins and the fleets show.
+        let targets = [0, 10, 20, 30, 40, 2, 12, 22, 32, 4, 14, 24, 6, 16, 26];
+        let mut spare = (60..100).filter(|c| c % 10 > 1);
+        for t in targets {
+            // The guest fires somewhere, then the host fires at the guest's fleet.
+            m = play_sonar(&m, [host, guest], 1, spare.next().unwrap(), false).unwrap();
+            m = play_sonar(&m, [host, guest], 1, t, false).unwrap();
+        }
+        let end = sonar_state(&m, [Some(host), Some(guest)], 1, 2).unwrap();
+        assert_eq!(end.outcome, Outcome::Win(Player::P1));
+        assert_eq!(end.cells["their_fleet"], host);
     }
 
     #[test]
