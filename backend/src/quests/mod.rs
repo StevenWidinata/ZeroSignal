@@ -41,6 +41,8 @@ pub enum Event {
     SonarGame { level: i64, result: GameResult },
     /// Today's Daily Hunt finished in `shots` moves.
     SonarDaily { shots: i64 },
+    /// A finished Snake Signal run (100+ ticks): score and best combo (1/2/3/5).
+    SnakeRun { score: i64, best_combo: i64 },
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -67,6 +69,9 @@ enum Goal {
     SonarDaily,
     Tile2048(i64),
     Score2048(i64),
+    SnakeRuns,
+    SnakeScore(i64),
+    SnakeCombo(i64),
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -123,6 +128,9 @@ impl QuestDef {
             (Goal::SonarDaily, SonarDaily { .. }) => 1,
             (Goal::Tile2048(min), Game2048 { max_tile, .. }) => hit(max_tile >= min),
             (Goal::Score2048(min), Game2048 { points, .. }) => hit(points >= min),
+            (Goal::SnakeRuns, SnakeRun { .. }) => 1,
+            (Goal::SnakeScore(min), SnakeRun { score, .. }) => hit(score >= min),
+            (Goal::SnakeCombo(min), SnakeRun { best_combo, .. }) => hit(best_combo >= min),
             _ => 0,
         }
     }
@@ -134,7 +142,7 @@ const fn q(id: &'static str, title: &'static str, goal: Goal, target: i32, coins
 
 use Game::{ConnectFour as CF, TicTacToe as TTT};
 
-pub const POOL: [QuestDef; 28] = [
+pub const POOL: [QuestDef; 31] = [
     q("cf_play_3", "Play 3 Connect Four games vs the AI", Goal::PlayAi(CF), 3, 20, 30),
     q("cf_win_2_medium", "Win 2 Connect Four games vs Medium or harder",
         Goal::WinAi { game: Some(CF), min_level: 2 }, 2, 40, 60),
@@ -170,6 +178,9 @@ pub const POOL: [QuestDef; 28] = [
     q("sonar_daily", "Finish today's Sonar Daily Hunt", Goal::SonarDaily, 1, 30, 40),
     q("g2048_tile_512", "Make a 512 tile in 2048", Goal::Tile2048(512), 1, 40, 60),
     q("g2048_score_10000", "Score 10,000 in one game of 2048", Goal::Score2048(10_000), 1, 40, 60),
+    q("snake_play_3", "Play 3 Snake Signal runs", Goal::SnakeRuns, 3, 20, 30),
+    q("snake_score_3000", "Score 3,000 in one Snake Signal run", Goal::SnakeScore(3_000), 1, 40, 60),
+    q("snake_combo_5", "Reach a ×5 combo in Snake Signal", Goal::SnakeCombo(5), 1, 30, 40),
 ];
 
 pub fn find(id: &str) -> Option<&'static QuestDef> {
@@ -323,5 +334,16 @@ mod tests {
         let clear = |cleared| Event::AngryBirdRound { score: 3_000, cleared };
         assert_eq!(quest("ab_clear_2").progress(&clear(true)), 1);
         assert_eq!(quest("ab_clear_2").progress(&clear(false)), 0);
+    }
+
+    #[test]
+    fn snake_quests() {
+        let run = |score, best_combo| Event::SnakeRun { score, best_combo };
+        assert_eq!(quest("snake_play_3").progress(&run(10, 1)), 1);
+        assert_eq!(quest("snake_score_3000").progress(&run(2_999, 5)), 0);
+        assert_eq!(quest("snake_score_3000").progress(&run(3_000, 1)), 1);
+        assert_eq!(quest("snake_combo_5").progress(&run(100, 3)), 0);
+        assert_eq!(quest("snake_combo_5").progress(&run(100, 5)), 1);
+        assert_eq!(quest("snake_play_3").progress(&Event::WhackRound { score: 1, golden_hits: 0 }), 0);
     }
 }

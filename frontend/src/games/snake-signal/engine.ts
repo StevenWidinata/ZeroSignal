@@ -19,7 +19,7 @@ export type Size = "small" | "medium" | "large";
 export const SIZES: Size[] = ["small", "medium", "large"];
 export type Power = "boost" | "phase" | "magnet" | "slow" | "snip";
 export const POWERS: Power[] = ["boost", "phase", "magnet", "slow", "snip"];
-export type End = "wall" | "self" | "glitch" | "bug" | "signal" | "full" | "time";
+export type End = "wall" | "self" | "glitch" | "bug" | "signal" | "full" | "time" | "quit";
 /** 0 up, 1 right, 2 down, 3 left. */
 export type Dir = 0 | 1 | 2 | 3;
 
@@ -243,6 +243,16 @@ export class Game {
     this.s.ended_by = why;
     this.s.score = Math.trunc((this.s.raw * sizePct(this.size)) / 100);
     this.events.push({ type: "crash", why });
+  }
+
+  /** End the run now (the player stopped); points so far count. */
+  quit(): void {
+    if (this.over !== null) return;
+    this.over = "quit";
+    this.s.ticks = this.tick;
+    this.s.length = this.snake.length;
+    this.s.ended_by = "quit";
+    this.s.score = Math.trunc((this.s.raw * sizePct(this.size)) / 100);
   }
 
   private addPoints(base: number): number {
@@ -476,14 +486,21 @@ export type ReplayError = "too_many_turns" | "unsorted" | "bad_dir" | "bad_turn"
 /** Is `d` a real turn from `cur` (not straight on, not a U-turn)? */
 export const canTurn = (cur: Dir, d: Dir): boolean => d !== cur && d !== (cur + 2) % 4;
 
-/** Plays a whole run; the run always ends (crash, signal lost or time cap). */
-export function replay(seed: number, mode: Mode, size: Size, turns: Turn[]): Summary | ReplayError {
+/**
+ * Plays a whole run; the run always ends (crash, signal lost or time cap),
+ * or at tick `stopAt` if the player quit there.
+ */
+export function replay(seed: number, mode: Mode, size: Size, turns: Turn[], stopAt: number | null = null): Summary | ReplayError {
   if (turns.length > RULES.max_ticks) return "too_many_turns";
   for (let i = 1; i < turns.length; i++) if (turns[i][0] <= turns[i - 1][0]) return "unsorted";
   if (turns.some((t) => t[1] > 3 || t[1] < 0)) return "bad_dir";
   const g = new Game(seed, mode, size);
   let i = 0;
   while (g.over === null) {
+    if (stopAt !== null && g.tick >= stopAt) {
+      g.quit();
+      break;
+    }
     let turn: Dir | null = null;
     if (i < turns.length && turns[i][0] === g.tick) {
       const d = turns[i][1];

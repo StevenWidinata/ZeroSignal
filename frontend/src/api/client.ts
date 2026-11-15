@@ -1,4 +1,10 @@
 import type {
+  SnakeCollection,
+  SnakeFinish,
+  SnakeItemKind,
+  SnakeMode,
+  SnakeSize,
+  SnakeStart,
   SonarCollection,
   SonarDaily,
   SonarGame,
@@ -385,6 +391,25 @@ export const whackAMole = {
   },
   finish(runId: string, taps: WamTap[]) {
     return post<WamFinish>(`${WAM}/runs/${encodeURIComponent(runId)}/finish`, { taps });
+  },
+};
+
+const SNAKE = "/api/games/snake-signal";
+
+/** Snake Signal: the server gives a seed and replays your turns itself. */
+export const snakeSignal = {
+  start(mode: SnakeMode, size: SnakeSize, skin: string, arena: string, trail: string) {
+    return post<SnakeStart>(`${SNAKE}/runs`, { mode, size, skin, arena, trail });
+  },
+  /** `turns`: [tick, dir] pairs; `quitAt`: the tick you stopped at, if you quit. */
+  finish(runId: string, turns: [number, number][], quitAt: number | null) {
+    return post<SnakeFinish>(`${SNAKE}/runs/${encodeURIComponent(runId)}/finish`, { turns, quit_at: quitAt });
+  },
+  collection() {
+    return request<SnakeCollection>(`${SNAKE}/collection`);
+  },
+  buy(kind: SnakeItemKind, id: string) {
+    return post<SnakeCollection>(`${SNAKE}/buy`, { kind, id });
   },
 };
 

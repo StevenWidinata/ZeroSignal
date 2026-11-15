@@ -191,6 +191,8 @@ pub enum End {
     Signal,
     Full,
     Time,
+    /// You ended the run yourself; the score still counts.
+    Quit,
 }
 
 impl End {
@@ -203,6 +205,7 @@ impl End {
             End::Signal => "signal",
             End::Full => "full",
             End::Time => "time",
+            End::Quit => "quit",
         }
     }
 }
@@ -443,6 +446,18 @@ impl Game {
         self.s.ticks = self.tick;
         self.s.length = self.snake.len() as u32;
         self.s.ended_by = Some(why);
+        self.s.score = (self.s.raw as u64 * self.size.pct() as u64 / 100) as u32;
+    }
+
+    /// End the run now (the player stopped); points so far count.
+    pub fn quit(&mut self) {
+        if self.over.is_some() {
+            return;
+        }
+        self.over = Some(End::Quit);
+        self.s.ticks = self.tick;
+        self.s.length = self.snake.len() as u32;
+        self.s.ended_by = Some(End::Quit);
         self.s.score = (self.s.raw as u64 * self.size.pct() as u64 / 100) as u32;
     }
 
@@ -697,8 +712,9 @@ impl ReplayError {
     }
 }
 
-/// Plays a whole run; the run always ends (crash, signal lost or time cap).
-pub fn replay(seed: u32, mode: Mode, size: Size, turns: &[Turn]) -> Result<Summary, ReplayError> {
+/// Plays a whole run; the run always ends (crash, signal lost or time cap),
+/// or at tick `stop_at` if the player quit there.
+pub fn replay(seed: u32, mode: Mode, size: Size, turns: &[Turn], stop_at: Option<u32>) -> Result<Summary, ReplayError> {
     if turns.len() as u32 > rules().max_ticks {
         return Err(ReplayError::TooManyTurns);
     }
@@ -711,6 +727,10 @@ pub fn replay(seed: u32, mode: Mode, size: Size, turns: &[Turn]) -> Result<Summa
     let mut g = Game::new(seed, mode, size);
     let mut i = 0;
     while g.over.is_none() {
+        if stop_at.is_some_and(|s| g.tick >= s) {
+            g.quit();
+            break;
+        }
         let turn = match turns.get(i) {
             Some(&(tick, d)) if tick == g.tick => {
                 i += 1;
@@ -811,7 +831,7 @@ pub mod tests {
 
     #[test]
     fn going_straight_hits_the_wall() {
-        let s = replay(1, Mode::Classic, Size::Medium, &[]).unwrap();
+        let s = replay(1, Mode::Classic, Size::Medium, &[], None).unwrap();
         assert_eq!(s.ended_by, Some(End::Wall));
         // Head starts in the middle (x = 10) and moves right until x = 19.
         assert_eq!(s.ticks, 10);
@@ -819,7 +839,7 @@ pub mod tests {
 
     #[test]
     fn wrap_mode_runs_until_the_signal_is_lost() {
-        let s = replay(1, Mode::Wrap, Size::Medium, &[]).unwrap();
+        let s = replay(1, Mode::Wrap, Size::Medium, &[], None).unwrap();
         // No walls: going straight only ends by losing the signal or a glitch.
         assert_ne!(s.ended_by, Some(End::Wall), "{s:?}");
         assert!(s.ticks > 20);
@@ -827,11 +847,11 @@ pub mod tests {
 
     #[test]
     fn u_turns_and_repeats_are_rejected() {
-        assert_eq!(replay(1, Mode::Classic, Size::Medium, &[(0, 3)]), Err(ReplayError::BadTurn));
-        assert_eq!(replay(1, Mode::Classic, Size::Medium, &[(0, 1)]), Err(ReplayError::BadTurn));
-        assert_eq!(replay(1, Mode::Classic, Size::Medium, &[(2, 0), (1, 1)]), Err(ReplayError::Unsorted));
-        assert_eq!(replay(1, Mode::Classic, Size::Medium, &[(0, 7)]), Err(ReplayError::BadDir));
-        assert_eq!(replay(1, Mode::Classic, Size::Medium, &[(500, 0)]), Err(ReplayError::AfterEnd));
+        assert_eq!(replay(1, Mode::Classic, Size::Medium, &[(0, 3)], None), Err(ReplayError::BadTurn));
+        assert_eq!(replay(1, Mode::Classic, Size::Medium, &[(0, 1)], None), Err(ReplayError::BadTurn));
+        assert_eq!(replay(1, Mode::Classic, Size::Medium, &[(2, 0), (1, 1)], None), Err(ReplayError::Unsorted));
+        assert_eq!(replay(1, Mode::Classic, Size::Medium, &[(0, 7)], None), Err(ReplayError::BadDir));
+        assert_eq!(replay(1, Mode::Classic, Size::Medium, &[(500, 0)], None), Err(ReplayError::AfterEnd));
     }
 
     #[test]
@@ -840,7 +860,7 @@ pub mod tests {
         // never eats either, so the signal runs out after 1000 / 4 ticks.
         let cycle = [0u8, 3, 2, 1];
         let turns: Vec<Turn> = (0..250u32).map(|t| (t, cycle[(t % 4) as usize])).collect();
-        let s = replay(9, Mode::Classic, Size::Medium, &turns).unwrap();
+        let s = replay(9, Mode::Classic, Size::Medium, &turns, None).unwrap();
         assert_eq!(s.ended_by, Some(End::Signal));
         assert_eq!(s.ticks, 250);
         assert_eq!(s.score, 0);
@@ -868,7 +888,7 @@ pub mod tests {
             for (mode, size) in [(Mode::Classic, Size::Medium), (Mode::Wrap, Size::Small), (Mode::Classic, Size::Large)] {
                 let (turns, s) = bot_run(seed, mode, size, usize::MAX);
                 assert!(s.eaten >= 10, "seed {seed} {mode:?}: {s:?}");
-                assert_eq!(replay(seed, mode, size, &turns).unwrap(), s);
+                assert_eq!(replay(seed, mode, size, &turns, None).unwrap(), s);
             }
         }
     }
@@ -947,7 +967,23 @@ pub mod tests {
                 .map(|t| (t[0].as_u64().unwrap() as u32, t[1].as_u64().unwrap() as u8))
                 .collect();
             let want: Summary = serde_json::from_value(run["summary"].clone()).unwrap();
-            assert_eq!(replay(seed, mode, size, &turns).unwrap(), want, "seed {seed}");
+            assert_eq!(replay(seed, mode, size, &turns, None).unwrap(), want, "seed {seed}");
         }
+    }
+
+    #[test]
+    fn quitting_banks_the_points_so_far() {
+        let run = |stop| {
+            let (turns, _) = bot_run(11, Mode::Classic, Size::Medium, usize::MAX);
+            let early: Vec<Turn> = turns.into_iter().filter(|t| t.0 < stop).collect();
+            replay(11, Mode::Classic, Size::Medium, &early, Some(stop)).unwrap()
+        };
+        let s = run(200);
+        assert_eq!(s.ended_by, Some(End::Quit));
+        assert_eq!(s.ticks, 200);
+        assert!(s.score > 0);
+        // A turn at or after the quit tick is not allowed.
+        assert_eq!(replay(1, Mode::Classic, Size::Medium, &[(5, 0)], Some(5)), Err(ReplayError::AfterEnd));
+        assert_eq!(replay(1, Mode::Classic, Size::Medium, &[], Some(0)).unwrap().score, 0);
     }
 }

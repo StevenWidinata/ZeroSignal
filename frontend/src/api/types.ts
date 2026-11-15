@@ -471,6 +471,55 @@ export interface WamCollection {
 }
 
 // ---------------------------------------------------------------------------
+// Snake Signal
+// ---------------------------------------------------------------------------
+
+export type SnakeMode = "classic" | "wrap" | "daily";
+export type SnakeSize = "small" | "medium" | "large";
+export type SnakeItemKind = "skin" | "arena" | "trail";
+
+export interface SnakeStart {
+  run_id: string;
+  seed: number;
+  mode: SnakeMode;
+  size: SnakeSize;
+}
+
+/** The server's replay of a run (same shape as the engine's Summary). */
+export interface SnakeSummary {
+  score: number;
+  raw: number;
+  length: number;
+  max_length: number;
+  eaten: number;
+  golden: number;
+  powers: number;
+  close_calls: number;
+  bugs_eaten: number;
+  best_combo: number;
+  ticks: number;
+  game_ms: number;
+  ended_by: "wall" | "self" | "glitch" | "bug" | "signal" | "full" | "time" | "quit" | null;
+}
+
+export interface SnakeFinish {
+  mode: SnakeMode;
+  size: SnakeSize;
+  summary: SnakeSummary;
+  previous_best: number;
+  new_best: boolean;
+  rewards: Granted;
+  /** Lucky drop ("skin:lava"), if any. */
+  drop: string | null;
+}
+
+export interface SnakeCollection {
+  skins: WamItemView[];
+  arenas: WamItemView[];
+  trails: WamItemView[];
+}
+
+// ---------------------------------------------------------------------------
 // Minefield
 // ---------------------------------------------------------------------------
 

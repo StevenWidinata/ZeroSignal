@@ -36,6 +36,15 @@ describe("snake signal engine", () => {
     expect(typeof s === "object" && s.ended_by).toBe("signal");
   });
 
+  it("quitting banks the points so far", () => {
+    const run = vectors.runs[0];
+    const early = run.turns.filter(([t]) => t < 200).map(([t, d]) => [t, d as Dir] as Turn);
+    const s = replay(run.seed, run.mode as Mode, run.size as Size, early, 200);
+    expect(typeof s === "object" && s.ended_by).toBe("quit");
+    expect(typeof s === "object" && s.ticks).toBe(200);
+    expect(replay(1, "classic", "medium", [[5, 0]], 5)).toBe("after_end");
+  });
+
   it("reports events for eating", () => {
     const g = new Game(11, "classic", "medium");
     // Walk the vector run and check that every eaten packet produced an event.

@@ -1,0 +1,30 @@
+{
+  "skins": [
+    { "id": "neon", "name": "Neon Green", "rarity": "common", "price": null, "art": { "style": "solid", "head": "#7CFFB2", "body": "#2EE88A", "glow": "#2EE88A" } },
+    { "id": "circuit", "name": "Circuit", "rarity": "common", "price": null, "art": { "style": "circuit", "head": "#7FE7FF", "body": "#1FA6C9", "glow": "#3CC8F0" } },
+    { "id": "pixel", "name": "Retro Pixel", "rarity": "common", "price": null, "art": { "style": "pixel", "head": "#FFE066", "body": "#F4A62A", "glow": "#FFC94A" } },
+    { "id": "ghost", "name": "Ghost Signal", "rarity": "common", "price": null, "art": { "style": "ghost", "head": "#F2F0FF", "body": "#B9B3FF", "glow": "#D9D4FF" } },
+    { "id": "rainbow", "name": "Rainbow", "rarity": "rare", "price": 400, "art": { "style": "rainbow", "head": "#FFFFFF", "body": "#FF5F7E", "glow": "#FFB0E0" } },
+    { "id": "lava", "name": "Lava Line", "rarity": "rare", "price": 450, "art": { "style": "stripes", "head": "#FFD08A", "body": "#FF5A1F", "glow": "#FF7A2E", "stripe": "#7A1B00" } },
+    { "id": "ice", "name": "Ice Wire", "rarity": "epic", "price": 700, "art": { "style": "stripes", "head": "#FFFFFF", "body": "#9BE3FF", "glow": "#C9F1FF", "stripe": "#4FA8D8" } },
+    { "id": "gold", "name": "Golden Cable", "rarity": "legendary", "price": 1200, "art": { "style": "solid", "head": "#FFF4B0", "body": "#F5C518", "glow": "#FFD84D" } }
+  ],
+  "arenas": [
+    { "id": "grid", "name": "Night Grid", "rarity": "common", "price": null, "art": { "style": "grid", "bg": "#0B1020", "line": "#1C2846", "wall": "#3A4F86", "food": "#FF4FA3" } },
+    { "id": "terminal", "name": "Terminal", "rarity": "common", "price": null, "art": { "style": "dots", "bg": "#050A05", "line": "#123015", "wall": "#2B6B31", "food": "#C6FF4F" } },
+    { "id": "paper", "name": "Graph Paper", "rarity": "common", "price": null, "art": { "style": "grid", "bg": "#F6F2E7", "line": "#DAD3BF", "wall": "#8E836A", "food": "#E2405F" } },
+    { "id": "ocean", "name": "Deep Ocean", "rarity": "common", "price": null, "art": { "style": "dots", "bg": "#04223A", "line": "#0D3B5E", "wall": "#1E6A9A", "food": "#FFB347" } },
+    { "id": "synthwave", "name": "Synthwave", "rarity": "rare", "price": 400, "art": { "style": "horizon", "bg": "#1A0B2E", "line": "#4B1E7A", "wall": "#FF3FA4", "food": "#3FF0FF" } },
+    { "id": "jungle", "name": "Jungle", "rarity": "rare", "price": 450, "art": { "style": "checker", "bg": "#183D1F", "line": "#1F4A27", "wall": "#6B4A2B", "food": "#FF5050" } },
+    { "id": "space", "name": "Deep Space", "rarity": "epic", "price": 700, "art": { "style": "stars", "bg": "#03030A", "line": "#11112A", "wall": "#6A5BFF", "food": "#FFE14F" } },
+    { "id": "mainframe", "name": "Mainframe", "rarity": "legendary", "price": 1200, "art": { "style": "circuit", "bg": "#0A0F14", "line": "#16323F", "wall": "#00E5C7", "food": "#FF2E63" } }
+  ],
+  "trails": [
+    { "id": "none", "name": "No trail", "rarity": "common", "price": null, "art": { "style": "none", "color": "#FFFFFF" } },
+    { "id": "sparks", "name": "Sparks", "rarity": "common", "price": null, "art": { "style": "sparks", "color": "#FFE066" } },
+    { "id": "bubbles", "name": "Bubbles", "rarity": "common", "price": null, "art": { "style": "bubbles", "color": "#9BE3FF" } },
+    { "id": "glitch", "name": "Glitch", "rarity": "rare", "price": 350, "art": { "style": "glitch", "color": "#FF3FA4" } },
+    { "id": "stars", "name": "Stardust", "rarity": "epic", "price": 600, "art": { "style": "stars", "color": "#FFFFFF" } },
+    { "id": "comet", "name": "Comet Tail", "rarity": "legendary", "price": 1000, "art": { "style": "comet", "color": "#FF9F43" } }
+  ]
+}
