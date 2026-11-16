@@ -5,6 +5,7 @@ mod auth;
 mod birds;
 mod birds_api;
 mod character;
+mod checkers;
 mod chess;
 mod config;
 mod connect_four;
