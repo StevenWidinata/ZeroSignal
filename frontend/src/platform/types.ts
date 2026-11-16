@@ -2,6 +2,14 @@ import type { ComponentType, LazyExoticComponent } from "react";
 
 export type GameStatus = "live" | "soon";
 
+/**
+ * How a game can be played (hub filter + card badges):
+ * solo = on your own for a score, bot = vs Zero-Bot, online = with a friend
+ * on another device (room code), local = two players on one device,
+ * daily = a Daily that's the same for everyone.
+ */
+export type PlayStyle = "solo" | "bot" | "online" | "local" | "daily";
+
 /** One step of a game's short "how to play" tutorial. */
 export interface TutorialStep {
   icon: string;
@@ -15,8 +23,10 @@ export interface GameMeta {
   id: string;
   title: string;
   tagline: string;
-  /** Short genre/feature tags shown on the card. */
+  /** Short genre/feature tags shown on the card (not how you play: see `play`). */
   tags: string[];
+  /** How the game can be played (solo, vs Zero-Bot, online, same device, Daily). */
+  play: PlayStyle[];
   /** Card accent: one of the theme's primary colors. */
   accent: "yellow" | "green" | "blue";
   /** Emoji/glyph used as the card's pixel icon. */

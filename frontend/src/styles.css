@@ -5182,3 +5182,67 @@ kbd.key {
   justify-content: flex-start;
   margin: 0;
 }
+
+/* Hub: filter by how you play */
+.play-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 10px;
+}
+.play-chip {
+  --btn-bg: var(--surface);
+  --btn-fg: var(--ink);
+  gap: 8px;
+  padding: 8px 12px;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.play-chip.selected {
+  --btn-bg: var(--yellow);
+  --btn-fg: var(--on-yellow);
+}
+.play-chip-count {
+  min-width: 22px;
+  padding: 0 6px;
+  border: 2px solid currentColor;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  text-align: center;
+}
+.play-filter-hint {
+  margin: 0 0 14px;
+  color: var(--muted);
+}
+.play-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.play-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--ink);
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.play-badge.play-online {
+  background: var(--blue);
+  color: var(--on-blue);
+}
+.play-badge.play-daily {
+  background: var(--green);
+  color: var(--on-green);
+}

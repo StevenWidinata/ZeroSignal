@@ -5,6 +5,16 @@ import type { StatsView } from "../api/types";
 import QuestList from "../components/QuestList";
 import TodaysDailies from "../components/dailies/TodaysDailies";
 import WeeklyPrizes from "../components/WeeklyPrizes";
+import {
+  PLAY_FILTERS,
+  countBy,
+  filterGames,
+  loadFilter,
+  playInfo,
+  saveFilter,
+  sortedStyles,
+  type PlayFilter,
+} from "../platform/playStyles";
 import { recentGames } from "../platform/recent";
 import { GAMES, LIVE_GAMES, findGame } from "../platform/registry";
 import type { GameModule } from "../platform/types";
@@ -35,6 +45,16 @@ function GameCard({ game, best }: { game: GameModule; best: number }) {
       <div className="game-card-body">
         <h2 id={`game-${meta.id}-title`}>{meta.title}</h2>
         <p>{meta.tagline}</p>
+        <ul className="play-badges" aria-label="How you can play">
+          {sortedStyles(meta.play).map((id) => {
+            const p = playInfo(id);
+            return (
+              <li key={id} className={`play-badge play-${id}`} title={p.hint}>
+                <span aria-hidden="true">{p.icon}</span> {p.badge}
+              </li>
+            );
+          })}
+        </ul>
         <ul className="tag-list" aria-label="Tags">
           {meta.tags.map((t) => (
             <li key={t} className="tag tag-outline">
@@ -174,8 +194,43 @@ function RecentRow({ ids, stats }: { ids: string[]; stats: StatsView | null }) {
   );
 }
 
+/** Chips that filter the game grids by how you can play. */
+function PlayFilterBar({ value, onChange }: { value: PlayFilter; onChange: (f: PlayFilter) => void }) {
+  return (
+    <div className="play-filter" role="radiogroup" aria-label="Show games you can play">
+      {PLAY_FILTERS.map((f) => {
+        const info = f === "all" ? null : playInfo(f);
+        const n = countBy(LIVE_GAMES, f);
+        return (
+          <button
+            key={f}
+            type="button"
+            role="radio"
+            aria-checked={value === f}
+            title={info?.hint ?? "Every game"}
+            className={`play-chip${value === f ? " selected" : ""}`}
+            onClick={() => onChange(f)}
+          >
+            {info && <span aria-hidden="true">{info.icon}</span>}
+            <span>{info ? info.label : "All games"}</span>
+            <span className="play-chip-count">{n}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function Hub() {
   const user = useAuth((s) => s.user);
+  const [filter, setFilter] = useState<PlayFilter>(loadFilter);
+  const pickFilter = (f: PlayFilter) => {
+    setFilter(f);
+    saveFilter(f);
+  };
+  const liveShown = filterGames(LIVE_GAMES, filter);
+  const soonShown = filterGames(GAMES.filter((g) => g.meta.status !== "live"), filter);
+  const filterInfo = filter === "all" ? null : playInfo(filter);
   const [stats, setStats] = useState<StatsView | null>(null);
   const recent = useMemo(() => recentGames().filter((id) => findGame(id)?.meta.status === "live"), []);
 
@@ -256,28 +311,36 @@ export default function Hub() {
         <h2 id="games-heading" className="section-title">
           Choose your game
         </h2>
-        <div className="game-grid">
-          {LIVE_GAMES.map((g) => (
-            <GameCard key={g.meta.id} game={g} best={bestOf(stats, g.meta.id)} />
-          ))}
-        </div>
+        <PlayFilterBar value={filter} onChange={pickFilter} />
+        {filterInfo && <p className="play-filter-hint">{filterInfo.hint}</p>}
+        {liveShown.length === 0 ? (
+          <p className="stats-empty">No games like that yet. More are coming soon.</p>
+        ) : (
+          <div className="game-grid">
+            {liveShown.map((g) => (
+              <GameCard key={g.meta.id} game={g} best={bestOf(stats, g.meta.id)} />
+            ))}
+          </div>
+        )}
       </section>
 
-      <section aria-labelledby="soon-heading" className="hub-soon">
-        <div className="hub-quests-head">
-          <h2 id="soon-heading" className="section-title">
-            🛠️ Coming soon
-          </h2>
-          <Link to="/roadmap" className="btn btn-ghost btn-sm">
-            Roadmap →
-          </Link>
-        </div>
-        <div className="game-grid">
-          {GAMES.filter((g) => g.meta.status !== "live").map((g) => (
-            <GameCard key={g.meta.id} game={g} best={0} />
-          ))}
-        </div>
-      </section>
+      {soonShown.length > 0 && (
+        <section aria-labelledby="soon-heading" className="hub-soon">
+          <div className="hub-quests-head">
+            <h2 id="soon-heading" className="section-title">
+              🛠️ Coming soon
+            </h2>
+            <Link to="/roadmap" className="btn btn-ghost btn-sm">
+              Roadmap →
+            </Link>
+          </div>
+          <div className="game-grid">
+            {soonShown.map((g) => (
+              <GameCard key={g.meta.id} game={g} best={0} />
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }
