@@ -2,4 +2,6 @@
 //! games vs Zero-Bot, the Daily puzzle and online rooms.
 
 pub mod ai;
+pub mod api;
+pub mod items;
 pub mod rules;

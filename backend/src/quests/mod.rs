@@ -37,6 +37,9 @@ pub enum Event {
     /// A finished chess game vs Zero-Bot (`level` 1 Easy … 4 Master) or online (0).
     ChessGame { level: i64, result: GameResult },
     ChessPuzzleSolved,
+    /// A finished checkers game vs Zero-Bot (`level` 1 Easy … 4 Master) or online (0).
+    CheckersGame { level: i64, result: GameResult },
+    CheckersPuzzleSolved,
     /// A finished Sonar game vs Zero-Bot (`level` 1 Easy … 4 Master).
     SonarGame { level: i64, result: GameResult },
     /// Today's Daily Hunt finished in `shots` moves.
@@ -64,6 +67,9 @@ enum Goal {
     ChessGames,
     ChessWins { min_level: i64 },
     ChessPuzzle,
+    CheckersGames,
+    CheckersWins { min_level: i64 },
+    CheckersPuzzle,
     SonarGames,
     SonarWins { min_level: i64 },
     SonarDaily,
@@ -123,6 +129,11 @@ impl QuestDef {
             (Goal::ChessGames, ChessGame { .. }) => 1,
             (Goal::ChessWins { min_level }, ChessGame { level, result }) => hit(level >= min_level && result == GameResult::Win),
             (Goal::ChessPuzzle, ChessPuzzleSolved) => 1,
+            (Goal::CheckersGames, CheckersGame { .. }) => 1,
+            (Goal::CheckersWins { min_level }, CheckersGame { level, result }) => {
+                hit(level >= min_level && result == GameResult::Win)
+            }
+            (Goal::CheckersPuzzle, CheckersPuzzleSolved) => 1,
             (Goal::SonarGames, SonarGame { .. }) => 1,
             (Goal::SonarWins { min_level }, SonarGame { level, result }) => hit(level >= min_level && result == GameResult::Win),
             (Goal::SonarDaily, SonarDaily { .. }) => 1,
@@ -142,7 +153,7 @@ const fn q(id: &'static str, title: &'static str, goal: Goal, target: i32, coins
 
 use Game::{ConnectFour as CF, TicTacToe as TTT};
 
-pub const POOL: [QuestDef; 31] = [
+pub const POOL: [QuestDef; 34] = [
     q("cf_play_3", "Play 3 Connect Four games vs the AI", Goal::PlayAi(CF), 3, 20, 30),
     q("cf_win_2_medium", "Win 2 Connect Four games vs Medium or harder",
         Goal::WinAi { game: Some(CF), min_level: 2 }, 2, 40, 60),
@@ -173,6 +184,9 @@ pub const POOL: [QuestDef; 31] = [
     q("chess_play_3", "Finish 3 chess games", Goal::ChessGames, 3, 20, 30),
     q("chess_win_medium", "Beat Zero-Bot at chess on Medium or harder", Goal::ChessWins { min_level: 2 }, 1, 40, 60),
     q("chess_puzzle", "Solve today's chess puzzle", Goal::ChessPuzzle, 1, 30, 40),
+    q("checkers_play_3", "Finish 3 checkers games", Goal::CheckersGames, 3, 20, 30),
+    q("checkers_win_medium", "Beat Zero-Bot at checkers on Medium or harder", Goal::CheckersWins { min_level: 2 }, 1, 40, 60),
+    q("checkers_puzzle", "Solve today's checkers puzzle", Goal::CheckersPuzzle, 1, 30, 40),
     q("sonar_play_3", "Finish 3 Sonar games vs Zero-Bot", Goal::SonarGames, 3, 20, 30),
     q("sonar_win_medium", "Beat Zero-Bot at Sonar on Medium or harder", Goal::SonarWins { min_level: 2 }, 1, 40, 60),
     q("sonar_daily", "Finish today's Sonar Daily Hunt", Goal::SonarDaily, 1, 30, 40),
@@ -345,5 +359,16 @@ mod tests {
         assert_eq!(quest("snake_combo_5").progress(&run(100, 3)), 0);
         assert_eq!(quest("snake_combo_5").progress(&run(100, 5)), 1);
         assert_eq!(quest("snake_play_3").progress(&Event::WhackRound { score: 1, golden_hits: 0 }), 0);
+    }
+
+    #[test]
+    fn checkers_quests() {
+        let game = |level, result| Event::CheckersGame { level, result };
+        assert_eq!(quest("checkers_play_3").progress(&game(1, GameResult::Loss)), 1);
+        assert_eq!(quest("checkers_win_medium").progress(&game(1, GameResult::Win)), 0);
+        assert_eq!(quest("checkers_win_medium").progress(&game(2, GameResult::Win)), 1);
+        assert_eq!(quest("checkers_win_medium").progress(&game(3, GameResult::Draw)), 0);
+        assert_eq!(quest("checkers_puzzle").progress(&Event::CheckersPuzzleSolved), 1);
+        assert_eq!(quest("checkers_puzzle").progress(&Event::ChessPuzzleSolved), 0);
     }
 }
