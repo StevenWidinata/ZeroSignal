@@ -13,7 +13,7 @@ A hub of fun browser games with a retro arcade UI and real, **server-verified le
 | Sling Squad   | Live        | 12 levels in 3 worlds with stars; full physics; the server re-simulates every shot with `rapier2d` |
 | Connect Four | Live        | vs AI (4 levels) or vs a friend; best of 3/5; 14 chip skins (6 free) + spin wheel |
 | Tic-Tac-Toe  | Live        | vs AI (Easy, Medium, unbeatable Hard) or vs a friend; boards, faces, your photo as a face |
-| Whack-a-Mole | Live        | 4 modes, 6 kinds of moles, combos and FEVER; the server replays every tap |
+| Whack-a-Mole | Live        | 5 modes (a calmer Normal, Classic, Frenzy, Survival, Daily), 6 kinds of moles, combos and FEVER; the server replays every tap |
 | Minefield    | Live        | No-guess boards in 3 sizes + a Daily; the server keeps the mines |
 | 2048         | Live        | Classic 4×4, Big 5×5, Tiny 3×3 + a Daily; saved as you play; the server replays every move |
 | Chess        | Live        | vs Zero-Bot (4 levels), online vs a friend, same device, a Daily "mate in 2"; 12 boards and 8 piece sets |

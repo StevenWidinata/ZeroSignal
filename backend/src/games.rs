@@ -71,7 +71,7 @@ pub const GAMES: &[GameInfo] = &[
         status: GameStatus::Live,
         ranking: Ranking::Best,
         // Classic, Frenzy, Survival (not the Daily board).
-        prize_boards: &[1, 2, 3],
+        prize_boards: &[1, 2, 3, 5],
     },
     GameInfo {
         id: "minefield",

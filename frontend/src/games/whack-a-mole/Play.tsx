@@ -20,6 +20,7 @@ type Screen =
   | { kind: "results"; result: WamFinish; grid: 3 | 4 };
 
 export const MODE_INFO: Record<WamMode, { icon: string; name: string; blurb: string }> = {
+  normal: { icon: "🙂", name: "Normal", blurb: "60 seconds at a calmer pace. Not too fast, not too slow: a good start." },
   classic: { icon: "⏱️", name: "Classic", blurb: "60 seconds. Moles speed up as the clock runs down." },
   frenzy: { icon: "⚡", name: "Frenzy", blurb: "30 seconds of chaos. Faster moles, more at once." },
   survival: { icon: "♥", name: "Survival", blurb: "No clock. 3 lives: every mole that escapes costs one." },
@@ -37,7 +38,7 @@ interface Prefs {
 }
 
 function loadPrefs(): Prefs {
-  const fallback: Prefs = { mode: "classic", grid: 3, showKeys: false, hammer: "mallet", theme: "garden" };
+  const fallback: Prefs = { mode: "normal", grid: 3, showKeys: false, hammer: "mallet", theme: "garden" };
   try {
     const v = JSON.parse(localStorage.getItem(PREFS_KEY) ?? "null") as Partial<Prefs> | null;
     if (!v) return fallback;

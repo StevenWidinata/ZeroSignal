@@ -377,6 +377,24 @@ Commits go to `main` step by step (each step live once tested); owner is the onl
 - Also: shared countdown / pause / results card / particle helpers
   (`refactor/run-kit`) now used by Whack-a-Mole, 2048 and Snake Signal.
 
+### Dailies everywhere + polish (`feat/daily-hub`; agreed and done 2026-11-16)
+- **Today's Dailies** on the Hub: every game's Daily (Snake Signal, Whack-a-Mole,
+  Minefield, 2048, Chess puzzle, Sonar Hunt) with played / in progress / done,
+  your score and today's rank; ▶ opens the game on its Daily (`?daily=1`), 🏆
+  opens its Daily board (`/leaderboard/<game>?board=daily`). `GET /api/me/dailies`.
+- **Share card** on every Daily result: "Copy result" (and the phone's Share
+  sheet) with the score, today's rank, an emoji line and a link.
+- **Fixes:** Whack-a-Mole Daily is now one ranked try a day (quitting asks
+  first); Stats page cards for Chess and Sonar; Chess keys listed (and
+  rebindable) in Settings → Controls.
+
+### Whack-a-Mole Normal (`feat/whack-normal`; asked 2026-11-16)
+- Friends found Whack-a-Mole too hard, so there's a new **🙂 Normal** mode:
+  60 seconds, moles stay up ~25% longer and come ~15% less often, fewer
+  double moles, bosses every 25 s. Its own board (level 5, weekly prizes);
+  the default for new players. Classic, Frenzy, Survival and the Daily are
+  unchanged and keep their scores.
+
 ## Phase 3b (planned)
 
 - Weekly leaderboards (reset each week, all-time board stays) — done.

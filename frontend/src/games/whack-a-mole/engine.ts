@@ -32,11 +32,11 @@ export class Rng {
 // Modes and moles
 // ---------------------------------------------------------------------------
 
-export type Mode = "classic" | "frenzy" | "survival" | "daily";
-export const MODES: Mode[] = ["classic", "frenzy", "survival", "daily"];
+export type Mode = "normal" | "classic" | "frenzy" | "survival" | "daily";
+export const MODES: Mode[] = ["normal", "classic", "frenzy", "survival", "daily"];
 
 /** `scores.level` value of each mode's leaderboard. */
-export const BOARD_ID: Record<Mode, number> = { classic: 1, frenzy: 2, survival: 3, daily: 4 };
+export const BOARD_ID: Record<Mode, number> = { classic: 1, frenzy: 2, survival: 3, daily: 4, normal: 5 };
 
 interface Config {
   /** Round length; null = Survival. */
@@ -51,6 +51,9 @@ interface Config {
 
 export function config(mode: Mode): Config {
   switch (mode) {
+    // Moles stay up ~25% longer, come ~15% less often, fewer doubles.
+    case "normal":
+      return { duration: 60_000, ramp: 60_000, gap: [1_035, 552], visible: [1_440, 940], doubleMax: 15, bossEvery: 25_000 };
     case "classic":
     case "daily":
       return { duration: 60_000, ramp: 60_000, gap: [900, 480], visible: [1_150, 750], doubleMax: 25, bossEvery: 20_000 };

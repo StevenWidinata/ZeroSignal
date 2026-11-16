@@ -60,6 +60,16 @@ describe("shared test vectors (must match backend engine.rs)", () => {
     expect(s).toHaveLength(SHARED_LEN);
   });
 
+  it("builds the calmer Normal schedule like the server", () => {
+    const s = schedule(42, "normal", 3);
+    expect(s.slice(0, 3).map(({ t, hole, kind, vis }) => ({ t, hole, kind, vis }))).toEqual([
+      { t: 600, hole: 7, kind: "ninja", vis: 789 },
+      { t: 1577, hole: 6, kind: "normal", vis: 1427 },
+      { t: 2501, hole: 1, kind: "normal", vis: 1420 },
+    ]);
+    expect(s).toHaveLength(111);
+  });
+
   it("replays", () => {
     expect([
       fingerprint(5, "classic", 3, 1),

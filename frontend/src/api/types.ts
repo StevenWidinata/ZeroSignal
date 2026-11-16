@@ -413,7 +413,7 @@ export interface PublicAchievement {
 // Whack-a-Mole
 // ---------------------------------------------------------------------------
 
-export type WamMode = "classic" | "frenzy" | "survival" | "daily";
+export type WamMode = "normal" | "classic" | "frenzy" | "survival" | "daily";
 
 export interface WamTap {
   t: number;

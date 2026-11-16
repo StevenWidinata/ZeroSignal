@@ -47,6 +47,8 @@ pub fn daily_seed(year: i32, month: u32, day: u32) -> u32 {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Mode {
+    /// 60 s like Classic, but calmer (~25% easier): for new players.
+    Normal,
     Classic,
     Frenzy,
     Survival,
@@ -54,10 +56,11 @@ pub enum Mode {
 }
 
 impl Mode {
-    pub const ALL: [Mode; 4] = [Mode::Classic, Mode::Frenzy, Mode::Survival, Mode::Daily];
+    pub const ALL: [Mode; 5] = [Mode::Normal, Mode::Classic, Mode::Frenzy, Mode::Survival, Mode::Daily];
 
     pub fn as_str(self) -> &'static str {
         match self {
+            Mode::Normal => "normal",
             Mode::Classic => "classic",
             Mode::Frenzy => "frenzy",
             Mode::Survival => "survival",
@@ -76,11 +79,21 @@ impl Mode {
             Mode::Frenzy => 2,
             Mode::Survival => 3,
             Mode::Daily => 4,
+            Mode::Normal => 5,
         }
     }
 
     pub fn config(self) -> Config {
         match self {
+            // Moles stay up ~25% longer, come ~15% less often, fewer doubles.
+            Mode::Normal => Config {
+                duration: Some(60_000),
+                ramp: 60_000,
+                gap: (1_035, 552),
+                visible: (1_440, 940),
+                double_max: 15,
+                boss_every: 25_000,
+            },
             Mode::Classic | Mode::Daily => Config {
                 duration: Some(60_000),
                 ramp: 60_000,
@@ -670,6 +683,26 @@ mod tests {
     }
 
     #[test]
+    fn normal_matches_the_shared_test_vector() {
+        // Same numbers in frontend engine.test.ts.
+        let s = schedule(42, Mode::Normal, 3);
+        let head: Vec<(u32, u32, Kind, u32)> = s.iter().take(3).map(|s| (s.t, s.hole, s.kind, s.vis)).collect();
+        assert_eq!(head, NORMAL_HEAD.to_vec(), "{head:?}");
+        assert_eq!(s.len(), NORMAL_LEN, "{}", s.len());
+    }
+
+    #[test]
+    fn normal_is_calmer_than_classic() {
+        for seed in 1..20 {
+            let calm = schedule(seed, Mode::Normal, 3).iter().filter(|s| s.t < 60_000).count();
+            let classic = schedule(seed, Mode::Classic, 3).iter().filter(|s| s.t < 60_000).count();
+            assert!(calm < classic, "seed {seed}: {calm} vs {classic}");
+        }
+        assert_eq!(Mode::parse("normal"), Some(Mode::Normal));
+        assert_eq!(Mode::Normal.board_id(), 5);
+    }
+
+    #[test]
     fn schedule_matches_the_shared_test_vector() {
         let s = schedule(42, Mode::Classic, 3);
         let head: Vec<(u32, u32, Kind, u32)> = s.iter().take(4).map(|s| (s.t, s.hole, s.kind, s.vis)).collect();
@@ -677,6 +710,8 @@ mod tests {
         assert_eq!(s.len(), SHARED_LEN);
     }
     const SHARED_LEN: usize = 144;
+    const NORMAL_LEN: usize = 111;
+    const NORMAL_HEAD: [(u32, u32, Kind, u32); 3] = [(600, 7, Kind::Ninja, 789), (1577, 6, Kind::Normal, 1427), (2501, 1, Kind::Normal, 1420)];
     const SHARED_HEAD: [(u32, u32, Kind, u32); 4] = [
         (600, 7, Kind::Ninja, 630),
         (1605, 6, Kind::Normal, 1140),
