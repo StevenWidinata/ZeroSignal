@@ -1,4 +1,9 @@
 import type {
+  CheckersCollection,
+  CheckersGame,
+  CheckersLevel,
+  CheckersPuzzle,
+  CheckersSide,
   DailyView,
   SnakeCollection,
   SnakeFinish,
@@ -530,6 +535,39 @@ export const chess = {
   },
   puzzleMove(uci: string) {
     return post<ChessPuzzle>(`${CHESS}/puzzle/move`, { uci });
+  },
+};
+
+const CHECKERS = "/api/games/checkers";
+
+/** Checkers vs Zero-Bot, the daily puzzle and the board / piece shop. */
+export const checkers = {
+  create(level: CheckersLevel, side: CheckersSide | "random", board: string, pieces: string) {
+    return post<CheckersGame>(`${CHECKERS}/games`, { level, side, board, pieces });
+  },
+  active() {
+    return request<CheckersGame | null>(`${CHECKERS}/games/active`);
+  },
+  move(id: string, mv: string) {
+    return post<CheckersGame>(`${CHECKERS}/games/${encodeURIComponent(id)}/move`, { mv });
+  },
+  undo(id: string) {
+    return post<CheckersGame>(`${CHECKERS}/games/${encodeURIComponent(id)}/undo`);
+  },
+  resign(id: string) {
+    return post<CheckersGame>(`${CHECKERS}/games/${encodeURIComponent(id)}/resign`);
+  },
+  collection() {
+    return request<CheckersCollection>(`${CHECKERS}/collection`);
+  },
+  buy(kind: "board" | "pieces", id: string) {
+    return post<CheckersCollection>(`${CHECKERS}/buy`, { kind, id });
+  },
+  puzzle() {
+    return request<CheckersPuzzle>(`${CHECKERS}/puzzle`);
+  },
+  puzzleMove(mv: string) {
+    return post<CheckersPuzzle>(`${CHECKERS}/puzzle/move`, { mv });
   },
 };
 

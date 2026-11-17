@@ -153,6 +153,22 @@ export const KEYMAPS: GameKeymap[] = [
     note: "Or click / drag the pieces. Click the board first to use the keys.",
   },
   {
+    gameId: "checkers",
+    groups: [
+      {
+        actions: [
+          { id: "up", label: "Move up", keys: ["ArrowUp"] },
+          { id: "down", label: "Move down", keys: ["ArrowDown"] },
+          { id: "left", label: "Move left", keys: ["ArrowLeft"] },
+          { id: "right", label: "Move right", keys: ["ArrowRight"] },
+          { id: "select", label: "Pick a piece / jump to a square", keys: ["Enter", "Space"] },
+          { id: "cancel", label: "Put the piece back", keys: ["Escape"] },
+        ],
+      },
+    ],
+    note: "Or click the pieces. For a double jump, pick each landing square in turn. Click the board first to use the keys.",
+  },
+  {
     gameId: "snake-signal",
     groups: [
       {

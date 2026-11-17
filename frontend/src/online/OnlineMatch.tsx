@@ -10,7 +10,7 @@ import type { Cells as TttCells } from "../games/tic-tac-toe/logic";
 import { playSfx } from "../platform/sound";
 import { useRoom } from "./useRoom";
 
-const GAME_NAME: Record<OnlineGame, string> = { "connect-four": "Connect Four", "tic-tac-toe": "Tic-Tac-Toe", chess: "Chess", sonar: "Sonar" };
+const GAME_NAME: Record<OnlineGame, string> = { "connect-four": "Connect Four", "tic-tac-toe": "Tic-Tac-Toe", chess: "Chess", sonar: "Sonar", checkers: "Checkers" };
 /** Each seat's look: seat 1 (host) and seat 2 (friend). */
 const C4_SKIN = ["red", "blue"];
 const TTT_FACE = ["x", "o"];
@@ -187,7 +187,7 @@ export default function OnlineMatch({
   })();
 
   return (
-    <div className={`c4-play online-play${game === "chess" ? " chess-play" : game === "sonar" ? " sonar-play" : ""}`}>
+    <div className={`c4-play online-play${game === "chess" ? " chess-play" : game === "sonar" ? " sonar-play" : game === "checkers" ? " ck-play" : ""}`}>
       <div className="versus-bar">
         <div className="versus-side">
           <LiveAvatar loadout={mine?.avatar} pose={myPose} emote={myEmote} size={72} label="You" bubble={room.game_over || seriesDone} />

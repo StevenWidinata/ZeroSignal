@@ -471,6 +471,69 @@ export interface WamCollection {
 }
 
 // ---------------------------------------------------------------------------
+// Checkers
+// ---------------------------------------------------------------------------
+
+export type CheckersSide = "dark" | "light";
+export type CheckersLevel = "easy" | "medium" | "hard" | "master";
+
+/** A game vs Zero-Bot. `cells`: 32 squares, 0 empty, ±1 man, ±2 king (+ = dark). */
+export interface CheckersGame {
+  id: string;
+  level: CheckersLevel;
+  side: CheckersSide;
+  cells: number[];
+  turn: CheckersSide;
+  moves: string[];
+  /** Your legal moves now (notation, e.g. "11-15", "22x15x8"). */
+  legal: string[];
+  status: "active" | "won" | "lost" | "drawn" | "resigned";
+  ending: string | null;
+  undos_left: number;
+  board_style: string;
+  piece_set: string;
+  quiet_left: number;
+  ai_move: string | null;
+  rewards: Granted | null;
+  drop: string | null;
+}
+
+export interface CheckersCollection {
+  boards: WamItemView[];
+  pieces: WamItemView[];
+}
+
+/** Today's "win in N" puzzle and your attempt. */
+export interface CheckersPuzzle {
+  day: string;
+  number: number;
+  cells: number[];
+  turn: CheckersSide;
+  win_in: number;
+  side: CheckersSide;
+  moves: string[];
+  legal: string[];
+  status: "new" | "playing" | "solved" | "failed";
+  mistakes: number;
+  mistakes_left: number;
+  streak: number;
+  solution: string[] | null;
+  start_cells: number[];
+  correct: boolean | null;
+  reply: string | null;
+  rewards: Granted | null;
+  points: number | null;
+}
+
+/** Online checkers: what the room's `board.highlight` holds. */
+export interface CheckersRoomInfo {
+  moves: string[];
+  legal: string[];
+  ending: string;
+  quiet_left: number;
+}
+
+// ---------------------------------------------------------------------------
 // Snake Signal
 // ---------------------------------------------------------------------------
 
@@ -613,6 +676,7 @@ export interface StatsView {
   };
   g2048: { games: number; best_tile: number | null; reached_2048: number; moves: number | null };
   chess: { levels: StatsLevelRow[]; puzzles_played: number; puzzles_solved: number };
+  checkers: { levels: StatsLevelRow[]; puzzles_played: number; puzzles_solved: number };
   sonar: { levels: StatsLevelRow[]; hunts: number; best_hunt: number | null; flawless: number };
   snake: {
     runs: number;
@@ -690,7 +754,7 @@ export interface WeeklyClaim {
 // Online rooms (two devices)
 // ---------------------------------------------------------------------------
 
-export type OnlineGame = "connect-four" | "tic-tac-toe" | "chess" | "sonar";
+export type OnlineGame = "connect-four" | "tic-tac-toe" | "chess" | "sonar" | "checkers";
 
 export interface RoomPlayer {
   username: string;
