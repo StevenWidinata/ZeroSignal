@@ -163,8 +163,8 @@ pub const GAMES: &[GameInfo] = &[
     GameInfo {
         id: "checkers",
         title: "Checkers",
-        status: GameStatus::ComingSoon,
-        ranking: Ranking::Best,
+        status: GameStatus::Live,
+        ranking: Ranking::Total,
         prize_boards: &[],
     },
 ];
@@ -207,6 +207,7 @@ mod tests {
         assert!(require("minefield").is_ok());
         assert!(require("2048").is_ok());
         assert!(require("snake-signal").is_ok());
+        assert!(require("checkers").is_ok());
         assert!(require("../etc").is_err());
         assert!(require("").is_err());
     }

@@ -168,6 +168,8 @@ export default function Stats() {
     s.snake.runs +
     s.chess.levels.reduce((n, r) => n + r.played, 0) +
     s.chess.puzzles_played +
+    s.checkers.levels.reduce((n, r) => n + r.played, 0) +
+    s.checkers.puzzles_played +
     s.sonar.levels.reduce((n, r) => n + r.played, 0) +
     s.sonar.hunts;
 
@@ -350,6 +352,26 @@ export default function Stats() {
             </div>
           </dl>
           <LevelTable rows={s.chess.levels} withDraws />
+        </GameCard>
+
+        <GameCard id="checkers" played={s.checkers.levels.length > 0 || s.checkers.puzzles_played > 0}>
+          <dl className="wam-stats">
+            <div>
+              <dt>Games vs Zero-Bot</dt>
+              <dd>{fmt(s.checkers.levels.reduce((n, r) => n + r.played, 0))}</dd>
+            </div>
+            <div>
+              <dt>Wins</dt>
+              <dd>{fmt(s.checkers.levels.reduce((n, r) => n + r.won, 0))}</dd>
+            </div>
+            <div>
+              <dt>Daily puzzles solved</dt>
+              <dd>
+                {s.checkers.puzzles_solved} / {s.checkers.puzzles_played}
+              </dd>
+            </div>
+          </dl>
+          <LevelTable rows={s.checkers.levels} withDraws />
         </GameCard>
 
         <GameCard id="sonar" played={s.sonar.levels.length > 0 || s.sonar.hunts > 0}>

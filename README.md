@@ -19,7 +19,8 @@ A hub of fun browser games with a retro arcade UI and real, **server-verified le
 | Chess        | Live        | vs Zero-Bot (4 levels), online vs a friend, same device, a Daily "mate in 2"; 12 boards and 8 piece sets |
 | Sonar        | Live        | Battleship-style with sonar pings: vs Zero-Bot (4 levels), online, same device and a Daily Hunt; 8 fleets and 8 seas |
 | Snake Signal | Live        | Neon snake: Classic, Wrap and a Daily on 3 board sizes; power-ups, glitch hazards, ×5 combos and a fading signal; 8 skins, 8 arenas, 6 trails; the server replays every turn |
-| 8 more       | Coming soon | Brick Breaker, Signal Flap, Memory Match, Pixel Picross, Block Drop, Sudoku, Pong Online, Checkers (see `/roadmap`) |
+| Checkers     | Live        | Classic 8×8 draughts: vs Zero-Bot (4 levels), online vs a friend on another device, same device and a Daily "win in 2–4" puzzle; 8 boards and 8 piece sets |
+| 7 more       | Coming soon | Brick Breaker, Signal Flap, Memory Match, Pixel Picross, Block Drop, Sudoku, Pong Online (see `/roadmap`) |
 
 ## Features
 

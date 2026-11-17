@@ -297,8 +297,8 @@ Commits go to `main` step by step (each step live once tested); owner is the onl
   feels the same; shared ModeSelect / ResultsPanel / GameHeader used by all
   games; "Coming soon" cards and a /roadmap page.
 - **Planned games:** Brick Breaker, Signal Flap, Memory Match, Pixel
-  Picross, Block Drop, Sudoku, Pong Online, Checkers (Sonar and Snake Signal
-  are live). All follow the Game Kit.
+  Picross, Block Drop, Sudoku, Pong Online, Reversi, Dots & Boxes (Sonar, Snake
+  Signal and Checkers are live). All follow the Game Kit.
 - **Ideas (build when the owner picks):** Live Arcade Lobby, Community Boss
   Raid, Ghost races, Pet that grows, Glitch Hour, Free seasons, Crews, Share
   cards, Chiptune Jukebox, Weekend tournaments.
@@ -394,6 +394,30 @@ Commits go to `main` step by step (each step live once tested); owner is the onl
   double moles, bosses every 25 s. Its own board (level 5, weekly prizes);
   the default for new players. Classic, Frenzy, Survival and the Daily are
   unchanged and keep their scores.
+
+### Hub play-style filter (`feat/hub-filters`; agreed and done 2026-11-17)
+- Chips above the games: All · Solo · Vs Zero-Bot · Online (2 devices) · Same
+  device · Daily, with counts, remembered in the browser. Every card shows
+  play badges (icon + word); tags now only describe the game. Each game's meta
+  has `play: PlayStyle[]`.
+
+### Checkers (`feat/checkers`; agreed and done 2026-11-17)
+- **Rules:** classic English draughts on 8×8: dark moves first, men move and
+  capture forward, captures are forced and chain, crowning ends the move,
+  no legal move loses, draw after 80 quiet plies or a third repetition.
+  Rust + TypeScript copies checked by perft (7, 49, 302, 1469, 7361) and 60
+  shared positions.
+- **Modes:** vs Zero-Bot (Easy / Medium / Hard / Master, each clearly stronger
+  than the one below in self-play), online rooms (any device, moves as
+  notation like "22x15x8"), same device (board turns for each player), and a
+  Daily puzzle: the same "win in 2–4" for everyone, 3 tries, Zero-Bot defends,
+  180 puzzles found by self-play and checked by the solver.
+- **Extras:** up to 3 undos vs Zero-Bot (they cancel the win bonus), 8 boards +
+  8 piece sets (half free; lucky drops on Hard+ wins), 3 quests, 4
+  achievements (First Crown, Draughts Master, Iron Wall, Jump Master), Stats
+  card, Today's Dailies entry, share card, rebindable keys, colourblind-safe
+  pieces (light pieces have an inner ring, kings a crown).
+- Next (agreed): Reversi, then Dots & Boxes (2 players), then rooms for 3–4 players.
 
 ## Phase 3b (planned)
 

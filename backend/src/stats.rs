@@ -112,6 +112,7 @@ pub struct StatsView {
     pub whack: WhackRow,
     pub snake: SnakeRow,
     pub chess: ChessStats,
+    pub checkers: ChessStats,
     pub sonar: SonarStats,
     pub g2048: Row2048,
 }
@@ -234,6 +235,23 @@ pub async fn my_stats(State(state): State<AppState>, user: AuthUser) -> AppResul
     .bind(id)
     .fetch_one(pool)
     .await?;
+    let checkers_levels: Vec<LevelRow> = sqlx::query_as(&format!(
+        r#"SELECT level::TEXT AS level, COUNT(*) AS played,
+                  COUNT(*) FILTER (WHERE status = 'won') AS won,
+                  COUNT(*) FILTER (WHERE status = 'drawn') AS drawn
+           FROM checkers_games WHERE user_id = $1 AND status <> 'active'
+           GROUP BY level ORDER BY {LEVEL_ORDER}"#
+    ))
+    .bind(id)
+    .fetch_all(pool)
+    .await?;
+    let (ck_played, ck_solved): (i64, i64) = sqlx::query_as(
+        r#"SELECT COUNT(*) FILTER (WHERE status <> 'playing'), COUNT(*) FILTER (WHERE status = 'solved')
+           FROM checkers_puzzle_runs WHERE user_id = $1"#,
+    )
+    .bind(id)
+    .fetch_one(pool)
+    .await?;
     let sonar_levels: Vec<LevelRow> = sqlx::query_as(&format!(
         r#"SELECT level::TEXT AS level, COUNT(*) AS played,
                   COUNT(*) FILTER (WHERE status = 'won') AS won,
@@ -269,6 +287,7 @@ pub async fn my_stats(State(state): State<AppState>, user: AuthUser) -> AppResul
         whack,
         snake,
         chess: ChessStats { levels: chess_levels, puzzles_played, puzzles_solved },
+        checkers: ChessStats { levels: checkers_levels, puzzles_played: ck_played, puzzles_solved: ck_solved },
         sonar: SonarStats { levels: sonar_levels, hunts, best_hunt, flawless },
         g2048,
     }))
