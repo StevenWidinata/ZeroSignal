@@ -1,4 +1,4 @@
-//! Online play: two people on two devices play Connect Four, Tic-Tac-Toe, chess or Sonar
+//! Online play: two people on two devices play Connect Four, Tic-Tac-Toe, chess, Sonar or checkers
 //! in a room joined by a 6-character code. The server keeps the moves and
 //! checks every one with the same rules as the AI games; clients only send
 //! the cell they want and poll for news (Vercel can't hold sockets open).
@@ -38,6 +38,8 @@ pub enum Game {
     Chess,
     #[serde(rename = "sonar")]
     Sonar,
+    #[serde(rename = "checkers")]
+    Checkers,
 }
 
 impl Game {
@@ -47,6 +49,7 @@ impl Game {
             "tic-tac-toe" => Some(Game::TicTacToe),
             "chess" => Some(Game::Chess),
             "sonar" => Some(Game::Sonar),
+            "checkers" => Some(Game::Checkers),
             _ => None,
         }
     }
@@ -57,6 +60,7 @@ impl Game {
             Game::TicTacToe => "tic-tac-toe",
             Game::Chess => "chess",
             Game::Sonar => "sonar",
+            Game::Checkers => "checkers",
         }
     }
 }
@@ -108,6 +112,27 @@ pub fn replay(game: Game, moves: &str) -> Result<GameState, &'static str> {
                     "ending": ending,
                 }),
                 next: if g.to_move() == Side::White { Player::P1 } else { Player::P2 },
+            })
+        }
+        Game::Checkers => {
+            use crate::checkers::rules::{Game as Ck, Move, Outcome as O, Side};
+            let g = Ck::replay(moves).map_err(|_| "bad moves")?;
+            let seat = |s: Side| if s == Side::Dark { Player::P1 } else { Player::P2 };
+            let outcome = match g.outcome() {
+                O::Ongoing => Outcome::Ongoing,
+                O::Win(s) => Outcome::Win(seat(s)),
+                O::Draw => Outcome::Draw,
+            };
+            Ok(GameState {
+                cells: json!(g.cells.to_vec()),
+                outcome,
+                highlight: json!({
+                    "moves": g.moves.iter().map(Move::notation).collect::<Vec<_>>(),
+                    "legal": g.legal_moves().iter().map(Move::notation).collect::<Vec<_>>(),
+                    "ending": crate::checkers::api::ending_of(&g),
+                    "quiet_left": crate::checkers::rules::QUIET_LIMIT.saturating_sub(g.quiet),
+                }),
+                next: seat(g.turn),
             })
         }
         Game::ConnectFour => {
@@ -183,6 +208,16 @@ pub fn play_sonar(moves: &str, fleets: [&str; 2], first_seat: Seat, cell: u8, pi
 }
 
 /// Play a chess move (UCI) after `moves`; returns the new move string.
+/// Checkers: play a move in notation ("11-15", "22x15x8"); dark (P1) starts.
+pub fn play_checkers(moves: &str, mv: &str) -> Result<String, &'static str> {
+    let mut g = crate::checkers::rules::Game::replay(moves).map_err(|_| "bad moves")?;
+    if g.outcome() != crate::checkers::rules::Outcome::Ongoing {
+        return Err("the game is already over");
+    }
+    g.play_str(mv)?;
+    Ok(g.move_string())
+}
+
 pub fn play_uci(moves: &str, uci: &str) -> Result<String, &'static str> {
     let mut g = crate::chess::Game::replay(crate::chess::START_FEN, moves).map_err(|_| "bad moves")?;
     g.play(uci).map_err(|e| e.text())?;
@@ -193,6 +228,7 @@ pub fn play_uci(moves: &str, uci: &str) -> Result<String, &'static str> {
 pub fn play(game: Game, moves: &str, cell: u8) -> Result<String, &'static str> {
     match game {
         Game::Chess => Err("send a chess move as uci"),
+        Game::Checkers => Err("send a checkers move as uci, e.g. 11-15"),
         Game::Sonar => Err("hide your fleet first"),
         Game::ConnectFour => {
             let mut b = CfBoard::from_move_string(moves).map_err(|_| "bad moves")?;

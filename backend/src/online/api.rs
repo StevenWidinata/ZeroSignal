@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::{Postgres, Transaction};
 use uuid::Uuid;
 
-use super::{clean_code, new_code, play, play_sonar, play_uci, replay, seat_of, series_xp, sonar_state, Game, GameState, Seat, Series, EMOTES};
+use super::{clean_code, new_code, play, play_checkers, play_sonar, play_uci, replay, seat_of, series_xp, sonar_state, Game, GameState, Seat, Series, EMOTES};
 use crate::auth::jwt::AuthUser;
 use crate::connect_four::board::Outcome;
 use crate::economy::{self, Reward};
@@ -330,7 +330,7 @@ fn default_best_of() -> i16 {
 
 /// `POST /api/rooms`: open a room and wait for a friend.
 pub async fn create(State(state): State<AppState>, user: AuthUser, Json(req): Json<CreateRequest>) -> AppResult<Json<RoomView>> {
-    let game = Game::parse(&req.game).ok_or_else(|| AppError::Validation("game must be connect-four, tic-tac-toe, chess or sonar".into()))?;
+    let game = Game::parse(&req.game).ok_or_else(|| AppError::Validation("game must be connect-four, tic-tac-toe, chess, sonar or checkers".into()))?;
     if ![1, 3, 5].contains(&req.best_of) {
         return Err(AppError::Validation("best_of must be 1, 3 or 5".into()));
     }
@@ -476,6 +476,8 @@ pub async fn make_move(
         ),
         (Game::Chess, _, Some(uci)) => play_uci(&r.moves, uci),
         (Game::Chess, _, None) => Err("send a chess move as uci"),
+        (Game::Checkers, _, Some(mv)) => play_checkers(&r.moves, mv),
+        (Game::Checkers, _, None) => Err("send a checkers move as uci, e.g. 11-15"),
         (g, Some(cell), _) => play(g, &r.moves, cell),
         (_, None, _) => Err("send the cell to play"),
     }
