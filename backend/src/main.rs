@@ -191,6 +191,8 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/games/checkers/games/:id/move", post(checkers::api::make_move))
         .route("/api/games/checkers/games/:id/undo", post(checkers::api::undo))
         .route("/api/games/checkers/games/:id/resign", post(checkers::api::resign))
+        .route("/api/games/checkers/puzzle", get(checkers::puzzle_api::today))
+        .route("/api/games/checkers/puzzle/move", post(checkers::puzzle_api::make_move))
         .route("/api/games/checkers/collection", get(checkers::api::collection))
         .route("/api/games/checkers/buy", post(checkers::api::buy))
         .route("/api/games/sonar/games", post(sonar::api::create))

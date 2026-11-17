@@ -4,4 +4,6 @@
 pub mod ai;
 pub mod api;
 pub mod items;
+pub mod puzzle_api;
+pub mod puzzles;
 pub mod rules;

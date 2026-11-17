@@ -11,7 +11,7 @@ export function dailyLine(d: DailyView): { text: string; action: "play" | "conti
 
 /** Link that opens a game on its Daily. */
 export function dailyLink(gameId: string): string {
-  if (gameId === "chess") return "/play/chess?mode=puzzle";
+  if (gameId === "chess" || gameId === "checkers") return `/play/${gameId}?mode=puzzle`;
   if (gameId === "minefield") return "/play/minefield";
   return `/play/${gameId}?daily=1`;
 }

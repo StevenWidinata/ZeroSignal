@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { api } from "../../api/client";
 import { findGame } from "../../platform/registry";
 import { playSfx } from "../../platform/sound";
-import { shareText, wibDate } from "./logic";
+import { dailyLink, shareText, wibDate } from "./logic";
 
 interface Props {
   gameId: string;
@@ -41,7 +41,7 @@ export default function ShareDaily({ gameId, headline, detail }: Props) {
     detail,
     rank: rank?.rank,
     players: rank?.players,
-    url: `${window.location.origin}/play/${gameId}${gameId === "chess" ? "?mode=puzzle" : "?daily=1"}`,
+    url: `${window.location.origin}${dailyLink(gameId)}`,
   });
   const canShare = typeof navigator !== "undefined" && typeof navigator.share === "function";
 

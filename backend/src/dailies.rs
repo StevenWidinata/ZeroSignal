@@ -25,7 +25,7 @@ struct DailyDef {
     resumable: bool,
 }
 
-const DAILIES: [DailyDef; 6] = [
+const DAILIES: [DailyDef; 7] = [
     DailyDef {
         game_id: "snake-signal",
         board: 4,
@@ -54,6 +54,12 @@ const DAILIES: [DailyDef; 6] = [
         game_id: "chess",
         board: 5,
         status_sql: "SELECT status <> 'playing' FROM chess_puzzle_runs WHERE user_id = $1 AND day = $2",
+        resumable: true,
+    },
+    DailyDef {
+        game_id: "checkers",
+        board: 5,
+        status_sql: "SELECT status <> 'playing' FROM checkers_puzzle_runs WHERE user_id = $1 AND day = $2",
         resumable: true,
     },
     DailyDef {

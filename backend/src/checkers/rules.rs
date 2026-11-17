@@ -258,6 +258,18 @@ impl Game {
         Ok(g)
     }
 
+    /// Replays moves from a given position (puzzles start mid-game).
+    pub fn replay_from(cells: Cells, turn: Side, moves: &str) -> Result<Game, &'static str> {
+        let mut g = Game::from_position(cells, turn);
+        for m in moves.split_whitespace() {
+            if g.outcome() != Outcome::Ongoing {
+                return Err("move after the game ended");
+            }
+            g.play_str(m)?;
+        }
+        Ok(g)
+    }
+
     /// Pieces left: (men, kings) of a side.
     pub fn count(&self, side: Side) -> (u32, u32) {
         let s = side.sign();
