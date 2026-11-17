@@ -1,4 +1,4 @@
-//! Achievements: 52 one-time goals. Progress is computed live from data the
+//! Achievements: 56 one-time goals. Progress is computed live from data the
 //! server already verified (matches, scores, ledger, inventory), so older
 //! progress counts too. Claiming pays coins + the same XP once, plus a title.
 
@@ -83,6 +83,12 @@ pub struct Stats {
     pub snake_longest: i64,
     pub snake_bugs: i64,
     pub snake_best: i64,
+    /// Checkers vs Zero-Bot: wins, Master wins, Medium+ wins with 10+ pieces
+    /// left, and the longest run of Daily puzzles solved on days in a row.
+    pub checkers_wins: i64,
+    pub checkers_master_wins: i64,
+    pub checkers_iron_wins: i64,
+    pub checkers_puzzle_streak: i64,
 }
 
 pub struct Achievement {
@@ -116,7 +122,7 @@ macro_rules! ach {
     };
 }
 
-pub static ACHIEVEMENTS: [Achievement; 52] = [
+pub static ACHIEVEMENTS: [Achievement; 56] = [
     ach!("cf_first_win", "First Drop", "Win your first Connect Four series", 30, "title-chip-dropper", 1, |s| s.cf_wins),
     ach!("cf_medium", "Thinking Ahead", "Win a Connect Four series vs Medium or harder", 40, "title-four-thinker", 1, |s| s.cf_wins_medium),
     ach!("cf_hard", "Hard Hitter", "Win a Connect Four series vs Hard or harder", 80, "title-grid-breaker", 1, |s| s.cf_wins_hard),
@@ -175,6 +181,10 @@ pub static ACHIEVEMENTS: [Achievement; 52] = [
     ach!("snake_long", "Long Cable", "Grow your snake to 50 long in Snake Signal", 100, "title-long-cable", 50, |s| s.snake_longest),
     ach!("snake_glitch_eater", "Glitch Eater", "Eat the glitch bug while Boosted in Snake Signal", 150, "title-glitch-eater", 1, |s| s.snake_bugs),
     ach!("snake_10000", "Full Bars", "Score 10,000 in one Snake Signal run", 300, "title-full-bars", 10_000, |s| s.snake_best),
+    ach!("checkers_first_win", "First Crown", "Beat Zero-Bot at checkers", 30, "title-first-crown", 1, |s| s.checkers_wins),
+    ach!("checkers_master", "Grandmaster of Draughts", "Beat Zero-Bot on Master at checkers", 300, "title-draughts-master", 1, |s| s.checkers_master_wins),
+    ach!("checkers_iron_wall", "Iron Wall", "Beat Zero-Bot on Medium or harder at checkers with 10 or more pieces left", 150, "title-iron-wall", 1, |s| s.checkers_iron_wins),
+    ach!("checkers_puzzle_streak", "Jump Master", "Solve the Daily checkers puzzle 7 days in a row", 150, "title-jump-master", 7, |s| s.checkers_puzzle_streak),
     ach!("quest_days_7", "Quest Master", "Finish all 3 daily quests in one day, 7 times", 200, "title-quest-master", 7, |s| s.quest_full_days),
 ];
 
@@ -288,6 +298,26 @@ pub async fn load_stats(pool: &sqlx::PgPool, user_id: Uuid) -> AppResult<Stats> 
     .fetch_one(pool)
     .await?;
     // Days in a row: solved days minus their row number are equal within a run.
+    let checkers: (i64, i64, i64) = sqlx::query_as(
+        r#"SELECT COUNT(*),
+                  COUNT(*) FILTER (WHERE level = 'master'),
+                  COUNT(*) FILTER (WHERE level <> 'easy' AND pieces_left >= 10)
+           FROM checkers_games WHERE user_id = $1 AND status = 'won'"#,
+    )
+    .bind(user_id)
+    .fetch_one(pool)
+    .await?;
+    let checkers_puzzle_streak = count(
+        pool,
+        r#"SELECT MAX(n) FROM (
+               SELECT COUNT(*) AS n FROM (
+                   SELECT day - (ROW_NUMBER() OVER (ORDER BY day))::INT AS run
+                   FROM checkers_puzzle_runs WHERE user_id = $1 AND status = 'solved'
+               ) d GROUP BY run
+           ) r"#,
+        user_id,
+    )
+    .await?;
     let chess_puzzle_streak = count(
         pool,
         r#"SELECT MAX(n) FROM (
@@ -378,6 +408,10 @@ pub async fn load_stats(pool: &sqlx::PgPool, user_id: Uuid) -> AppResult<Stats> 
         chess_master_wins: chess.1,
         chess_fast_mates: chess.2,
         chess_puzzle_streak,
+        checkers_wins: checkers.0,
+        checkers_master_wins: checkers.1,
+        checkers_iron_wins: checkers.2,
+        checkers_puzzle_streak,
         sonar_wins: sonar.0,
         sonar_master_wins: sonar.1,
         sonar_flawless: sonar.2,
@@ -539,11 +573,11 @@ mod tests {
     use super::*;
 
     #[test]
-    fn there_are_52_unique_achievements() {
+    fn there_are_56_unique_achievements() {
         let mut ids: Vec<_> = ACHIEVEMENTS.iter().map(|a| a.id).collect();
         ids.sort();
         ids.dedup();
-        assert_eq!(ids.len(), 52);
+        assert_eq!(ids.len(), 56);
         assert!(ACHIEVEMENTS.iter().all(|a| a.coins > 0 && a.target > 0 && a.id.len() <= 32));
     }
 
@@ -558,9 +592,9 @@ mod tests {
         let mut titles: Vec<_> = ACHIEVEMENTS.iter().map(|a| a.title).collect();
         titles.sort();
         titles.dedup();
-        assert_eq!(titles.len(), 52);
+        assert_eq!(titles.len(), 56);
         let achievement_items = c.items.iter().filter(|i| i.unlock == Unlock::Achievement).count();
-        assert_eq!(achievement_items, 52, "orphan achievement-only items in catalog");
+        assert_eq!(achievement_items, 56, "orphan achievement-only items in catalog");
     }
 
     #[test]

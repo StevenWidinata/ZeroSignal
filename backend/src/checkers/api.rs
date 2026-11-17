@@ -315,13 +315,17 @@ async fn finish(
             drop = Some(k);
         }
     }
-    sqlx::query("UPDATE checkers_games SET status = $2, ending = $3, moves = $4, finished_at = now() WHERE id = $1")
-        .bind(row.id)
-        .bind(&row.status)
-        .bind(&row.ending)
-        .bind(&row.moves)
-        .execute(&mut **tx)
-        .await?;
+    let (men, kings) = row.game()?.count(row.side());
+    sqlx::query(
+        "UPDATE checkers_games SET status = $2, ending = $3, moves = $4, pieces_left = $5, finished_at = now() WHERE id = $1",
+    )
+    .bind(row.id)
+    .bind(&row.status)
+    .bind(&row.ending)
+    .bind(&row.moves)
+    .bind((men + kings) as i16)
+    .execute(&mut **tx)
+    .await?;
     Ok((granted, drop))
 }
 

@@ -276,6 +276,10 @@
     { "id": "title-signal-found", "slot": "title", "name": "Signal Found", "rarity": "common", "unlock": { "kind": "achievement" }, "art": { "text": "Signal Found", "tier": "bronze", "color": "#2ee88a", "icon": "🐍" } },
     { "id": "title-long-cable", "slot": "title", "name": "Long Cable", "rarity": "rare", "unlock": { "kind": "achievement" }, "art": { "text": "Long Cable", "tier": "silver", "color": "#1fa6c9", "icon": "🔌" } },
     { "id": "title-glitch-eater", "slot": "title", "name": "Glitch Eater", "rarity": "epic", "unlock": { "kind": "achievement" }, "art": { "text": "Glitch Eater", "tier": "gold", "color": "#ff3fa4", "icon": "👾", "effect": "glow" } },
-    { "id": "title-full-bars", "slot": "title", "name": "Full Bars", "rarity": "legendary", "unlock": { "kind": "achievement" }, "art": { "text": "Full Bars", "tier": "mythic", "color": "#f5c518", "icon": "📶", "effect": "shimmer" } }
+    { "id": "title-full-bars", "slot": "title", "name": "Full Bars", "rarity": "legendary", "unlock": { "kind": "achievement" }, "art": { "text": "Full Bars", "tier": "mythic", "color": "#f5c518", "icon": "📶", "effect": "shimmer" } },
+    { "id": "title-first-crown", "slot": "title", "name": "First Crown", "rarity": "common", "unlock": { "kind": "achievement" }, "art": { "text": "First Crown", "tier": "bronze", "color": "#c8323c", "icon": "👑" } },
+    { "id": "title-draughts-master", "slot": "title", "name": "Draughts Master", "rarity": "legendary", "unlock": { "kind": "achievement" }, "art": { "text": "Draughts Master", "tier": "mythic", "color": "#e8b923", "icon": "⛀", "effect": "shimmer" } },
+    { "id": "title-iron-wall", "slot": "title", "name": "Iron Wall", "rarity": "epic", "unlock": { "kind": "achievement" }, "art": { "text": "Iron Wall", "tier": "gold", "color": "#7c7f86", "icon": "🛡️", "effect": "glow" } },
+    { "id": "title-jump-master", "slot": "title", "name": "Jump Master", "rarity": "epic", "unlock": { "kind": "achievement" }, "art": { "text": "Jump Master", "tier": "gold", "color": "#2f7aa8", "icon": "🦘", "effect": "glow" } }
   ]
 }
