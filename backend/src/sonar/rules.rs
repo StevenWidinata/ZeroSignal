@@ -448,21 +448,24 @@ impl Sea {
     }
 }
 
-/// Two sides firing in turn. Side 0 and side 1; `first` moves first and turns
-/// always alternate (a ping uses the turn too). `moves` holds both sides' moves
-/// in order; side s fires at the other side's fleet.
+/// Two sides firing in turn. Side 0 and side 1; `first` moves first. Whose turn
+/// it is comes from the moves played (`next`), not from counting them, so a
+/// move can later grant an extra turn. In Classic every move (a ping too)
+/// passes the turn. `log` holds both sides' moves in order; side s fires at
+/// the other side's fleet.
 #[derive(Debug, Clone)]
 pub struct Duel {
     /// seas[s] = side s's own sea (what the other side fires at).
     pub seas: [Sea; 2],
-    pub first: usize,
+    /// The side to move now.
+    next: usize,
     /// Every move in order: (side, move, result).
     pub log: Vec<(usize, Move, ShotResult)>,
 }
 
 impl Duel {
     pub fn new(fleets: [&Fleet; 2], first: usize) -> Duel {
-        Duel { seas: [Sea::new(fleets[0]), Sea::new(fleets[1])], first, log: Vec::new() }
+        Duel { seas: [Sea::new(fleets[0]), Sea::new(fleets[1])], next: first, log: Vec::new() }
     }
 
     pub fn replay(fleets: [&Fleet; 2], first: usize, moves: &str) -> Result<Duel, ShotError> {
@@ -476,7 +479,7 @@ impl Duel {
 
     /// The side whose turn it is.
     pub fn to_move(&self) -> usize {
-        (self.first + self.log.len()) % 2
+        self.next
     }
 
     /// The side that sank the other fleet, if any.
@@ -491,6 +494,7 @@ impl Duel {
         let side = self.to_move();
         let r = self.seas[1 - side].play(m)?;
         self.log.push((side, m, r));
+        self.next = 1 - side;
         Ok(r)
     }
 
@@ -520,9 +524,19 @@ mod tests {
         all_sunk: bool,
     }
     #[derive(Deserialize)]
+    struct DuelCase {
+        fleets: [String; 2],
+        first: usize,
+        moves: String,
+        results: Vec<String>,
+        next: usize,
+        winner: Option<usize>,
+    }
+    #[derive(Deserialize)]
     struct Vectors {
         fleets: Vec<FleetCase>,
         games: Vec<GameCase>,
+        duels: Vec<DuelCase>,
     }
 
     #[test]
@@ -560,6 +574,25 @@ mod tests {
             assert_eq!(results.iter().map(|r| r.short()).collect::<Vec<_>>(), g.results, "game {}", g.moves);
             assert_eq!(sea.all_sunk(), g.all_sunk);
         }
+        for c in &v.duels {
+            let a = Fleet::parse(&c.fleets[0]).unwrap();
+            let b = Fleet::parse(&c.fleets[1]).unwrap();
+            let d = Duel::replay([&a, &b], c.first, &c.moves).unwrap();
+            assert_eq!(d.log.iter().map(|(_, _, r)| r.short()).collect::<Vec<_>>(), c.results, "duel {}", c.moves);
+            assert_eq!(d.to_move(), c.next, "duel {}", c.moves);
+            assert_eq!(d.winner(), c.winner, "duel {}", c.moves);
+            assert_eq!(d.move_string(), c.moves);
+        }
+    }
+
+    #[test]
+    fn a_finished_duel_takes_no_more_moves() {
+        let v: Vectors = serde_json::from_str(VECTORS).unwrap();
+        let c = v.duels.iter().find(|c| c.winner.is_some()).unwrap();
+        let a = Fleet::parse(&c.fleets[0]).unwrap();
+        let b = Fleet::parse(&c.fleets[1]).unwrap();
+        let mut d = Duel::replay([&a, &b], c.first, &c.moves).unwrap();
+        assert_eq!(d.play(Move::Fire(99)), Err(ShotError::Over));
     }
 
     #[test]

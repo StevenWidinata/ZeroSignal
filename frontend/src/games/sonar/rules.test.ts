@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import vectors from "../../../../shared/sonar_vectors.json";
-import { cellName, fleetCode, isError, parseCell, parseFleet, parseMove, pingArea, randomFleet, Sea, shortResult, validateFleet } from "./rules";
+import { cellName, Duel, fleetCode, isError, parseCell, parseFleet, parseMove, pingArea, randomFleet, Sea, shortResult, validateFleet } from "./rules";
 
 describe("sonar rules (same vectors as the server)", () => {
   it("checks fleets like the server", () => {
@@ -21,6 +21,23 @@ describe("sonar rules (same vectors as the server)", () => {
       });
       expect(got, g.moves).toEqual(g.results);
       expect(sea.allSunk()).toBe(g.all_sunk);
+    }
+  });
+
+  it("takes turns and finds the winner like the server", () => {
+    for (const c of vectors.duels) {
+      const [a, b] = c.fleets.map((f) => {
+        const r = parseFleet(f);
+        if ("error" in r) throw new Error(r.error);
+        return r.ships;
+      });
+      const d = Duel.replay([a, b], c.first as 0 | 1, c.moves);
+      if (isError(d)) throw new Error(d);
+      expect(d.log.map((l) => shortResult(l.result)), c.moves).toEqual(c.results);
+      expect(d.toMove()).toBe(c.next);
+      expect(d.winner()).toBe(c.winner);
+      expect(d.moveString()).toBe(c.moves);
+      if (c.winner !== null) expect(d.play({ kind: "fire", cell: 99 })).toBe("over");
     }
   });
 

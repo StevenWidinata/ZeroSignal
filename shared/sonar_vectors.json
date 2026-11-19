@@ -37,5 +37,10 @@
       "results": ["ping:2", "ping:0", "hit"],
       "all_sunk": false
     }
+  ],
+  "duels": [
+    {"fleets": ["a1h a3h a5h a7h a9h", "a1v c1v e1v g1v i1v"], "first": 0, "moves": "f0 p55 f8 f99 f18", "results": ["hit", "ping:0", "hit", "miss", "sunk:destroyer"], "next": 1, "winner": null},
+    {"fleets": ["a1h a3h a5h a7h a9h", "a1v c1v e1v g1v i1v"], "first": 1, "moves": "f0 f0", "results": ["hit", "hit"], "next": 1, "winner": null},
+    {"fleets": ["a1h a3h a5h a7h a9h", "a1v c1v e1v g1v i1v"], "first": 0, "moves": "f0 f10 f10 f11 f20 f12 f30 f13 f40 f14 f2 f15 f12 f16 f22 f17 f32 f18 f4 f19 f14 f30 f24 f31 f6 f32 f16 f33 f26 f34 f8 f35 f18", "results": ["hit", "miss", "hit", "miss", "hit", "miss", "hit", "miss", "sunk:carrier", "miss", "hit", "miss", "hit", "miss", "hit", "miss", "sunk:battleship", "miss", "hit", "miss", "hit", "miss", "sunk:cruiser", "miss", "hit", "miss", "hit", "miss", "sunk:submarine", "miss", "hit", "miss", "sunk:destroyer"], "next": 1, "winner": 0}
   ]
 }

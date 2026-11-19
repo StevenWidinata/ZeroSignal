@@ -4,7 +4,7 @@ import { SOUND } from "./AiGame";
 import Battle from "./Battle";
 import { label, resultText, viewOf } from "./fleet";
 import Placement from "./Placement";
-import { isError, parseFleet, Sea } from "./rules";
+import { Duel, isError, parseFleet } from "./rules";
 
 type Phase =
   | { kind: "place"; who: 0 | 1 }
@@ -20,8 +20,8 @@ type Phase =
 export default function LocalGame({ names, look, onExit }: { names: [string, string]; look: { fleet: string; sea: string }; onExit: () => void }) {
   const [phase, setPhase] = useState<Phase>({ kind: "place", who: 0 });
   const [fleets, setFleets] = useState<[string | null, string | null]>([null, null]);
-  /** seas[i] = player i's own sea (the other player fires at it). */
-  const [seas, setSeas] = useState<[Sea, Sea] | null>(null);
+  /** The battle: player 0 fires first; duel.seas[i] = player i's own sea. */
+  const [duel, setDuel] = useState<Duel | null>(null);
   const [, setTick] = useState(0);
   const [news, setNews] = useState<string | null>(null);
   const [lastShot, setLastShot] = useState<[number | null, number | null]>([null, null]);
@@ -30,7 +30,7 @@ export default function LocalGame({ names, look, onExit }: { names: [string, str
   function restart() {
     setPhase({ kind: "place", who: 0 });
     setFleets([null, null]);
-    setSeas(null);
+    setDuel(null);
     setNews(null);
     setLastShot([null, null]);
   }
@@ -51,7 +51,7 @@ export default function LocalGame({ names, look, onExit }: { names: [string, str
           else {
             const a = parseFleet(next[0]!);
             const b = parseFleet(code);
-            if ("ships" in a && "ships" in b) setSeas([new Sea(a.ships), new Sea(b.ships)]);
+            if ("ships" in a && "ships" in b) setDuel(new Duel([a.ships, b.ships], 0));
             setPhase({ kind: "cover", who: 0, then: "turn" });
           }
         }}
@@ -82,29 +82,31 @@ export default function LocalGame({ names, look, onExit }: { names: [string, str
       </div>
     );
 
-  if (!seas || !fleets[0] || !fleets[1]) return null;
+  if (!duel || !fleets[0] || !fleets[1]) return null;
+  const seas = duel.seas;
   const me = phase.kind === "turn" ? phase.who : phase.winner;
   const them = (1 - me) as 0 | 1;
 
   function fire(cell: number, ping: boolean) {
-    if (phase.kind !== "turn" || waiting || !seas) return;
-    const r = seas[them].play({ kind: ping ? "ping" : "fire", cell });
+    if (phase.kind !== "turn" || waiting || !duel) return;
+    const r = duel.play({ kind: ping ? "ping" : "fire", cell });
     if (isError(r)) return;
     setTick((t) => t + 1);
     playSfx(SOUND[r.kind]);
     const text = `${names[me]} ${ping ? "pinged" : "fired at"} ${label(cell)}: ${resultText(r)}`;
     setNews(text);
     if (!ping) setLastShot((l) => (me === 0 ? [cell, l[1]] : [l[0], cell]));
-    if (seas[them].allSunk()) {
+    if (duel.winner() === me) {
       playSfx("win");
       setPhase({ kind: "over", winner: me });
       return;
     }
-    // A moment to see the result, then cover the screen for the other player.
+    // A moment to see the result, then cover the screen for whoever moves next.
+    const next = duel.toMove();
     setWaiting(true);
     window.setTimeout(() => {
       setWaiting(false);
-      setPhase({ kind: "cover", who: them, then: "turn" });
+      setPhase(next === me ? { kind: "turn", who: me } : { kind: "cover", who: next, then: "turn" });
     }, 1300);
   }
 

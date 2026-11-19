@@ -230,3 +230,57 @@ export class Sea {
 }
 
 export const isError = (r: ShotResult | ShotError): r is ShotError => typeof r === "string";
+
+/**
+ * Two sides firing in turn (like `Duel` in rules.rs). Side 0 and side 1;
+ * `first` moves first. Whose turn it is comes from the moves played, not from
+ * counting them, so a move can later grant an extra turn. In Classic every
+ * move (a ping too) passes the turn. seas[s] is side s's own sea.
+ */
+export class Duel {
+  readonly seas: [Sea, Sea];
+  log: { side: 0 | 1; move: Move; result: ShotResult }[] = [];
+  private next: 0 | 1;
+
+  constructor(fleets: [Placement[], Placement[]], first: 0 | 1) {
+    this.seas = [new Sea(fleets[0]), new Sea(fleets[1])];
+    this.next = first;
+  }
+
+  /** Replay a move list ("f37 p44 …"); the first bad move is returned as an error. */
+  static replay(fleets: [Placement[], Placement[]], first: 0 | 1, moves: string): Duel | ShotError {
+    const d = new Duel(fleets, first);
+    for (const t of moves.split(/\s+/).filter(Boolean)) {
+      const m = parseMove(t);
+      if (!m) return "bad_move";
+      const r = d.play(m);
+      if (isError(r)) return r;
+    }
+    return d;
+  }
+
+  toMove(): 0 | 1 {
+    return this.next;
+  }
+
+  /** The side that sank the other fleet, if any. */
+  winner(): 0 | 1 | null {
+    if (this.seas[1].allSunk()) return 0;
+    if (this.seas[0].allSunk()) return 1;
+    return null;
+  }
+
+  play(m: Move): ShotResult | ShotError {
+    if (this.winner() !== null) return "over";
+    const side = this.next;
+    const r = this.seas[1 - side].play(m);
+    if (isError(r)) return r;
+    this.log.push({ side, move: m, result: r });
+    this.next = (1 - side) as 0 | 1;
+    return r;
+  }
+
+  moveString(): string {
+    return this.log.map((l) => moveCode(l.move)).join(" ");
+  }
+}
