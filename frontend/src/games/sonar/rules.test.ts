@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import vectors from "../../../../shared/sonar_vectors.json";
-import { cellName, Duel, fleetCode, isError, parseCell, parseFleet, parseMove, pingArea, randomFleet, Sea, shortResult, validateFleet } from "./rules";
+import { cellName, Duel, FLEET, fleetCode, isError, markChar, moveCode, parseCell, parseFleet, parseMove, pingArea, randomFleet, Sea, shortResult, validateFleet, type Placement } from "./rules";
+import { POWERS } from "./tactics";
 
 describe("sonar rules (same vectors as the server)", () => {
   it("checks fleets like the server", () => {
@@ -39,6 +40,50 @@ describe("sonar rules (same vectors as the server)", () => {
       expect(d.moveString()).toBe(c.moves);
       if (c.winner !== null) expect(d.play({ kind: "fire", cell: 99 })).toBe("over");
     }
+  });
+
+  it("plays Tactics powers like the server", () => {
+    const fleetOf = (f: string): Placement[] => {
+      const r = parseFleet(f);
+      if ("error" in r) throw new Error(r.error);
+      return r.ships;
+    };
+    for (const c of vectors.tactics) {
+      const d = new Duel([fleetOf(c.fleets[0]), fleetOf(c.fleets[1])], c.first as 0 | 1, c.levels as [number[], number[]] | null);
+      const tokens = c.moves.split(" ");
+      let error: string | null = null;
+      tokens.forEach((t, i) => {
+        const m = parseMove(t);
+        if (!m) throw new Error(`${c.about}: can't parse ${t}`);
+        const r = d.play(m);
+        if (isError(r)) {
+          expect(i, `${c.about}: only the last move may fail`).toBe(tokens.length - 1);
+          error = r;
+        }
+      });
+      expect(d.log.map((l) => l.results.map(([cell, r]) => `${cell}:${shortResult(r)}`).join(",")), c.about).toEqual(c.results);
+      expect(error, c.about).toBe(c.error);
+      expect(d.toMove(), c.about).toBe(c.next);
+      expect(d.winner(), c.about).toBe(c.winner);
+      expect(d.tactics?.charge ?? null, c.about).toEqual(c.charge);
+      for (const s of [0, 1]) {
+        const want = new Array<string>(100).fill(".");
+        for (const [ch, cells] of Object.entries(c.marks[s] as Record<string, number[]>)) for (const cell of cells) want[cell] = ch;
+        expect(d.seas[s].marks.map(markChar).join(""), `${c.about}: sea ${s}`).toBe(want.join(""));
+      }
+    }
+  });
+
+  it("writes and reads every move code", () => {
+    for (const code of ["f0", "p99", "a12h", "a90v", "b1.2", "b1.2.3", "r0", "k9", "t3l", "t3r", "t0u", "t9d", "l45"]) {
+      const m = parseMove(code);
+      expect(m && moveCode(m)).toBe(code);
+    }
+    for (const bad of ["", "f", "f100", "f+3", "a12", "a12x", "b1", "b1.2.3.4", "r10", "t3", "t3x", "l100", "z1"]) expect(parseMove(bad), bad).toBeNull();
+  });
+
+  it("gives every ship one power, in fleet order", () => {
+    expect(POWERS.map((p) => p.ship)).toEqual(FLEET.map((s) => s.id));
   });
 
   it("names cells and pings 3×3 areas", () => {

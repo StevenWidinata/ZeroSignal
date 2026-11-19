@@ -11,7 +11,16 @@ import { itemName } from "./items";
 
 export const LEVEL_LABEL: Record<SonarLevel, string> = { easy: "Easy", medium: "Medium", hard: "Hard", master: "Master" };
 
-export const SOUND: Record<SonarResult["kind"], Sfx> = { miss: "splash", hit: "boom", sunk: "clang", ping: "chime" };
+export const SOUND: Record<SonarResult["kind"], Sfx> = {
+  miss: "splash",
+  hit: "boom",
+  sunk: "clang",
+  ping: "chime",
+  radar: "chime",
+  seen: "zap",
+  clear: "splash",
+  dud: "whiff",
+};
 
 export default function AiGame({ initial, onExit, onRematch }: { initial: SonarGame; onExit: () => void; onRematch: () => void }) {
   const [game, setGame] = useState(initial);

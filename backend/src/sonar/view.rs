@@ -14,7 +14,7 @@ pub struct SunkShip {
 #[derive(Debug, Clone, Serialize)]
 pub struct SeaView {
     /// 100 characters, cell 0 first: '.' unknown, 'o' miss, 'x' hit,
-    /// 's' sunk ship, '-' water next to a sunk ship.
+    /// 's' sunk ship, '-' known water, '*' spotted ship (see `Mark::ch`).
     pub marks: String,
     pub sunk: Vec<SunkShip>,
     pub pings: Vec<Ping>,
@@ -26,17 +26,7 @@ pub struct SeaView {
 
 impl SeaView {
     pub fn of(sea: &Sea) -> SeaView {
-        let marks = sea
-            .marks
-            .iter()
-            .map(|m| match m {
-                Mark::Unknown => '.',
-                Mark::Miss => 'o',
-                Mark::Hit => 'x',
-                Mark::Sunk(_) => 's',
-                Mark::Empty => '-',
-            })
-            .collect();
+        let marks = sea.marks.iter().map(|m| m.ch()).collect();
         let mut sunk: Vec<SunkShip> = Vec::new();
         for c in 0..CELLS {
             if let Mark::Sunk(ship) = sea.marks[c] {
@@ -66,13 +56,7 @@ pub struct LogEntry {
 pub fn log_for(d: &Duel, side: usize) -> Vec<LogEntry> {
     d.log
         .iter()
-        .map(|&(s, m, result)| {
-            let (cell, ping) = match m {
-                Move::Fire(c) => (c, false),
-                Move::Ping(c) => (c, true),
-            };
-            LogEntry { mine: s == side, mv: m.code(), cell, ping, result }
-        })
+        .map(|t| LogEntry { mine: t.side == side, mv: t.mv.code(), cell: t.mv.cell(), ping: matches!(t.mv, Move::Ping(_)), result: t.main() })
         .collect()
 }
 

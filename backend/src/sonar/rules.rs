@@ -11,6 +11,8 @@
 //!   "a1h a3h a5h a7h a9h".
 //! - Moves are "f37" (fire at cell 37) or "p44" (sonar ping centred on 44:
 //!   how many ship cells are in that 3×3 area). Each side has 2 pings.
+//! - Tactics games add one power per ship (air strike, salvo, radar, torpedo,
+//!   flare; see `tactics.rs` and `Move`).
 
 use std::sync::OnceLock;
 
@@ -256,8 +258,31 @@ pub enum Mark {
     Hit,
     /// Part of a sunk ship (its fleet index).
     Sunk(u8),
-    /// Water next to a sunk ship (ships can't touch, so it's known empty).
+    /// Water next to a sunk ship (ships can't touch, so it's known empty),
+    /// or water lit up by a flare.
     Empty,
+    /// Tactics: a ship square seen (by a flare) but not hit yet.
+    Spotted,
+}
+
+impl Mark {
+    /// One letter per square, as sent to the browser: '.' unknown, 'o' miss,
+    /// 'x' hit, 's' sunk ship, '-' known water, '*' spotted ship.
+    pub fn ch(self) -> char {
+        match self {
+            Mark::Unknown => '.',
+            Mark::Miss => 'o',
+            Mark::Hit => 'x',
+            Mark::Sunk(_) => 's',
+            Mark::Empty => '-',
+            Mark::Spotted => '*',
+        }
+    }
+
+    /// Squares you can still fire at.
+    pub fn open(self) -> bool {
+        matches!(self, Mark::Unknown | Mark::Spotted)
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
@@ -267,16 +292,40 @@ pub enum ShotResult {
     Hit,
     Sunk { ship: u8 },
     Ping { count: u8 },
+    /// Tactics: ship squares in a radar line.
+    Radar { count: u8 },
+    /// Tactics: a flare shows a ship here.
+    Seen,
+    /// Tactics: a flare shows water here.
+    Clear,
+    /// Tactics: a torpedo that ran off the far edge (reported at its last square).
+    Dud,
 }
 
 impl ShotResult {
-    /// Short form used by the shared test vectors: miss, hit, sunk:destroyer, ping:3.
+    /// Short form used by the shared test vectors: miss, hit, sunk:destroyer, ping:3, radar:2, seen, clear, dud.
     pub fn short(self) -> String {
         match self {
             ShotResult::Miss => "miss".into(),
             ShotResult::Hit => "hit".into(),
             ShotResult::Sunk { ship } => format!("sunk:{}", rules().fleet[ship as usize].id),
             ShotResult::Ping { count } => format!("ping:{count}"),
+            ShotResult::Radar { count } => format!("radar:{count}"),
+            ShotResult::Seen => "seen".into(),
+            ShotResult::Clear => "clear".into(),
+            ShotResult::Dud => "dud".into(),
+        }
+    }
+
+    /// How much a result matters, for picking a move's headline result.
+    fn weight(self) -> u8 {
+        match self {
+            ShotResult::Sunk { .. } => 5,
+            ShotResult::Hit => 4,
+            ShotResult::Seen => 3,
+            ShotResult::Ping { .. } | ShotResult::Radar { .. } => 2,
+            ShotResult::Clear | ShotResult::Miss => 1,
+            ShotResult::Dud => 0,
         }
     }
 }
@@ -287,6 +336,12 @@ pub enum ShotError {
     AlreadyKnown,
     NoPingsLeft,
     Over,
+    /// A power move in a Classic game.
+    NotTactics,
+    /// The power is still charging.
+    NotReady,
+    /// The ship with that power has sunk.
+    PowerLost,
 }
 
 impl ShotError {
@@ -296,6 +351,22 @@ impl ShotError {
             ShotError::AlreadyKnown => "you already know what's there",
             ShotError::NoPingsLeft => "no sonar pings left",
             ShotError::Over => "this game is over",
+            ShotError::NotTactics => "ship powers are only in Tactics games",
+            ShotError::NotReady => "that power is still charging",
+            ShotError::PowerLost => "that ship has sunk, so its power is gone",
+        }
+    }
+
+    /// Short form used by the shared test vectors (same names as the browser's).
+    pub fn code(self) -> &'static str {
+        match self {
+            ShotError::BadMove => "bad_move",
+            ShotError::AlreadyKnown => "already_known",
+            ShotError::NoPingsLeft => "no_pings_left",
+            ShotError::Over => "over",
+            ShotError::NotTactics => "not_tactics",
+            ShotError::NotReady => "not_ready",
+            ShotError::PowerLost => "power_lost",
         }
     }
 }
@@ -306,6 +377,48 @@ pub struct Ping {
     pub count: u8,
 }
 
+/// Tactics: a radar sweep of a whole row (`row`) or column.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+pub struct Sweep {
+    pub line: u8,
+    pub row: bool,
+    pub count: u8,
+}
+
+/// Where a torpedo starts: from the left edge along a row, the right edge,
+/// the top edge down a column, or the bottom edge.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Edge {
+    Left,
+    Right,
+    Top,
+    Bottom,
+}
+
+impl Edge {
+    fn ch(self) -> char {
+        match self {
+            Edge::Left => 'l',
+            Edge::Right => 'r',
+            Edge::Top => 'u',
+            Edge::Bottom => 'd',
+        }
+    }
+    fn parse(c: &str) -> Option<Edge> {
+        match c {
+            "l" => Some(Edge::Left),
+            "r" => Some(Edge::Right),
+            "u" => Some(Edge::Top),
+            "d" => Some(Edge::Bottom),
+            _ => None,
+        }
+    }
+    /// Left and top are the Mk I edges; right and bottom need Mk III.
+    pub fn basic(self) -> bool {
+        matches!(self, Edge::Left | Edge::Top)
+    }
+}
+
 /// One side's sea as the other side fires at it.
 #[derive(Debug, Clone)]
 pub struct Sea {
@@ -314,32 +427,133 @@ pub struct Sea {
     pub marks: [Mark; CELLS],
     hits: Vec<u8>,
     pub pings: Vec<Ping>,
+    /// Tactics: radar sweeps so far.
+    pub sweeps: Vec<Sweep>,
+    /// Tactics: this ship doesn't show in pings or radar while afloat.
+    silent: Option<u8>,
     /// Shots and pings so far.
     pub moves: Vec<String>,
 }
 
+/// Every move. Classic games only use Fire and Ping; the rest are Tactics
+/// ship powers (see `tactics.rs`).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Move {
+    /// "f37"
     Fire(usize),
+    /// "p44"
     Ping(usize),
+    /// "a12h": squares from `cell` to the right (h) or down (v).
+    AirStrike { cell: usize, horizontal: bool },
+    /// "b12.40" (or 3 cells at Mk II+): `n` shots in one turn.
+    Salvo { cells: [usize; 3], n: u8 },
+    /// "r3" sweeps row 3 (the 4th row), "k3" column 3.
+    Radar { line: usize, row: bool },
+    /// "t3l": along row 3 from the left edge (l/r rows, u/d columns).
+    Torpedo { line: usize, edge: Edge },
+    /// "l45": lights up around 45.
+    Flare(usize),
 }
 
 impl Move {
     pub fn parse(s: &str) -> Option<Move> {
-        let (k, n) = s.split_at(1.min(s.len()));
-        let cell: usize = n.parse().ok().filter(|&c| c < CELLS)?;
+        let (k, rest) = s.split_at(1.min(s.len()));
+        let num = |t: &str| -> Option<usize> { t.parse().ok().filter(|_| !t.is_empty() && t.bytes().all(|b| b.is_ascii_digit())) };
+        let cell = |t: &str| num(t).filter(|&c| c < CELLS);
+        let line = |t: &str| num(t).filter(|&l| l < SIZE);
         match k {
-            "f" => Some(Move::Fire(cell)),
-            "p" => Some(Move::Ping(cell)),
+            "f" => Some(Move::Fire(cell(rest)?)),
+            "p" => Some(Move::Ping(cell(rest)?)),
+            "l" => Some(Move::Flare(cell(rest)?)),
+            "r" => Some(Move::Radar { line: line(rest)?, row: true }),
+            "k" => Some(Move::Radar { line: line(rest)?, row: false }),
+            "a" | "t" if !rest.is_empty() => {
+                let (n, d) = rest.split_at(rest.len() - 1);
+                if k == "a" {
+                    let horizontal = match d {
+                        "h" => true,
+                        "v" => false,
+                        _ => return None,
+                    };
+                    Some(Move::AirStrike { cell: cell(n)?, horizontal })
+                } else {
+                    Some(Move::Torpedo { line: line(n)?, edge: Edge::parse(d)? })
+                }
+            }
+            "b" => {
+                let parts: Vec<&str> = rest.split('.').collect();
+                if !(2..=3).contains(&parts.len()) {
+                    return None;
+                }
+                let mut cells = [0; 3];
+                for (i, p) in parts.iter().enumerate() {
+                    cells[i] = cell(p)?;
+                }
+                Some(Move::Salvo { cells, n: parts.len() as u8 })
+            }
             _ => None,
         }
     }
+
     pub fn code(self) -> String {
         match self {
             Move::Fire(c) => format!("f{c}"),
             Move::Ping(c) => format!("p{c}"),
+            Move::AirStrike { cell, horizontal } => format!("a{cell}{}", if horizontal { 'h' } else { 'v' }),
+            Move::Salvo { cells, n } => format!("b{}", cells[..n as usize].iter().map(usize::to_string).collect::<Vec<_>>().join(".")),
+            Move::Radar { line, row } => format!("{}{line}", if row { 'r' } else { 'k' }),
+            Move::Torpedo { line, edge } => format!("t{line}{}", edge.ch()),
+            Move::Flare(c) => format!("l{c}"),
         }
     }
+
+    /// The Tactics power this move uses (fleet index of its ship), if any.
+    pub fn power(self) -> Option<usize> {
+        use super::tactics::{AIR_STRIKE, FLARE, RADAR, SALVO, TORPEDO};
+        match self {
+            Move::Fire(_) | Move::Ping(_) => None,
+            Move::AirStrike { .. } => Some(AIR_STRIKE),
+            Move::Salvo { .. } => Some(SALVO),
+            Move::Radar { .. } => Some(RADAR),
+            Move::Torpedo { .. } => Some(TORPEDO),
+            Move::Flare(_) => Some(FLARE),
+        }
+    }
+
+    /// The square a move is shown at (a ping's centre, a line's first square).
+    pub fn cell(self) -> usize {
+        match self {
+            Move::Fire(c) | Move::Ping(c) | Move::Flare(c) | Move::AirStrike { cell: c, .. } => c,
+            Move::Salvo { cells, .. } => cells[0],
+            Move::Radar { line, row } => line_cells(line, row)[0],
+            Move::Torpedo { line, edge } => torpedo_path(line, edge)[0],
+        }
+    }
+}
+
+/// The squares of row `line` (`row`) or column `line`, in order.
+pub fn line_cells(line: usize, row: bool) -> Vec<usize> {
+    (0..SIZE).map(|k| if row { line * SIZE + k } else { k * SIZE + line }).collect()
+}
+
+/// The squares a torpedo runs through, in order.
+pub fn torpedo_path(line: usize, edge: Edge) -> Vec<usize> {
+    let mut v = line_cells(line, matches!(edge, Edge::Left | Edge::Right));
+    if matches!(edge, Edge::Right | Edge::Bottom) {
+        v.reverse();
+    }
+    v
+}
+
+/// The squares a flare lights: a + shape (size 5) or the 3×3 area (size 9), clipped.
+pub fn flare_area(center: usize, size: u8) -> Vec<usize> {
+    if size >= 9 {
+        return ping_area(center);
+    }
+    let mut v: Vec<usize> = neighbours(center).filter(|&n| n / SIZE == center / SIZE || n % SIZE == center % SIZE).collect();
+    v.push(center);
+    v.sort_unstable();
+    v
 }
 
 impl Sea {
@@ -350,8 +564,15 @@ impl Sea {
             marks: [Mark::Unknown; CELLS],
             hits: vec![0; fleet.ships.len()],
             pings: Vec::new(),
+            sweeps: Vec::new(),
+            silent: None,
             moves: Vec::new(),
         }
+    }
+
+    /// A Tactics sea: the submarine runs silent.
+    pub fn new_tactics(fleet: &Fleet) -> Sea {
+        Sea { silent: Some(super::tactics::SILENT_SHIP), ..Sea::new(fleet) }
     }
 
     pub fn pings_left(&self) -> u8 {
@@ -360,6 +581,10 @@ impl Sea {
 
     pub fn all_sunk(&self) -> bool {
         self.hits.iter().zip(&self.lens).all(|(h, l)| h == l)
+    }
+
+    pub fn is_sunk(&self, ship: usize) -> bool {
+        self.hits[ship] == self.lens[ship]
     }
 
     pub fn sunk_ships(&self) -> Vec<u8> {
@@ -371,11 +596,78 @@ impl Sea {
         self.moves.len()
     }
 
+    /// Ship squares in `cells` that pings and radar can hear (a silent sub can't be heard).
+    fn heard(&self, cells: &[usize]) -> u8 {
+        cells
+            .iter()
+            .filter(|&&c| match self.occ[c] {
+                Some(s) => self.silent != Some(s) || self.is_sunk(s as usize),
+                None => false,
+            })
+            .count() as u8
+    }
+
+    /// Fire at an open square.
+    fn fire_at(&mut self, cell: usize) -> ShotResult {
+        match self.occ[cell] {
+            None => {
+                self.marks[cell] = Mark::Miss;
+                ShotResult::Miss
+            }
+            Some(ship) => {
+                let s = ship as usize;
+                self.hits[s] += 1;
+                self.marks[cell] = Mark::Hit;
+                if self.hits[s] < self.lens[s] {
+                    return ShotResult::Hit;
+                }
+                // Reveal the ship and the water around it.
+                for c in 0..CELLS {
+                    if self.occ[c] == Some(ship) {
+                        self.marks[c] = Mark::Sunk(ship);
+                    }
+                }
+                for c in 0..CELLS {
+                    if self.occ[c] == Some(ship) {
+                        for n in neighbours(c) {
+                            if self.marks[n] == Mark::Unknown {
+                                self.marks[n] = Mark::Empty;
+                            }
+                        }
+                    }
+                }
+                ShotResult::Sunk { ship }
+            }
+        }
+    }
+
+    /// Play a classic move (a shot or a ping) and get its result.
     pub fn play(&mut self, m: Move) -> Result<ShotResult, ShotError> {
+        if m.power().is_some() {
+            return Err(ShotError::NotTactics);
+        }
+        Ok(self.strike(m, 0)?[0].1)
+    }
+
+    /// Play any move; `size` is the power's size at the shooter's Mk level
+    /// (see `tactics.rs`; unused for shots and pings). Checks everything
+    /// before changing anything, then returns (square, result) for each
+    /// square the move touched. Whether the shooter may use the power at all
+    /// is the duel's job.
+    pub fn strike(&mut self, m: Move, size: u8) -> Result<Vec<(usize, ShotResult)>, ShotError> {
         if self.all_sunk() {
             return Err(ShotError::Over);
         }
-        let r = match m {
+        let out = match m {
+            Move::Fire(cell) => {
+                if cell >= CELLS {
+                    return Err(ShotError::BadMove);
+                }
+                if !self.marks[cell].open() {
+                    return Err(ShotError::AlreadyKnown);
+                }
+                vec![(cell, self.fire_at(cell))]
+            }
             Move::Ping(center) => {
                 if center >= CELLS {
                     return Err(ShotError::BadMove);
@@ -383,55 +675,83 @@ impl Sea {
                 if self.pings_left() == 0 {
                     return Err(ShotError::NoPingsLeft);
                 }
-                let count = ping_area(center).into_iter().filter(|&c| self.occ[c].is_some()).count() as u8;
+                let count = self.heard(&ping_area(center));
                 self.pings.push(Ping { center, count });
-                ShotResult::Ping { count }
+                vec![(center, ShotResult::Ping { count })]
             }
-            Move::Fire(cell) => {
-                if cell >= CELLS {
-                    return Err(ShotError::BadMove);
-                }
-                if self.marks[cell] != Mark::Unknown {
+            Move::AirStrike { cell, horizontal } => {
+                let cells = ship_cells(Placement { bow: cell, horizontal }, usize::from(size)).ok_or(ShotError::BadMove)?;
+                if !cells.iter().any(|&c| self.marks[c].open()) {
                     return Err(ShotError::AlreadyKnown);
                 }
-                match self.occ[cell] {
-                    None => {
-                        self.marks[cell] = Mark::Miss;
-                        ShotResult::Miss
-                    }
-                    Some(ship) => {
-                        let s = ship as usize;
-                        self.hits[s] += 1;
-                        self.marks[cell] = Mark::Hit;
-                        if self.hits[s] == self.lens[s] {
-                            // Reveal the ship and the water around it.
-                            for c in 0..CELLS {
-                                if self.occ[c] == Some(ship) {
-                                    self.marks[c] = Mark::Sunk(ship);
-                                }
-                            }
-                            for c in 0..CELLS {
-                                if self.occ[c] == Some(ship) {
-                                    for n in neighbours(c) {
-                                        if self.marks[n] == Mark::Unknown {
-                                            self.marks[n] = Mark::Empty;
-                                        }
-                                    }
-                                }
-                            }
-                            ShotResult::Sunk { ship }
-                        } else {
-                            ShotResult::Hit
-                        }
+                // A sinking can turn a later square into known water: skip it then.
+                let mut v = Vec::new();
+                for c in cells {
+                    if self.marks[c].open() {
+                        v.push((c, self.fire_at(c)));
                     }
                 }
+                v
+            }
+            Move::Salvo { cells, n } => {
+                let cells = &cells[..usize::from(n)];
+                if n != size {
+                    return Err(ShotError::BadMove);
+                }
+                if cells.iter().enumerate().any(|(i, c)| cells[..i].contains(c)) {
+                    return Err(ShotError::BadMove);
+                }
+                if cells.iter().any(|&c| !self.marks[c].open()) {
+                    return Err(ShotError::AlreadyKnown);
+                }
+                let mut v = Vec::new();
+                for &c in cells {
+                    if self.marks[c].open() {
+                        v.push((c, self.fire_at(c)));
+                    }
+                }
+                v
+            }
+            Move::Radar { line, row } => {
+                let cells = line_cells(line, row);
+                let count = self.heard(&cells);
+                self.sweeps.push(Sweep { line: line as u8, row, count });
+                vec![(cells[0], ShotResult::Radar { count })]
+            }
+            Move::Torpedo { line, edge } => {
+                let path = torpedo_path(line, edge);
+                // The first ship square that isn't hit yet takes it.
+                match path.iter().copied().find(|&c| self.occ[c].is_some() && self.marks[c].open()) {
+                    Some(c) => vec![(c, self.fire_at(c))],
+                    None => vec![(path[SIZE - 1], ShotResult::Dud)],
+                }
+            }
+            Move::Flare(center) => {
+                let area = flare_area(center, size);
+                if !area.iter().any(|&c| self.marks[c] == Mark::Unknown) {
+                    return Err(ShotError::AlreadyKnown);
+                }
+                let mut v = Vec::new();
+                for c in area {
+                    if self.marks[c] != Mark::Unknown {
+                        continue;
+                    }
+                    if self.occ[c].is_some() {
+                        self.marks[c] = Mark::Spotted;
+                        v.push((c, ShotResult::Seen));
+                    } else {
+                        self.marks[c] = Mark::Empty;
+                        v.push((c, ShotResult::Clear));
+                    }
+                }
+                v
             }
         };
         self.moves.push(m.code());
-        Ok(r)
+        Ok(out)
     }
 
-    /// Replay a move list ("f37 p44 …") against a fleet.
+    /// Replay a classic move list ("f37 p44 …") against a fleet.
     pub fn replay(fleet: &Fleet, moves: &str) -> Result<(Sea, Vec<ShotResult>), ShotError> {
         let mut sea = Sea::new(fleet);
         let mut results = Vec::new();
@@ -448,33 +768,65 @@ impl Sea {
     }
 }
 
+/// One move in a duel and what it did, square by square.
+#[derive(Debug, Clone)]
+pub struct Turn {
+    pub side: usize,
+    pub mv: Move,
+    pub results: Vec<(usize, ShotResult)>,
+}
+
+impl Turn {
+    /// The result that matters most (a sinking beats a hit beats a miss).
+    pub fn main(&self) -> ShotResult {
+        self.results.iter().map(|&(_, r)| r).max_by_key(|r| r.weight()).unwrap_or(ShotResult::Miss)
+    }
+}
+
 /// Two sides firing in turn. Side 0 and side 1; `first` moves first. Whose turn
 /// it is comes from the moves played (`next`), not from counting them, so a
-/// move can later grant an extra turn. In Classic every move (a ping too)
-/// passes the turn. `log` holds both sides' moves in order; side s fires at
-/// the other side's fleet.
+/// move can later grant an extra turn. Every move (a ping too) passes the turn.
+/// `log` holds both sides' moves in order; side s fires at the other side's
+/// fleet. A Tactics duel (`tactics` is set) also allows ship powers.
 #[derive(Debug, Clone)]
 pub struct Duel {
     /// seas[s] = side s's own sea (what the other side fires at).
     pub seas: [Sea; 2],
     /// The side to move now.
     next: usize,
-    /// Every move in order: (side, move, result).
-    pub log: Vec<(usize, Move, ShotResult)>,
+    pub log: Vec<Turn>,
+    pub tactics: Option<super::tactics::Tactics>,
 }
 
 impl Duel {
     pub fn new(fleets: [&Fleet; 2], first: usize) -> Duel {
-        Duel { seas: [Sea::new(fleets[0]), Sea::new(fleets[1])], next: first, log: Vec::new() }
+        Duel { seas: [Sea::new(fleets[0]), Sea::new(fleets[1])], next: first, log: Vec::new(), tactics: None }
+    }
+
+    /// A Tactics duel with each side's power Mk levels.
+    pub fn new_tactics(fleets: [&Fleet; 2], first: usize, levels: [super::tactics::Levels; 2]) -> Duel {
+        Duel {
+            seas: [Sea::new_tactics(fleets[0]), Sea::new_tactics(fleets[1])],
+            next: first,
+            log: Vec::new(),
+            tactics: Some(super::tactics::Tactics::new(levels)),
+        }
     }
 
     pub fn replay(fleets: [&Fleet; 2], first: usize, moves: &str) -> Result<Duel, ShotError> {
-        let mut d = Duel::new(fleets, first);
+        Duel::new(fleets, first).replayed(moves)
+    }
+
+    pub fn replay_tactics(fleets: [&Fleet; 2], first: usize, levels: [super::tactics::Levels; 2], moves: &str) -> Result<Duel, ShotError> {
+        Duel::new_tactics(fleets, first, levels).replayed(moves)
+    }
+
+    fn replayed(mut self, moves: &str) -> Result<Duel, ShotError> {
         for t in moves.split_whitespace() {
             let m = Move::parse(t).ok_or(ShotError::BadMove)?;
-            d.play(m)?;
+            self.play(m)?;
         }
-        Ok(d)
+        Ok(self)
     }
 
     /// The side whose turn it is.
@@ -487,19 +839,42 @@ impl Duel {
         (0..2).find(|&s| self.seas[1 - s].all_sunk())
     }
 
+    /// Play the next move; returns its headline result (see `Turn::main`).
     pub fn play(&mut self, m: Move) -> Result<ShotResult, ShotError> {
         if self.winner().is_some() {
             return Err(ShotError::Over);
         }
         let side = self.to_move();
-        let r = self.seas[1 - side].play(m)?;
-        self.log.push((side, m, r));
+        let power = m.power();
+        let mut size = 0;
+        if let Some(p) = power {
+            let t = self.tactics.as_ref().ok_or(ShotError::NotTactics)?;
+            if self.seas[side].is_sunk(p) {
+                return Err(ShotError::PowerLost);
+            }
+            if !t.ready(side, p) {
+                return Err(ShotError::NotReady);
+            }
+            size = t.spec(side, p).size;
+            if let Move::Torpedo { edge, .. } = m {
+                if size < 4 && !edge.basic() {
+                    return Err(ShotError::BadMove);
+                }
+            }
+        }
+        let results = self.seas[1 - side].strike(m, size)?;
+        if let Some(t) = self.tactics.as_mut() {
+            t.after_move(side, power);
+        }
+        let turn = Turn { side, mv: m, results };
+        let main = turn.main();
+        self.log.push(turn);
         self.next = 1 - side;
-        Ok(r)
+        Ok(main)
     }
 
     pub fn move_string(&self) -> String {
-        self.log.iter().map(|(_, m, _)| m.code()).collect::<Vec<_>>().join(" ")
+        self.log.iter().map(|t| t.mv.code()).collect::<Vec<_>>().join(" ")
     }
 }
 
@@ -533,10 +908,28 @@ mod tests {
         winner: Option<usize>,
     }
     #[derive(Deserialize)]
+    struct TacticsCase {
+        about: String,
+        fleets: [String; 2],
+        first: usize,
+        levels: Option<[crate::sonar::tactics::Levels; 2]>,
+        moves: String,
+        /// Per move: "cell:result,cell:result".
+        results: Vec<String>,
+        /// The last move's error, if it fails.
+        error: Option<String>,
+        next: usize,
+        winner: Option<usize>,
+        charge: Option<[[u8; 5]; 2]>,
+        /// Per sea: mark letter -> squares (the rest unknown).
+        marks: [std::collections::BTreeMap<char, Vec<usize>>; 2],
+    }
+    #[derive(Deserialize)]
     struct Vectors {
         fleets: Vec<FleetCase>,
         games: Vec<GameCase>,
         duels: Vec<DuelCase>,
+        tactics: Vec<TacticsCase>,
     }
 
     #[test]
@@ -578,11 +971,75 @@ mod tests {
             let a = Fleet::parse(&c.fleets[0]).unwrap();
             let b = Fleet::parse(&c.fleets[1]).unwrap();
             let d = Duel::replay([&a, &b], c.first, &c.moves).unwrap();
-            assert_eq!(d.log.iter().map(|(_, _, r)| r.short()).collect::<Vec<_>>(), c.results, "duel {}", c.moves);
+            assert_eq!(d.log.iter().map(|t| t.main().short()).collect::<Vec<_>>(), c.results, "duel {}", c.moves);
             assert_eq!(d.to_move(), c.next, "duel {}", c.moves);
             assert_eq!(d.winner(), c.winner, "duel {}", c.moves);
             assert_eq!(d.move_string(), c.moves);
         }
+    }
+
+    #[test]
+    fn shared_tactics_vectors() {
+        let v: Vectors = serde_json::from_str(VECTORS).unwrap();
+        for c in &v.tactics {
+            let a = Fleet::parse(&c.fleets[0]).unwrap();
+            let b = Fleet::parse(&c.fleets[1]).unwrap();
+            let mut d = match c.levels {
+                Some(l) => Duel::new_tactics([&a, &b], c.first, l),
+                None => Duel::new([&a, &b], c.first),
+            };
+            let tokens: Vec<&str> = c.moves.split_whitespace().collect();
+            let mut error = None;
+            for (i, t) in tokens.iter().enumerate() {
+                if let Err(e) = d.play(Move::parse(t).unwrap_or_else(|| panic!("{}: can't parse {t}", c.about))) {
+                    assert_eq!(i, tokens.len() - 1, "{}: only the last move may fail ({t}: {})", c.about, e.code());
+                    error = Some(e.code().to_string());
+                }
+            }
+            let got: Vec<String> = d
+                .log
+                .iter()
+                .map(|t| t.results.iter().map(|(cell, r)| format!("{cell}:{}", r.short())).collect::<Vec<_>>().join(","))
+                .collect();
+            assert_eq!(got, c.results, "{}", c.about);
+            assert_eq!(error, c.error, "{}", c.about);
+            assert_eq!(d.to_move(), c.next, "{}", c.about);
+            assert_eq!(d.winner(), c.winner, "{}", c.about);
+            assert_eq!(d.tactics.as_ref().map(|t| t.charge), c.charge, "{}", c.about);
+            for s in 0..2 {
+                let mut want = ['.'; CELLS];
+                for (&ch, cells) in &c.marks[s] {
+                    for &cell in cells {
+                        want[cell] = ch;
+                    }
+                }
+                let got: String = d.seas[s].marks.iter().map(|m| m.ch()).collect();
+                assert_eq!(got, want.iter().collect::<String>(), "{}: sea {s}", c.about);
+            }
+            // Replaying the moves played so far gives the same duel.
+            if let Some(l) = c.levels {
+                let again = Duel::replay_tactics([&a, &b], c.first, l, &d.move_string()).unwrap();
+                assert_eq!(again.tactics, d.tactics);
+            }
+        }
+    }
+
+    #[test]
+    fn move_codes_round_trip() {
+        for code in ["f0", "p99", "a12h", "a90v", "b1.2", "b1.2.3", "r0", "k9", "t3l", "t3r", "t0u", "t9d", "l45"] {
+            assert_eq!(Move::parse(code).map(|m| m.code()).as_deref(), Some(code));
+        }
+        for bad in ["", "f", "f100", "f+3", "a12", "a12x", "b1", "b1.2.3.4", "r10", "t3", "t3x", "l100", "z1"] {
+            assert_eq!(Move::parse(bad), None, "{bad}");
+        }
+    }
+
+    #[test]
+    fn a_classic_sea_ignores_powers_and_hears_the_sub() {
+        let f = Fleet::parse("a1v c1v e1v g1v i1v").unwrap();
+        assert_eq!(Sea::new(&f).play(Move::Ping(16)), Ok(ShotResult::Ping { count: 3 }));
+        assert_eq!(Sea::new_tactics(&f).play(Move::Ping(16)), Ok(ShotResult::Ping { count: 0 }));
+        assert_eq!(Sea::new(&f).play(Move::Flare(0)), Err(ShotError::NotTactics));
     }
 
     #[test]

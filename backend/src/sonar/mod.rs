@@ -6,4 +6,5 @@ pub mod api;
 pub mod daily;
 pub mod items;
 pub mod rules;
+pub mod tactics;
 pub mod view;

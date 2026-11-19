@@ -1,5 +1,5 @@
 import type { SonarSea } from "../../api/types";
-import { FLEET, parseFleet, shipCells, type Placement, type Sea } from "./rules";
+import { FLEET, markChar, parseFleet, shipCells, type Placement, type Sea } from "./rules";
 
 export interface DrawnShip {
   ship: number;
@@ -23,12 +23,17 @@ export function shipsOf(fleet: string | (Placement | null)[] | null | undefined)
   return out;
 }
 
-/** "Hit!", "Miss", "Sunk their Cruiser!", "Ping: 3 ship squares". */
+/** "Hit!", "Miss", "Sunk their Cruiser!", "Ping: 3 ship squares nearby", "Radar: 2 ship squares in that line". */
 export function resultText(r: { kind: string; ship?: number; count?: number }, whose: "their" | "your" = "their"): string {
+  const squares = `${r.count} ship square${r.count === 1 ? "" : "s"}`;
   if (r.kind === "miss") return "Miss";
   if (r.kind === "hit") return "Hit!";
   if (r.kind === "sunk") return `Sunk ${whose} ${FLEET[r.ship ?? 0].name}!`;
-  return `Ping: ${r.count} ship square${r.count === 1 ? "" : "s"} nearby`;
+  if (r.kind === "radar") return `Radar: ${squares} in that line`;
+  if (r.kind === "seen") return "Flare: ship spotted!";
+  if (r.kind === "clear") return "Flare: only water";
+  if (r.kind === "dud") return "Torpedo ran off the edge";
+  return `Ping: ${squares} nearby`;
 }
 
 /** "C7" for cell 62 (upper case for display). */
@@ -45,7 +50,7 @@ export function viewOf(sea: Sea): SonarSea {
         else sunk.push({ ship: m.sunk, cells: [cell] });
         return "s";
       }
-      return m === "miss" ? "o" : m === "hit" ? "x" : m === "empty" ? "-" : ".";
+      return markChar(m);
     })
     .join("");
   return { marks, sunk, pings: [...sea.pings], pings_left: sea.pingsLeft(), shots: sea.moves.length, all_sunk: sea.allSunk() };

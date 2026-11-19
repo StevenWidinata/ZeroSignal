@@ -1,0 +1,20 @@
+{
+  "about": "Sonar Tactics: one power per ship, in fleet order. A power is ready when its charge reaches the cooldown; every move you make adds 1 charge, using it resets it to 0, and it starts at half the cooldown. A sunk ship's power is gone. levels = Mk I, Mk II, Mk III. size: air_strike = squares hit, salvo = shots, radar = lines (always 1), torpedo = edges it can start from (2 = left/top, 4 = any), flare = 5 (+ shape) or 9 (3x3).",
+  "powers": [
+    { "id": "air_strike", "ship": "carrier", "name": "Air Strike", "icon": "✈️", "code": "a",
+      "text": "Fire at a line of squares in one go.",
+      "levels": [{ "cooldown": 6, "size": 3 }, { "cooldown": 5, "size": 3 }, { "cooldown": 5, "size": 4 }] },
+    { "id": "salvo", "ship": "battleship", "name": "Salvo", "icon": "💥", "code": "b",
+      "text": "Fire several shots anywhere this turn.",
+      "levels": [{ "cooldown": 5, "size": 2 }, { "cooldown": 5, "size": 3 }, { "cooldown": 4, "size": 3 }] },
+    { "id": "radar", "ship": "cruiser", "name": "Radar Sweep", "icon": "📶", "code": "r",
+      "text": "Count the ship squares in a whole row or column.",
+      "levels": [{ "cooldown": 5, "size": 1 }, { "cooldown": 4, "size": 1 }, { "cooldown": 3, "size": 1 }] },
+    { "id": "torpedo", "ship": "submarine", "name": "Torpedo", "icon": "🚀", "code": "t",
+      "text": "Runs in from the edge and hits the first ship it meets. Your sub also hides from pings and radar.",
+      "levels": [{ "cooldown": 5, "size": 2 }, { "cooldown": 4, "size": 2 }, { "cooldown": 4, "size": 4 }] },
+    { "id": "flare", "ship": "destroyer", "name": "Flare", "icon": "🎆", "code": "l",
+      "text": "Lights up squares to show ship or water, without firing.",
+      "levels": [{ "cooldown": 4, "size": 5 }, { "cooldown": 4, "size": 5 }, { "cooldown": 3, "size": 9 }] }
+  ]
+}

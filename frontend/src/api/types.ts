@@ -888,11 +888,20 @@ export interface ChessPuzzle {
 
 export type SonarLevel = "easy" | "medium" | "hard" | "master";
 
-export type SonarResult = { kind: "miss" } | { kind: "hit" } | { kind: "sunk"; ship: number } | { kind: "ping"; count: number };
+/** Same shape as `ShotResult` in games/sonar/rules.ts (radar, seen, clear and dud are Tactics only). */
+export type SonarResult =
+  | { kind: "miss" }
+  | { kind: "hit" }
+  | { kind: "sunk"; ship: number }
+  | { kind: "ping"; count: number }
+  | { kind: "radar"; count: number }
+  | { kind: "seen" }
+  | { kind: "clear" }
+  | { kind: "dud" };
 
 /** What a shooter knows about a sea. */
 export interface SonarSea {
-  /** 100 chars: '.' unknown, 'o' miss, 'x' hit, 's' sunk, '-' water next to a sunk ship. */
+  /** 100 chars: '.' unknown, 'o' miss, 'x' hit, 's' sunk, '-' known water, '*' spotted ship (Tactics). */
   marks: string;
   sunk: { ship: number; cells: number[] }[];
   pings: { center: number; count: number }[];
