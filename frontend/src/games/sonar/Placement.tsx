@@ -2,13 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import { playSfx } from "../../platform/sound";
 import { shipsOf } from "./fleet";
 import Grid from "./Grid";
-import { FLEET, FLEET_ERROR_TEXT, fleetCode, occupancy, randomFleet, shipCells, validateFleet, type Placement as P } from "./rules";
+import { FLEET, FLEET_ERROR_TEXT, fleetCode, neighbours, occupancy, randomFleet, shipCells, validateFleet, validateMines, type Placement as P } from "./rules";
 import ShipArt from "./ShipArt";
 
 /**
  * Hide your fleet: pick a ship and tap where its bow goes (or drag ships
  * around), press R or "Turn" to stand it up, or Shuffle for a random fleet.
- * Ships can't touch, not even corner to corner.
+ * Ships can't touch, not even corner to corner. In Tactics (`mines` > 0) a
+ * second step hides the mines on open water.
  */
 export default function Placement({
   sea,
@@ -16,6 +17,7 @@ export default function Placement({
   title = "Hide your fleet",
   doneLabel = "✓ Ready",
   busy = false,
+  mines: mineCount = 0,
   onDone,
 }: {
   sea: string;
@@ -23,8 +25,12 @@ export default function Placement({
   title?: string;
   doneLabel?: string;
   busy?: boolean;
+  /** Tactics: how many mines to hide after the ships. */
+  mines?: number;
   onDone: (code: string) => void;
 }) {
+  const [step, setStep] = useState<"ships" | "mines">("ships");
+  const [mines, setMines] = useState<number[]>([]);
   const [ships, setShips] = useState<(P | null)[]>(() => FLEET.map(() => null));
   const [selected, setSelected] = useState<number | null>(0);
   const [horizontal, setHorizontal] = useState(true);
@@ -122,6 +128,101 @@ export default function Placement({
     return () => window.removeEventListener("pointerup", up);
   }, []);
 
+  /** Open water not next to a ship (where a mine may go). */
+  const mineSpot = (cell: number, fleet = ships) => {
+    const occ = occupancy(fleet);
+    return occ[cell] === -1 && neighbours(cell).every((n) => occ[n] === -1);
+  };
+
+  function toggleMine(cell: number) {
+    if (mines.includes(cell)) {
+      setMines(mines.filter((m) => m !== cell));
+      playSfx("click");
+      return;
+    }
+    if (!mineSpot(cell)) {
+      setNote("Mines go on open water, not on or next to a ship.");
+      playSfx("whiff");
+      return;
+    }
+    if (mines.length >= mineCount) {
+      setNote(`You have ${mineCount} mines. Tap one to pick it up first.`);
+      return;
+    }
+    setMines([...mines, cell]);
+    setNote(null);
+    playSfx("drop");
+  }
+
+  function shuffleMines() {
+    const spots = Array.from({ length: 100 }, (_, c) => c).filter((c) => mineSpot(c));
+    const picked: number[] = [];
+    while (picked.length < mineCount && spots.length) picked.push(spots.splice(Math.floor(Math.random() * spots.length), 1)[0]);
+    setMines(picked);
+    setNote(null);
+    playSfx("slide");
+  }
+
+  if (step === "mines") {
+    const mineError = validateMines(ships, mines);
+    return (
+      <div className="sonar-placement">
+        <div className="sonar-place-board">
+          <Grid
+            label={`${title}: hide your mines`}
+            sea={sea}
+            fleetSkin={fleetSkin}
+            ships={shipsOf(ships)}
+            mines={mines}
+            interactive
+            pickAll
+            preview={hover !== null && !mines.includes(hover) ? { cells: [hover], ok: mineSpot(hover) } : null}
+            onHover={setHover}
+            onPick={toggleMine}
+          />
+        </div>
+        <aside className="panel sonar-dock">
+          <h3>💣 Hide {mineCount} mines</h3>
+          <p className="hint">
+            Tap open water (not next to a ship) to hide a mine; tap it again to pick it up. If the other side shoots one, one of their ship squares is
+            shown to you.
+          </p>
+          <p>
+            <strong>
+              {mines.length}/{mineCount}
+            </strong>{" "}
+            mines hidden
+          </p>
+          <div className="game-controls">
+            <button className="btn-sm btn-blue" onClick={shuffleMines}>
+              🎲 Shuffle mines
+            </button>
+            <button className="btn-sm btn-ghost" onClick={() => setMines([])}>
+              Clear
+            </button>
+          </div>
+          {note && (
+            <p className="error" role="alert">
+              {note}
+            </p>
+          )}
+          <button className="btn-green" disabled={mines.length !== mineCount || !!mineError || busy} onClick={() => onDone(fleetCode(ships as P[], mines))}>
+            {busy ? "…" : doneLabel}
+          </button>
+          <button
+            className="btn-ghost btn-sm"
+            onClick={() => {
+              setStep("ships");
+              setNote(null);
+            }}
+          >
+            ← Back to the ships
+          </button>
+        </aside>
+      </div>
+    );
+  }
+
   return (
     <div className="sonar-placement">
       <div className="sonar-place-board">
@@ -198,8 +299,19 @@ export default function Placement({
             {note ?? (error ? FLEET_ERROR_TEXT[error] : "")}
           </p>
         )}
-        <button className="btn-green" disabled={!placedAll || !!error || busy} onClick={() => onDone(fleetCode(ships as P[]))}>
-          {busy ? "…" : doneLabel}
+        <button
+          className="btn-green"
+          disabled={!placedAll || !!error || busy}
+          onClick={() => {
+            if (mineCount > 0) {
+              // Mines that ended up next to a moved ship have to move too.
+              setMines(mines.filter((m) => mineSpot(m)));
+              setStep("mines");
+              setNote(null);
+            } else onDone(fleetCode(ships as P[]));
+          }}
+        >
+          {busy ? "…" : mineCount > 0 ? "Next: hide mines →" : doneLabel}
         </button>
       </aside>
     </div>

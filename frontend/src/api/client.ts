@@ -15,6 +15,7 @@ import type {
   SonarDaily,
   SonarGame,
   SonarLevel,
+  SonarMode,
   ChessCollection,
   ChessGame,
   ChessLevel,
@@ -479,14 +480,18 @@ const SONAR = "/api/games/sonar";
 
 /** Sonar vs Zero-Bot, the Daily Hunt and the fleet / sea shop. */
 export const sonar = {
-  create(level: SonarLevel, fleet: string, fleetSkin: string, sea: string) {
-    return post<SonarGame>(`${SONAR}/games`, { level, fleet, fleet_skin: fleetSkin, sea });
+  create(level: SonarLevel, fleet: string, fleetSkin: string, sea: string, mode: SonarMode = "classic") {
+    return post<SonarGame>(`${SONAR}/games`, { level, fleet, fleet_skin: fleetSkin, sea, mode });
   },
   active() {
     return request<SonarGame | null>(`${SONAR}/games/active`);
   },
   fire(id: string, cell: number, ping = false) {
     return post<SonarGame>(`${SONAR}/games/${encodeURIComponent(id)}/fire`, { cell, ping });
+  },
+  /** Any move as a code ("a12h", "o2", …: see games/sonar/rules.ts). */
+  move(id: string, code: string) {
+    return post<SonarGame>(`${SONAR}/games/${encodeURIComponent(id)}/fire`, { move: code });
   },
   resign(id: string) {
     return post<SonarGame>(`${SONAR}/games/${encodeURIComponent(id)}/resign`);

@@ -6,7 +6,7 @@ import { SaveScorePrompt } from "../../components/Guest";
 import { playSfx, type Sfx } from "../../platform/sound";
 import { useWallet } from "../../store/wallet";
 import Battle from "./Battle";
-import { label, resultText } from "./fleet";
+import { describe, fxFor, type Fx } from "./fleet";
 import { itemName } from "./items";
 
 export const LEVEL_LABEL: Record<SonarLevel, string> = { easy: "Easy", medium: "Medium", hard: "Hard", master: "Master" };
@@ -36,6 +36,8 @@ export default function AiGame({ initial, onExit, onRematch }: { initial: SonarG
   const [error, setError] = useState<string | null>(null);
   const [news, setNews] = useState<string | null>(null);
   const [confirmResign, setConfirmResign] = useState(false);
+  const [fx, setFx] = useState<{ key: number; list: Fx[] } | null>(null);
+  const [fxYours, setFxYours] = useState<{ key: number; list: Fx[] } | null>(null);
   const mounted = useRef(true);
   useEffect(() => {
     mounted.current = true;
@@ -49,30 +51,36 @@ export default function AiGame({ initial, onExit, onRematch }: { initial: SonarG
   const theirs = game.log.filter((e) => !e.mine);
   const lastMine = mine[mine.length - 1];
   const lastTheirs = theirs[theirs.length - 1];
+  const showCell = (e: typeof lastMine | undefined) => (e && !e.ping && e.hits.length === 1 ? e.hits[0].cell : null);
 
-  async function fire(cell: number, ping: boolean) {
+  /** A shot or ping, or (Tactics) any move code. */
+  async function send(move: { cell: number; ping: boolean } | { code: string }) {
     if (!active || busy) return;
     setBusy(true);
     setError(null);
-    playSfx(ping ? "zap" : "click");
+    playSfx("cell" in move && move.ping ? "zap" : "click");
     try {
-      const g = await sonar.fire(game.id, cell, ping);
+      const g = "code" in move ? await sonar.move(game.id, move.code) : await sonar.fire(game.id, move.cell, move.ping);
       if (!mounted.current) return;
-      const n = g.log.length;
-      const you = g.log.filter((e) => e.mine).slice(-1)[0];
-      const bot = g.log[n - 1] && !g.log[n - 1].mine ? g.log[n - 1] : null;
-      // Show your result first, then Zero-Bot's answer a moment later.
-      setGame({ ...g, log: bot ? g.log.slice(0, -1) : g.log, your_sea: bot ? game.your_sea : g.your_sea, status: bot ? "active" : g.status });
+      const fresh = g.log.slice(game.log.length);
+      const yours = fresh.filter((e) => e.mine);
+      const bots = fresh.filter((e) => !e.mine);
+      // Show your result first, then Zero-Bot's answers a moment later.
+      setGame({ ...g, log: bots.length ? g.log.slice(0, g.log.length - bots.length) : g.log, your_sea: bots.length ? game.your_sea : g.your_sea, status: bots.length ? "active" : g.status });
+      const you = yours[yours.length - 1];
       if (you) {
         playSfx(SOUND[you.result.kind]);
-        setNews(`You ${you.ping ? "pinged" : "fired at"} ${label(you.cell)}: ${resultText(you.result)}`);
+        setNews(describe(you, "You", "their"));
+        setFx({ key: Date.now(), list: fxFor(you) });
       }
-      if (bot) {
+      for (const bot of bots) {
         await new Promise((r) => window.setTimeout(r, 650));
         if (!mounted.current) return;
         playSfx(SOUND[bot.result.kind]);
-        setNews((s) => `${s ?? ""} · Zero-Bot ${bot.ping ? "pinged" : "fired at"} ${label(bot.cell)}: ${resultText(bot.result, "your")}`);
+        setFxYours({ key: Date.now(), list: fxFor(bot) });
+        setNews((s) => `${s ?? ""} · ${describe(bot, "Zero-Bot", "your")}`);
       }
+      if (!bots.length && g.your_turn && g.status === "active") setNews((s) => `${s ?? ""} · Your turn again!`);
       setGame(g);
       if (g.status !== "active") {
         playSfx(g.status === "won" ? "win" : "lose");
@@ -102,11 +110,12 @@ export default function AiGame({ initial, onExit, onRematch }: { initial: SonarG
 
   const result = game.status === "won" ? "win" : game.status === "active" ? null : "loss";
   let status: string;
-  if (game.status === "won") status = `🏆 You sank Zero-Bot's whole fleet on ${LEVEL_LABEL[game.level]}!`;
+  if (game.status === "won") status = `🏆 You sank Zero-Bot's whole fleet on ${LEVEL_LABEL[game.level]}${game.mode === "tactics" ? " in Tactics" : ""}!`;
   else if (game.status === "lost") status = "💥 Zero-Bot sank your fleet. Try again!";
   else if (game.status === "resigned") status = "🏳 You gave up this battle.";
   else if (busy) status = news ?? "Zero-Bot is aiming…";
-  else status = news ? `${news} · Your turn` : "Your turn: pick a square on Zero-Bot's sea.";
+  else if (news) status = news.endsWith("Your turn again!") ? news : `${news} · Your turn`;
+  else status = game.mode === "tactics" ? "Your turn: fire, ping, or pick a ship power below." : "Your turn: pick a square on Zero-Bot's sea.";
 
   return (
     <div className="c4-play sonar-play">
@@ -121,12 +130,17 @@ export default function AiGame({ initial, onExit, onRematch }: { initial: SonarG
         fleetSkin={game.fleet_skin}
         sea={game.sea}
         canFire={active && !busy && game.your_turn}
-        onFire={(c, p) => void fire(c, p)}
+        onFire={(cell, ping) => void send({ cell, ping })}
+        onMove={(code) => void send({ code })}
+        powers={active ? game.powers : null}
+        theirPowers={game.bot_powers}
+        fx={fx}
+        fxYours={fxYours}
         theirFleet={game.ai_fleet}
         targetLabel="Zero-Bot's sea"
         yourLabel="Your fleet"
-        lastTarget={lastMine && !lastMine.ping ? lastMine.cell : null}
-        lastYours={lastTheirs && !lastTheirs.ping ? lastTheirs.cell : null}
+        lastTarget={showCell(lastMine)}
+        lastYours={showCell(lastTheirs)}
       />
       {error && (
         <div className="error" role="alert">

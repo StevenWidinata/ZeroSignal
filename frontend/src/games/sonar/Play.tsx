@@ -16,6 +16,8 @@ import Placement from "./Placement";
 import Shop from "./Shop";
 import "./sonar.css";
 import { FleetSwatch, SeaSwatch } from "./Swatches";
+import { FLEET } from "./rules";
+import { MINES, POWERS } from "./tactics";
 
 type Mode = "ai" | "daily" | "online" | "local";
 type Screen =
@@ -87,6 +89,8 @@ export default function Play() {
   const [screen, setScreen] = useState<Screen>(roomParam ? { kind: "online", code: roomParam.toUpperCase() } : { kind: "menu" });
   const [mode, setMode] = useState<Mode>(roomParam ? "online" : params.get("daily") ? "daily" : "ai");
   const [level, setLevel] = useState<SonarLevel>("easy");
+  /** Tactics (ship powers, mines, crates) or Classic, for Zero-Bot and same-device games. */
+  const [tactics, setTactics] = useState(false);
   const [look, setLook] = useLook();
   const [collection, setCollection] = useState<SonarCollection | null>(null);
   const [resume, setResume] = useState<SonarGame | null>(null);
@@ -109,7 +113,7 @@ export default function Play() {
     setStarting(true);
     setError(null);
     try {
-      const g = await sonar.create(level, fleet, usable.fleet, usable.sea);
+      const g = await sonar.create(level, fleet, usable.fleet, usable.sea, tactics ? "tactics" : "classic");
       playSfx("click");
       setResume(null);
       setScreen({ kind: "ai", game: g });
@@ -132,6 +136,9 @@ export default function Play() {
         <>
           {(screen.kind === "ai" || screen.kind === "place") && (
             <span className="tag tag-blue">vs Zero-Bot · {LEVEL_LABEL[screen.kind === "ai" ? screen.game.level : level]}</span>
+          )}
+          {((screen.kind === "ai" && screen.game.mode === "tactics") || ((screen.kind === "place" || screen.kind === "local") && tactics)) && (
+            <span className="tag tag-yellow">⚡ Tactics</span>
           )}
           {screen.kind === "daily" && <span className="tag tag-green">📅 Daily Hunt</span>}
           {screen.kind === "local" && <span className="tag">2 players</span>}
@@ -156,7 +163,15 @@ export default function Play() {
   else if (screen.kind === "place")
     body = (
       <>
-        <Placement sea={usable.sea} fleetSkin={usable.fleet} title="Hide your fleet from Zero-Bot" doneLabel="▶ Start the battle" busy={starting} onDone={(f) => void startAi(f)} />
+        <Placement
+          sea={usable.sea}
+          fleetSkin={usable.fleet}
+          mines={tactics ? MINES : 0}
+          title="Hide your fleet from Zero-Bot"
+          doneLabel="▶ Start the battle"
+          busy={starting}
+          onDone={(f) => void startAi(f)}
+        />
         {error && (
           <div className="error" role="alert">
             {error}
@@ -169,9 +184,22 @@ export default function Play() {
         </div>
       </>
     );
-  else if (screen.kind === "ai") body = <AiGame key={screen.game.id} initial={screen.game} onExit={back} onRematch={() => setScreen({ kind: "place" })} />;
+  else if (screen.kind === "ai") {
+    const again = screen.game.mode === "tactics";
+    body = (
+      <AiGame
+        key={screen.game.id}
+        initial={screen.game}
+        onExit={back}
+        onRematch={() => {
+          setTactics(again);
+          setScreen({ kind: "place" });
+        }}
+      />
+    );
+  }
   else if (screen.kind === "daily") body = <DailyHunt look={usable} onExit={back} />;
-  else if (screen.kind === "local") body = <LocalGame names={[username, "Player 2"]} look={usable} onExit={back} />;
+  else if (screen.kind === "local") body = <LocalGame names={[username, "Player 2"]} look={usable} tactics={tactics} onExit={back} />;
   else if (screen.kind === "shop") body = <Shop collection={collection} onCollection={setCollection} onBack={back} />;
   if (body)
     return (
@@ -188,7 +216,8 @@ export default function Play() {
         {resume && (
           <div className="panel c4-resume">
             <span>
-              Unfinished battle vs <strong>Zero-Bot · {LEVEL_LABEL[resume.level]}</strong> ({resume.target.shots} shots in)
+              Unfinished {resume.mode === "tactics" ? "Tactics " : ""}battle vs <strong>Zero-Bot · {LEVEL_LABEL[resume.level]}</strong> ({resume.target.shots} shots
+              in)
             </span>
             <button className="btn-green btn-sm" onClick={() => setScreen({ kind: "ai", game: resume })}>
               ▶ Resume
@@ -204,6 +233,32 @@ export default function Play() {
             ))}
           </div>
 
+          {(mode === "ai" || mode === "local") && (
+            <div className="sonar-rules-pick">
+              <div className="segmented" role="radiogroup" aria-label="Rules">
+                <button role="radio" aria-checked={!tactics} className={tactics ? "btn-ghost" : ""} onClick={() => setTactics(false)}>
+                  🎯 Classic
+                </button>
+                <button role="radio" aria-checked={tactics} className={tactics ? "" : "btn-ghost"} onClick={() => setTactics(true)}>
+                  ⚡ Tactics
+                </button>
+              </div>
+              <p className="hint">
+                {tactics
+                  ? "Every ship has a power that recharges while it's afloat. Hide 2 mines, shoot supply crates for prizes, and 3 hits in a row fill Overdrive."
+                  : "Shots and 2 sonar pings: the original game."}
+              </p>
+              {tactics && (
+                <ul className="sonar-power-list">
+                  {POWERS.map((p, i) => (
+                    <li key={p.id}>
+                      <span aria-hidden="true">{p.icon}</span> <strong>{p.name}</strong> <small>({FLEET[i].name})</small>: {p.text}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
           {mode === "online" && (
             <OnlineLobby
               game="sonar"

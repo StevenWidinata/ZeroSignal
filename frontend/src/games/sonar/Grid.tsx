@@ -2,13 +2,24 @@ import { useRef, useState, type CSSProperties, type KeyboardEvent, type PointerE
 import { isTyping } from "../../platform/display";
 import { currentAction } from "../../platform/keymap";
 import { useSettings } from "../../store/settings";
-import type { DrawnShip } from "./fleet";
+import type { DrawnShip, Fx } from "./fleet";
 import { label } from "./fleet";
 import { findSea } from "./items";
 import { pingArea, SIZE } from "./rules";
 import ShipArt from "./ShipArt";
 
-const MARK_TEXT: Record<string, string> = { o: "miss", x: "hit", s: "sunk", "-": "empty water" };
+const MARK_TEXT: Record<string, string> = {
+  o: "miss",
+  x: "hit",
+  s: "sunk",
+  "-": "empty water",
+  "*": "ship spotted",
+  m: "mine",
+  "+": "supply crate",
+  c: "opened crate",
+};
+const MARK_ICON: Record<string, string> = { o: "•", x: "✕", s: "✕", "*": "◎", m: "💣", "+": "📦", c: "📭" };
+const MARK_CLASS: Record<string, string> = { o: "miss", x: "hit", s: "sunk", "-": "empty", "*": "spotted", m: "mine", "+": "crate", c: "crate opened" };
 
 export interface GridProps {
   label: string;
@@ -29,8 +40,17 @@ export interface GridProps {
   onPick?: (cell: number) => void;
   onTogglePing?: () => void;
   onRotate?: () => void;
-  /** Placing ships: the ship under the pointer, red when it doesn't fit. */
+  /** Placing ships: the ship under the pointer, red when it doesn't fit. Aiming a power: what it would touch. */
   preview?: { cells: number[]; ok: boolean } | null;
+  previewKind?: "place" | "aim";
+  /** Aiming a power: every square can be picked, not just unknown ones. */
+  pickAll?: boolean;
+  /** Tactics, your own sea: where your mines are hidden. */
+  mines?: number[];
+  /** Tactics: radar sweeps (a band over the row or column with its count). */
+  sweeps?: { line: number; row: boolean; count: number }[];
+  /** Effects of the last move (a new `key` plays them again). */
+  fx?: { key: number; list: Fx[] } | null;
   onHover?: (cell: number | null) => void;
   onCellPointerDown?: (cell: number, e: PointerEvent) => void;
   last?: number | null;
@@ -54,6 +74,9 @@ export default function Grid(p: GridProps) {
   const marks = p.marks ?? ".".repeat(SIZE * SIZE);
 
   const pingPreview = p.pingMode && p.interactive && hover !== null ? pingArea(hover) : null;
+  const okClass = p.previewKind === "aim" ? "aim-ok" : "place-ok";
+  const badClass = p.previewKind === "aim" ? "aim-bad" : "place-bad";
+  const mineSet = new Set(p.mines ?? []);
   const previewSet = new Set(p.preview?.cells ?? []);
 
   function setHoverCell(c: number | null) {
@@ -117,13 +140,15 @@ export default function Grid(p: GridProps) {
         ))}
         {Array.from({ length: SIZE * SIZE }, (_, cell) => {
           const m = marks[cell];
-          const canPick = !!p.interactive && (p.pingMode || m === ".");
+          const canPick = !!p.interactive && (p.pingMode || p.pickAll || m === "." || m === "*" || m === "+");
+          const ownMine = m === "." && mineSet.has(cell);
           const cls = [
             "sonar-cell",
-            m === "o" ? "miss" : m === "x" ? "hit" : m === "s" ? "sunk" : m === "-" ? "empty" : "",
+            MARK_CLASS[m] ?? "",
+            ownMine ? "own-mine" : "",
             p.last === cell ? "last" : "",
             pingPreview?.includes(cell) ? "ping-preview" : "",
-            previewSet.has(cell) ? (p.preview?.ok ? "place-ok" : "place-bad") : "",
+            previewSet.has(cell) ? (p.preview?.ok ? okClass : badClass) : "",
             canPick ? "pickable" : "",
           ]
             .filter(Boolean)
@@ -138,18 +163,38 @@ export default function Grid(p: GridProps) {
               className={cls}
               style={{ gridRow: Math.floor(cell / SIZE) + 2, gridColumn: (cell % SIZE) + 2 }}
               tabIndex={cell === cursor ? 0 : -1}
-              aria-label={`${label(cell)}${MARK_TEXT[m] ? `, ${MARK_TEXT[m]}` : ""}`}
+              aria-label={`${label(cell)}${MARK_TEXT[m] ? `, ${MARK_TEXT[m]}` : ownMine ? ", your mine" : ""}`}
               aria-disabled={!canPick}
               onFocus={() => setCursor(cell)}
               onPointerEnter={() => setHoverCell(cell)}
               onPointerDown={(e) => p.onCellPointerDown?.(cell, e)}
               onClick={() => canPick && p.onPick?.(cell)}
             >
-              {m === "o" && <span className="mk">•</span>}
-              {(m === "x" || m === "s") && <span className="mk">✕</span>}
+              {MARK_ICON[m] ? <span className="mk">{MARK_ICON[m]}</span> : ownMine && <span className="mk">💣</span>}
             </button>
           );
         })}
+        {(p.sweeps ?? []).map((w, i) => (
+          <div
+            key={`w${i}`}
+            className={`sonar-sweep${w.row ? " row" : " col"}${w.count === 0 ? " zero" : ""}`}
+            style={w.row ? { gridRow: w.line + 2, gridColumn: "2 / 12" } : { gridRow: "2 / 12", gridColumn: w.line + 2 }}
+            aria-hidden="true"
+          >
+            <span>{w.count}</span>
+          </div>
+        ))}
+        {!light &&
+          p.fx?.list.map((f, i) =>
+            f.cells.length ? (
+              <div
+                key={`fx${p.fx!.key}-${i}`}
+                className={`sonar-fx fx-${f.kind}${f.cells.length > 1 && Math.abs(f.cells[1] - f.cells[0]) === SIZE ? " v" : ""}${f.cells.length > 1 && f.cells[1] < f.cells[0] ? " rev" : ""}`}
+                style={area(f.cells)}
+                aria-hidden="true"
+              />
+            ) : null,
+          )}
         {(p.pings ?? []).map((g, i) => (
           <div key={`p${i}`} className={`sonar-ping${g.count === 0 ? " zero" : ""}`} style={area(pingArea(g.center))} aria-hidden="true">
             <span>{g.count}</span>

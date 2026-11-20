@@ -387,3 +387,346 @@
 .chess-levels {
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
 }
+
+/* ---------- Tactics ---------- */
+.sonar-battle {
+  display: grid;
+  gap: 14px;
+}
+.sonar-rules-pick {
+  display: grid;
+  gap: 6px;
+}
+.sonar-rules-pick .hint {
+  margin: 0;
+}
+.sonar-power-list {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.85rem;
+}
+
+/* Marks only Tactics uses. */
+.sonar-cell.spotted .mk {
+  color: #ffd23f;
+  text-shadow: 0 0 2px #000, 0 0 4px #000;
+}
+.sonar-cell.spotted {
+  background: rgba(255, 210, 63, 0.25);
+}
+.sonar-cell.mine,
+.sonar-cell.crate {
+  background: rgba(0, 0, 0, 0.25);
+  font-size: clamp(0.6rem, 2.2vw, 0.95rem);
+}
+.sonar-cell.crate.opened .mk {
+  opacity: 0.7;
+}
+.sonar-cell.own-mine {
+  background: rgba(0, 0, 0, 0.18);
+}
+.sonar-cell.own-mine .mk {
+  font-size: clamp(0.7rem, 2.6vw, 1.1rem);
+  filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.7));
+}
+.sonar-cell.aim-ok {
+  background: rgba(255, 210, 63, 0.45);
+}
+.sonar-cell.aim-bad {
+  background: rgba(255, 59, 59, 0.4);
+}
+
+/* A radar sweep: a band over its row or column with the count at the end. */
+.sonar-sweep {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  border: 2px dashed #5fe0a0;
+  border-radius: 4px;
+  background: rgba(95, 224, 160, 0.1);
+  pointer-events: none;
+}
+.sonar-sweep.col {
+  align-items: flex-end;
+  justify-content: center;
+}
+.sonar-sweep span {
+  display: grid;
+  place-items: center;
+  min-width: 1.5em;
+  height: 1.5em;
+  margin: 1px;
+  border-radius: 999px;
+  background: #1f9d63;
+  color: #fff;
+  font: 700 0.75rem/1 var(--font-pixel);
+  box-shadow: 0 0 0 2px #fff;
+}
+.sonar-sweep.zero {
+  border-color: rgba(255, 255, 255, 0.55);
+}
+.sonar-sweep.zero span {
+  background: #445;
+}
+
+/* Power cards. */
+.sonar-powers {
+  display: grid;
+  gap: 8px;
+}
+.sonar-power-cards {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+@media (max-width: 640px) {
+  .sonar-power-cards {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 400px) {
+  .sonar-power-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.sonar-power-cards li {
+  display: grid;
+}
+.sonar-power {
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  justify-items: start;
+  width: 100%;
+  min-width: 0;
+  padding: 8px 10px;
+  text-align: left;
+  --btn-bg: var(--surface);
+  --btn-fg: var(--ink);
+  font: 600 0.82rem/1.25 var(--font-body);
+  white-space: normal;
+}
+.sonar-power-name small {
+  margin-left: 4px;
+  color: var(--muted);
+}
+.sonar-power-state {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+.sonar-power.ready {
+  --btn-bg: #fff4c2;
+  --btn-fg: #2a2300;
+}
+.sonar-power.ready .sonar-power-state {
+  color: inherit;
+  font: 700 0.75rem/1 var(--font-pixel);
+}
+.sonar-power.aiming {
+  --btn-bg: var(--yellow, #ffd23f);
+  --btn-fg: var(--on-yellow, #2a2300);
+  outline: 3px solid var(--line);
+}
+.sonar-power.lost {
+  opacity: 0.55;
+  text-decoration: line-through;
+}
+.sonar-power.chargeable {
+  --btn-bg: #e9e2ff;
+  --btn-fg: #24164f;
+  outline: 3px dashed #7b61ff;
+}
+.sonar-power:disabled {
+  cursor: default;
+}
+.sonar-charge {
+  display: block;
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(127, 127, 127, 0.25);
+  overflow: hidden;
+}
+.sonar-charge > span {
+  display: block;
+  height: 100%;
+  background: #7b61ff;
+}
+.sonar-power-extras {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  align-items: center;
+  font-size: 0.85rem;
+}
+.sonar-meter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.sonar-meter .sonar-charge {
+  width: 70px;
+}
+.sonar-meter .sonar-charge > span {
+  background: #ff9f1a;
+}
+.btn-sm.sonar-od {
+  --btn-bg: #ff9f1a;
+  --btn-fg: #241400;
+}
+.btn-sm.sonar-od.picking {
+  --btn-bg: #e9e2ff;
+  --btn-fg: #24164f;
+}
+
+/* The aiming panel under the enemy grid. */
+.sonar-aim {
+  display: grid;
+  gap: 6px;
+  padding: 8px 10px;
+  border: 2px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.sonar-aim p {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+/* Effects after a move (skipped with light graphics; still with reduced motion). */
+.sonar-fx {
+  position: relative;
+  z-index: 3;
+  pointer-events: none;
+  border-radius: 4px;
+}
+.fx-boom {
+  background: radial-gradient(circle, rgba(255, 210, 63, 0.95), rgba(255, 90, 31, 0.7) 45%, transparent 70%);
+  animation: sonar-fx-boom 0.6s ease-out forwards;
+}
+.fx-splash {
+  background: radial-gradient(circle, transparent 30%, rgba(255, 255, 255, 0.8) 40%, transparent 60%);
+  animation: sonar-fx-splash 0.6s ease-out forwards;
+}
+.fx-sweep {
+  background: linear-gradient(90deg, transparent, rgba(95, 224, 160, 0.75), transparent) no-repeat;
+  background-size: 30% 100%;
+  animation: sonar-fx-sweep-x 0.9s linear forwards;
+}
+.fx-trail {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.85)) no-repeat;
+  background-size: 0% 100%;
+  animation: sonar-fx-trail 0.7s ease-in forwards;
+}
+.fx-flare {
+  background: radial-gradient(circle, rgba(255, 244, 194, 0.9), rgba(255, 210, 63, 0.3) 60%, transparent 75%);
+  animation: sonar-fx-fade 1.1s ease-out forwards;
+}
+.fx-strike {
+  background: rgba(255, 90, 31, 0.35);
+  animation: sonar-fx-fade 0.9s ease-out forwards;
+}
+@keyframes sonar-fx-boom {
+  from {
+    transform: scale(0.3);
+    opacity: 1;
+  }
+  to {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+@keyframes sonar-fx-splash {
+  from {
+    transform: scale(0.4);
+    opacity: 1;
+  }
+  to {
+    transform: scale(1.3);
+    opacity: 0;
+  }
+}
+@keyframes sonar-fx-sweep-x {
+  from {
+    background-position: -40% 0;
+  }
+  to {
+    background-position: 140% 0;
+    opacity: 0.2;
+  }
+}
+@keyframes sonar-fx-trail {
+  70% {
+    background-size: 100% 100%;
+    opacity: 1;
+  }
+  to {
+    background-size: 100% 100%;
+    opacity: 0;
+  }
+}
+@keyframes sonar-fx-fade {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+[data-motion="reduced"] .sonar-fx {
+  animation-duration: 0.01s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sonar-fx {
+    animation-duration: 0.01s;
+  }
+}
+/* Columns run top to bottom; torpedoes from the right or bottom run backwards. */
+.fx-sweep.v {
+  background-image: linear-gradient(180deg, transparent, rgba(95, 224, 160, 0.75), transparent);
+  background-size: 100% 30%;
+  animation-name: sonar-fx-sweep-y;
+}
+@keyframes sonar-fx-sweep-y {
+  from {
+    background-position: 0 -40%;
+  }
+  to {
+    background-position: 0 140%;
+    opacity: 0.2;
+  }
+}
+.fx-trail.rev {
+  background-image: linear-gradient(270deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.85));
+  background-position: right;
+}
+.fx-trail.v {
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.85));
+  background-size: 100% 0%;
+  animation-name: sonar-fx-trail-y;
+}
+.fx-trail.v.rev {
+  background-image: linear-gradient(0deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.85));
+  background-position: bottom;
+}
+@keyframes sonar-fx-trail-y {
+  70% {
+    background-size: 100% 100%;
+    opacity: 1;
+  }
+  to {
+    background-size: 100% 100%;
+    opacity: 0;
+  }
+}

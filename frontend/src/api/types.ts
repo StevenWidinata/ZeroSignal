@@ -916,19 +916,49 @@ export interface SonarSea {
   pings_left: number;
   shots: number;
   all_sunk: boolean;
+  /** Tactics: radar sweeps of this sea. */
+  sweeps: { line: number; row: boolean; count: number }[];
+  /** Tactics: shields guarding this sea's ships. */
+  shields: number;
+}
+
+export interface SonarCellResult {
+  cell: number;
+  result: SonarResult;
 }
 
 export interface SonarLogEntry {
   mine: boolean;
+  /** The move code ("f37", "a12h", "o2", …). */
   move: string;
   cell: number;
   ping: boolean;
+  /** The headline result. */
   result: SonarResult;
+  /** Every square the move touched in the other sea. */
+  hits: SonarCellResult[];
+  /** Tactics: what happened in the mover's own sea (a mine showed a ship, a repair kit fixed one). */
+  own: SonarCellResult[];
 }
+
+/** One side's Tactics powers, in fleet order (Air Strike, Salvo, Radar, Torpedo, Flare). */
+export interface SonarPowers {
+  charge: number[];
+  cooldown: number[];
+  size: number[];
+  levels: number[];
+  /** That power's ship has sunk. */
+  lost: boolean[];
+  combo: number;
+  overdrive: boolean;
+}
+
+export type SonarMode = "classic" | "tactics";
 
 export interface SonarGame {
   id: string;
   level: SonarLevel;
+  mode: SonarMode;
   status: "active" | "won" | "lost" | "resigned";
   fleet: string;
   your_sea: SonarSea;
@@ -936,6 +966,9 @@ export interface SonarGame {
   log: SonarLogEntry[];
   your_turn: boolean;
   ai_fleet: string | null;
+  /** Tactics: your powers and Zero-Bot's. */
+  powers: SonarPowers | null;
+  bot_powers: SonarPowers | null;
   fleet_skin: string;
   sea: string;
   rewards: Granted | null;
