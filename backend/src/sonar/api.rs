@@ -1,6 +1,7 @@
 //! Sonar vs Zero-Bot: the server keeps both fleets, checks every shot and
 //! plays Zero-Bot's reply. Zero-Bot's fleet is only sent once the game ends.
-//! Also the fleet / sea collection and shop.
+//! Games are Classic or Tactics (ship powers, mines, crates, Overdrive; see
+//! `tactics.rs`). Also the fleet / sea collection and shop.
 
 use axum::extract::{Path, State};
 use axum::Json;
@@ -8,10 +9,11 @@ use rand::Rng as _;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use super::ai::{choose, Level};
+use super::ai::{bot_mines, choose_for, Level};
 use super::items::{self, Kind};
-use super::rules::{random_fleet, Duel, Fleet, Move, CELLS};
-use super::view::{log_for, LogEntry, SeaView};
+use super::rules::{random_fleet, Duel, Fleet, Move, ShotResult, CELLS};
+use super::tactics::{levels_code, parse_levels, tactics_rules, Levels, Setup, MK1};
+use super::view::{log_for, LogEntry, PowersView, SeaView};
 use crate::auth::jwt::AuthUser;
 use crate::economy::{self, game_xp, GameResult, Granted, Reward};
 use crate::error::{AppError, AppResult};
@@ -33,9 +35,42 @@ struct GameRow {
     status: String,
     fleet_skin: String,
     sea: String,
+    mode: String,
+    seed: i64,
+    levels: Option<String>,
+    crates: i16,
 }
 
-const COLUMNS: &str = "id, level, player_fleet, ai_fleet, moves, status, fleet_skin, sea";
+const COLUMNS: &str = "id, level, player_fleet, ai_fleet, moves, status, fleet_skin, sea, mode, seed, levels, crates";
+
+/// Classic (shots and 2 pings) or Tactics (ship powers, mines, crates).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Mode {
+    Classic,
+    Tactics,
+}
+
+impl Mode {
+    pub fn parse(s: &str) -> Option<Mode> {
+        match s {
+            "classic" => Some(Mode::Classic),
+            "tactics" => Some(Mode::Tactics),
+            _ => None,
+        }
+    }
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Mode::Classic => "classic",
+            Mode::Tactics => "tactics",
+        }
+    }
+}
+
+/// "1,1,1,1,1 2,1,1,1,1" -> both sides' Mk levels.
+fn parse_both_levels(s: &str) -> Option<[Levels; 2]> {
+    let (a, b) = s.split_once(' ')?;
+    Some([parse_levels(a)?, parse_levels(b)?])
+}
 
 impl GameRow {
     fn level(&self) -> Level {
@@ -45,9 +80,28 @@ impl GameRow {
         let bad = |e: super::rules::FleetError| AppError::Internal(anyhow::anyhow!("sonar game {}: {}", self.id, e.text()));
         Ok((Fleet::parse(&self.player_fleet).map_err(bad)?, Fleet::parse(&self.ai_fleet).map_err(bad)?))
     }
+    fn mode(&self) -> Mode {
+        Mode::parse(&self.mode).unwrap_or(Mode::Classic)
+    }
+    /// The Tactics setup this game was started with (None for Classic).
+    fn setup(&self) -> AppResult<Option<Setup>> {
+        if self.mode() == Mode::Classic {
+            return Ok(None);
+        }
+        let levels = self
+            .levels
+            .as_deref()
+            .and_then(parse_both_levels)
+            .ok_or_else(|| AppError::Internal(anyhow::anyhow!("sonar game {}: bad levels", self.id)))?;
+        Ok(Some(Setup { levels, seed: self.seed as u32, crates: self.crates as u8 }))
+    }
     fn duel(&self) -> AppResult<Duel> {
         let (you, bot) = self.fleets()?;
-        Duel::replay([&you, &bot], YOU, &self.moves).map_err(|e| AppError::Internal(anyhow::anyhow!("sonar game {}: {}", self.id, e.text())))
+        let bad = |e: super::rules::ShotError| AppError::Internal(anyhow::anyhow!("sonar game {}: {}", self.id, e.text()));
+        match self.setup()? {
+            Some(setup) => Duel::replay_tactics([&you, &bot], YOU, setup, &self.moves).map_err(bad),
+            None => Duel::replay([&you, &bot], YOU, &self.moves).map_err(bad),
+        }
     }
 }
 
@@ -55,6 +109,8 @@ impl GameRow {
 pub struct GameView {
     pub id: Uuid,
     pub level: Level,
+    /// classic | tactics
+    pub mode: &'static str,
     /// active | won | lost | resigned
     pub status: String,
     /// Your fleet code.
@@ -65,6 +121,10 @@ pub struct GameView {
     pub target: SeaView,
     pub log: Vec<LogEntry>,
     pub your_turn: bool,
+    /// Tactics: your ship powers, combo and Overdrive.
+    pub powers: Option<PowersView>,
+    /// Tactics: Zero-Bot's (public too: they follow from the moves).
+    pub bot_powers: Option<PowersView>,
     /// Zero-Bot's fleet, only once the game is over.
     pub ai_fleet: Option<String>,
     pub fleet_skin: String,
@@ -78,12 +138,15 @@ fn view(row: &GameRow, d: &Duel, rewards: Option<Granted>, points: Option<i32>, 
     GameView {
         id: row.id,
         level: row.level(),
+        mode: row.mode().as_str(),
         status: row.status.clone(),
         fleet: row.player_fleet.clone(),
         your_sea: SeaView::of(&d.seas[YOU]),
         target: SeaView::of(&d.seas[BOT]),
         log: log_for(d, YOU),
         your_turn: row.status == "active" && d.to_move() == YOU,
+        powers: PowersView::of(d, YOU),
+        bot_powers: PowersView::of(d, BOT),
         ai_fleet: (row.status != "active").then(|| row.ai_fleet.clone()),
         fleet_skin: row.fleet_skin.clone(),
         sea: row.sea.clone(),
@@ -143,6 +206,9 @@ pub async fn pick_look(pool: &sqlx::PgPool, user_id: Uuid, fleet_skin: Option<St
 #[serde(deny_unknown_fields)]
 pub struct CreateRequest {
     pub level: String,
+    /// "classic" (default) or "tactics".
+    #[serde(default)]
+    pub mode: Option<String>,
     /// Your fleet code ("a1h a3h a5h a7h a9h").
     pub fleet: String,
     #[serde(default)]
@@ -154,9 +220,27 @@ pub struct CreateRequest {
 /// `POST /api/games/sonar/games`: a new game vs Zero-Bot (an unfinished one is resigned).
 pub async fn create(State(state): State<AppState>, user: AuthUser, Json(req): Json<CreateRequest>) -> AppResult<Json<GameView>> {
     let level = Level::parse(&req.level).ok_or_else(|| AppError::Validation("level must be easy, medium, hard or master".into()))?;
+    let mode = match req.mode.as_deref() {
+        None => Mode::Classic,
+        Some(m) => Mode::parse(m).ok_or_else(|| AppError::Validation("mode must be classic or tactics".into()))?,
+    };
     let fleet = Fleet::parse(&req.fleet).map_err(|e| AppError::Validation(e.text().into()))?;
+    if mode == Mode::Classic && !fleet.mines.is_empty() {
+        return Err(AppError::Validation("mines are only for Tactics games".into()));
+    }
     let (fleet_skin, sea) = pick_look(&state.pool, user.user_id, req.fleet_skin, req.sea).await?;
-    let ai_fleet = random_fleet(&mut rand::thread_rng());
+    let (ai_fleet, seed) = {
+        let mut rng = rand::thread_rng();
+        let mut f = random_fleet(&mut rng);
+        if mode == Mode::Tactics {
+            f.mines = bot_mines(&f, tactics_rules().mines, level, &mut rng);
+        }
+        (f, rng.gen::<u32>())
+    };
+    let (seed, levels, crates) = match mode {
+        Mode::Classic => (0, None, 0),
+        Mode::Tactics => (i64::from(seed), Some(format!("{} {}", levels_code(&MK1), levels_code(&MK1))), i16::from(tactics_rules().crates)),
+    };
 
     let mut tx = state.pool.begin().await?;
     sqlx::query("UPDATE sonar_games SET status = 'resigned', finished_at = now() WHERE user_id = $1 AND status = 'active'")
@@ -164,7 +248,8 @@ pub async fn create(State(state): State<AppState>, user: AuthUser, Json(req): Js
         .execute(&mut *tx)
         .await?;
     let row: GameRow = sqlx::query_as(&format!(
-        "INSERT INTO sonar_games (user_id, level, player_fleet, ai_fleet, fleet_skin, sea) VALUES ($1, $2, $3, $4, $5, $6) RETURNING {COLUMNS}"
+        "INSERT INTO sonar_games (user_id, level, player_fleet, ai_fleet, fleet_skin, sea, mode, seed, levels, crates) \
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING {COLUMNS}"
     ))
     .bind(user.user_id)
     .bind(level.as_str())
@@ -172,6 +257,10 @@ pub async fn create(State(state): State<AppState>, user: AuthUser, Json(req): Js
     .bind(ai_fleet.code())
     .bind(&fleet_skin)
     .bind(&sea)
+    .bind(mode.as_str())
+    .bind(seed)
+    .bind(&levels)
+    .bind(crates)
     .fetch_one(&mut *tx)
     .await?;
     tx.commit().await?;
@@ -236,8 +325,13 @@ async fn finish(
             .execute(&mut **tx)
             .await?;
     }
+    let (powers_used, crates_opened) = tally(d, YOU);
     if !resigned {
-        quests::api::record(tx, user_id, &[quests::Event::SonarGame { level: level.mult(), result }]).await?;
+        let mut events = vec![quests::Event::SonarGame { level: level.mult(), result }];
+        if row.mode() == Mode::Tactics {
+            events.push(quests::Event::SonarTactics { result, powers: powers_used, crates: crates_opened });
+        }
+        quests::api::record(tx, user_id, &events).await?;
     }
     let (pay, lucky, seed) = {
         let mut rng = rand::thread_rng();
@@ -260,12 +354,18 @@ async fn finish(
             drop = Some(k);
         }
     }
-    sqlx::query("UPDATE sonar_games SET status = $2, moves = $3, ships_lost = $4, shots = $5, finished_at = now() WHERE id = $1")
-        .bind(row.id)
-        .bind(&row.status)
-        .bind(&row.moves)
-        .bind(ships_lost as i16)
-        .bind(d.seas[BOT].shots() as i16)
+    let tactics = row.mode() == Mode::Tactics;
+    sqlx::query(
+        "UPDATE sonar_games SET status = $2, moves = $3, ships_lost = $4, shots = $5, powers_used = $6, crates_opened = $7, finished_at = now() \
+         WHERE id = $1",
+    )
+    .bind(row.id)
+    .bind(&row.status)
+    .bind(&row.moves)
+    .bind(ships_lost as i16)
+    .bind(d.seas[BOT].shots() as i16)
+    .bind(tactics.then_some(powers_used as i16))
+    .bind(tactics.then_some(crates_opened as i16))
         .execute(&mut **tx)
         .await?;
     Ok((granted, pts, drop))
@@ -275,19 +375,46 @@ async fn finish(
 #[serde(deny_unknown_fields)]
 pub struct FireRequest {
     /// 0–99 (row * 10 + column).
-    pub cell: usize,
+    #[serde(default)]
+    pub cell: Option<usize>,
     /// A sonar ping centred on `cell` instead of a shot.
     #[serde(default)]
     pub ping: bool,
+    /// Any move as a move code instead ("a12h", "o2", …; see `rules::Move`).
+    #[serde(default, rename = "move")]
+    pub mv: Option<String>,
 }
 
 impl FireRequest {
     pub fn to_move(&self) -> AppResult<Move> {
-        if self.cell >= CELLS {
-            return Err(AppError::Validation("that isn't a square on the grid".into()));
+        if let Some(code) = &self.mv {
+            return Move::parse(code).ok_or_else(|| AppError::Validation(format!("unknown move: {code}")));
         }
-        Ok(if self.ping { Move::Ping(self.cell) } else { Move::Fire(self.cell) })
+        let cell = self.cell.filter(|&c| c < CELLS).ok_or_else(|| AppError::Validation("that isn't a square on the grid".into()))?;
+        Ok(if self.ping { Move::Ping(cell) } else { Move::Fire(cell) })
     }
+}
+
+/// Ship powers (Overdrive too) used and crates opened by `side`.
+pub fn tally(d: &Duel, side: usize) -> (i64, i64) {
+    let mine = || d.log.iter().filter(move |t| t.side == side);
+    let powers = mine().filter(|t| t.mv.power().is_some() || matches!(t.mv, Move::Overdrive(_))).count();
+    let crates = mine().flat_map(|t| &t.results).filter(|(_, r)| matches!(r, ShotResult::Crate { .. })).count();
+    (powers as i64, crates as i64)
+}
+
+/// Zero-Bot's moves until it's your turn again (an extra shot or Overdrive
+/// keeps its turn) or the game ends.
+fn bot_turn(d: &mut Duel, level: Level) -> AppResult<()> {
+    let mut rng = rand::thread_rng();
+    for _ in 0..16 {
+        if d.winner().is_some() || d.to_move() != BOT {
+            return Ok(());
+        }
+        let m = choose_for(d, BOT, level, &mut rng);
+        d.play(m).map_err(|e| AppError::Internal(anyhow::anyhow!("Zero-Bot made a bad move {}: {}", m.code(), e.text())))?;
+    }
+    Err(AppError::Internal(anyhow::anyhow!("Zero-Bot kept the turn too long")))
 }
 
 /// `POST /api/games/sonar/games/:id/fire`: your shot or ping, then Zero-Bot's.
@@ -308,11 +435,7 @@ pub async fn fire(
         return Err(AppError::Conflict("wait for Zero-Bot".into()));
     }
     d.play(mv).map_err(|e| AppError::Validation(e.text().into()))?;
-    if d.winner().is_none() {
-        let k = d.seas[YOU].knowledge();
-        let m = choose(&k, row.level(), &mut rand::thread_rng());
-        d.play(m).map_err(|e| AppError::Internal(anyhow::anyhow!("Zero-Bot made a bad move: {}", e.text())))?;
-    }
+    bot_turn(&mut d, row.level())?;
     row.moves = d.move_string();
     let (mut rewards, mut pts, mut drop) = (None, None, None);
     match d.winner() {
@@ -424,5 +547,42 @@ mod tests {
         assert_eq!(points(Level::Master, GameResult::Win, 0), 45);
         assert_eq!(points(Level::Master, GameResult::Win, 2), 40);
         assert_eq!(points(Level::Easy, GameResult::Loss, 0), 0);
+    }
+
+    #[test]
+    fn moves_come_as_cells_or_codes() {
+        let req = |j: &str| serde_json::from_str::<FireRequest>(j).unwrap().to_move();
+        assert_eq!(req(r#"{"cell": 37}"#).unwrap(), Move::Fire(37));
+        assert_eq!(req(r#"{"cell": 44, "ping": true}"#).unwrap(), Move::Ping(44));
+        assert_eq!(req(r#"{"move": "a12h"}"#).unwrap(), Move::AirStrike { cell: 12, horizontal: true });
+        assert!(req(r#"{"cell": 100}"#).is_err());
+        assert!(req(r#"{"move": "z9"}"#).is_err());
+        assert!(req("{}").is_err());
+        assert_eq!(parse_both_levels("1,1,1,1,1 3,2,1,1,1"), Some([[1; 5], [3, 2, 1, 1, 1]]));
+        assert_eq!(parse_both_levels("1,1,1,1,1"), None);
+    }
+
+    #[test]
+    fn zero_bot_keeps_playing_while_it_has_the_turn() {
+        // A whole Tactics game played the way `fire` plays it: always a legal
+        // move for you, then Zero-Bot until it's your turn again.
+        let mut rng = ChaCha8Rng::seed_from_u64(4);
+        let you = random_fleet(&mut rng);
+        let mut bot = random_fleet(&mut rng);
+        bot.mines = bot_mines(&bot, 2, Level::Master, &mut rng);
+        let mut d = Duel::new_tactics([&you, &bot], YOU, Setup::new([MK1, MK1], 99));
+        let mut turns = 0;
+        while d.winner().is_none() {
+            assert_eq!(d.to_move(), YOU);
+            let m = choose_for(&d, YOU, Level::Hard, &mut rng);
+            d.play(m).unwrap();
+            bot_turn(&mut d, Level::Master).unwrap();
+            turns += 1;
+            assert!(turns < 200);
+        }
+        let again = Duel::replay_tactics([&you, &bot], YOU, Setup::new([MK1, MK1], 99), &d.move_string()).unwrap();
+        assert_eq!(again.winner(), d.winner());
+        let (powers, _) = tally(&d, YOU);
+        assert!(powers > 0);
     }
 }

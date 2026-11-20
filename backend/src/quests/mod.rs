@@ -44,6 +44,9 @@ pub enum Event {
     SonarGame { level: i64, result: GameResult },
     /// Today's Daily Hunt finished in `shots` moves.
     SonarDaily { shots: i64 },
+    /// A finished Sonar Tactics game vs Zero-Bot (sent with `SonarGame`):
+    /// ship powers (and Overdrive) used and supply crates opened.
+    SonarTactics { result: GameResult, powers: i64, crates: i64 },
     /// A finished Snake Signal run (100+ ticks): score and best combo (1/2/3/5).
     SnakeRun { score: i64, best_combo: i64 },
 }
@@ -73,6 +76,9 @@ enum Goal {
     SonarGames,
     SonarWins { min_level: i64 },
     SonarDaily,
+    SonarTacticsWins,
+    SonarPowers,
+    SonarCrates,
     Tile2048(i64),
     Score2048(i64),
     SnakeRuns,
@@ -137,6 +143,9 @@ impl QuestDef {
             (Goal::SonarGames, SonarGame { .. }) => 1,
             (Goal::SonarWins { min_level }, SonarGame { level, result }) => hit(level >= min_level && result == GameResult::Win),
             (Goal::SonarDaily, SonarDaily { .. }) => 1,
+            (Goal::SonarTacticsWins, SonarTactics { result, .. }) => hit(result == GameResult::Win),
+            (Goal::SonarPowers, SonarTactics { powers, .. }) => powers.clamp(0, i32::MAX as i64) as i32,
+            (Goal::SonarCrates, SonarTactics { crates, .. }) => crates.clamp(0, i32::MAX as i64) as i32,
             (Goal::Tile2048(min), Game2048 { max_tile, .. }) => hit(max_tile >= min),
             (Goal::Score2048(min), Game2048 { points, .. }) => hit(points >= min),
             (Goal::SnakeRuns, SnakeRun { .. }) => 1,
@@ -153,7 +162,7 @@ const fn q(id: &'static str, title: &'static str, goal: Goal, target: i32, coins
 
 use Game::{ConnectFour as CF, TicTacToe as TTT};
 
-pub const POOL: [QuestDef; 34] = [
+pub const POOL: [QuestDef; 37] = [
     q("cf_play_3", "Play 3 Connect Four games vs the AI", Goal::PlayAi(CF), 3, 20, 30),
     q("cf_win_2_medium", "Win 2 Connect Four games vs Medium or harder",
         Goal::WinAi { game: Some(CF), min_level: 2 }, 2, 40, 60),
@@ -190,6 +199,9 @@ pub const POOL: [QuestDef; 34] = [
     q("sonar_play_3", "Finish 3 Sonar games vs Zero-Bot", Goal::SonarGames, 3, 20, 30),
     q("sonar_win_medium", "Beat Zero-Bot at Sonar on Medium or harder", Goal::SonarWins { min_level: 2 }, 1, 40, 60),
     q("sonar_daily", "Finish today's Sonar Daily Hunt", Goal::SonarDaily, 1, 30, 40),
+    q("sonar_tactics_win", "Win a Sonar Tactics game vs Zero-Bot", Goal::SonarTacticsWins, 1, 40, 60),
+    q("sonar_powers_6", "Use 6 ship powers in Sonar Tactics", Goal::SonarPowers, 6, 30, 40),
+    q("sonar_crates_2", "Open 2 supply crates in Sonar Tactics", Goal::SonarCrates, 2, 30, 40),
     q("g2048_tile_512", "Make a 512 tile in 2048", Goal::Tile2048(512), 1, 40, 60),
     q("g2048_score_10000", "Score 10,000 in one game of 2048", Goal::Score2048(10_000), 1, 40, 60),
     q("snake_play_3", "Play 3 Snake Signal runs", Goal::SnakeRuns, 3, 20, 30),
@@ -323,6 +335,13 @@ mod tests {
         assert_eq!(quest("sonar_win_medium").progress(&game(2, GameResult::Win)), 1);
         assert_eq!(quest("sonar_win_medium").progress(&game(1, GameResult::Win)), 0);
         assert_eq!(quest("sonar_daily").progress(&Event::SonarDaily { shots: 40 }), 1);
+        let tactics = |result, powers, crates| Event::SonarTactics { result, powers, crates };
+        assert_eq!(quest("sonar_tactics_win").progress(&tactics(GameResult::Win, 0, 0)), 1);
+        assert_eq!(quest("sonar_tactics_win").progress(&tactics(GameResult::Loss, 9, 3)), 0);
+        assert_eq!(quest("sonar_powers_6").progress(&tactics(GameResult::Loss, 4, 0)), 4);
+        assert_eq!(quest("sonar_crates_2").progress(&tactics(GameResult::Win, 2, 1)), 1);
+        // Tactics games still count as Sonar games.
+        assert_eq!(quest("sonar_play_3").progress(&tactics(GameResult::Win, 2, 1)), 0);
         assert_eq!(quest("sonar_daily").progress(&game(4, GameResult::Win)), 0);
     }
 

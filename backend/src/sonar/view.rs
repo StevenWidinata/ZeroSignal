@@ -3,7 +3,8 @@
 
 use serde::Serialize;
 
-use super::rules::{Duel, Mark, Move, Ping, Sea, ShotResult, CELLS};
+use super::rules::{Duel, Mark, Move, Ping, Sea, ShotResult, Sweep, CELLS};
+use super::tactics::POWERS;
 
 #[derive(Debug, Clone, Serialize)]
 pub struct SunkShip {
@@ -22,6 +23,10 @@ pub struct SeaView {
     pub pings_left: u8,
     pub shots: usize,
     pub all_sunk: bool,
+    /// Tactics: radar sweeps of this sea.
+    pub sweeps: Vec<Sweep>,
+    /// Tactics: shields guarding this sea's ships (each blocks one hit).
+    pub shields: u8,
 }
 
 impl SeaView {
@@ -36,7 +41,16 @@ impl SeaView {
                 }
             }
         }
-        SeaView { marks, sunk, pings: sea.pings.clone(), pings_left: sea.pings_left(), shots: sea.shots(), all_sunk: sea.all_sunk() }
+        SeaView {
+            marks,
+            sunk,
+            pings: sea.pings.clone(),
+            pings_left: sea.pings_left(),
+            shots: sea.shots(),
+            all_sunk: sea.all_sunk(),
+            sweeps: sea.sweeps.clone(),
+            shields: sea.shields,
+        }
     }
 }
 
@@ -49,14 +63,68 @@ pub struct LogEntry {
     pub mv: String,
     pub cell: usize,
     pub ping: bool,
+    /// The headline result (a sinking beats a hit beats a miss).
     pub result: ShotResult,
+    /// Tactics: every square the move touched in the other sea.
+    pub hits: Vec<CellResult>,
+    /// Tactics: what happened in the mover's own sea (a mine showed a ship
+    /// square, a repair kit fixed one).
+    pub own: Vec<CellResult>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct CellResult {
+    pub cell: usize,
+    pub result: ShotResult,
+}
+
+fn cells(v: &[(usize, ShotResult)]) -> Vec<CellResult> {
+    v.iter().map(|&(cell, result)| CellResult { cell, result }).collect()
+}
+
+/// One side's Tactics powers, in fleet order (all public: both players can
+/// work them out from the moves).
+#[derive(Debug, Clone, Serialize)]
+pub struct PowersView {
+    pub charge: [u8; POWERS],
+    pub cooldown: [u8; POWERS],
+    pub size: [u8; POWERS],
+    pub levels: [u8; POWERS],
+    /// The ship with this power has sunk.
+    pub lost: [bool; POWERS],
+    pub combo: u8,
+    pub overdrive: bool,
+}
+
+impl PowersView {
+    /// `side`'s powers, or None in a Classic duel.
+    pub fn of(d: &Duel, side: usize) -> Option<PowersView> {
+        let t = d.tactics.as_ref()?;
+        Some(PowersView {
+            charge: t.charge[side],
+            cooldown: std::array::from_fn(|p| t.spec(side, p).cooldown),
+            size: std::array::from_fn(|p| t.spec(side, p).size),
+            levels: t.levels[side],
+            lost: std::array::from_fn(|p| d.seas[side].is_sunk(p)),
+            combo: t.combo[side],
+            overdrive: t.overdrive[side],
+        })
+    }
 }
 
 /// The duel's log as seen by `side`.
 pub fn log_for(d: &Duel, side: usize) -> Vec<LogEntry> {
     d.log
         .iter()
-        .map(|t| LogEntry { mine: t.side == side, mv: t.mv.code(), cell: t.mv.cell(), ping: matches!(t.mv, Move::Ping(_)), result: t.main() })
+        .map(|t| LogEntry {
+            mine: t.side == side,
+            mv: t.mv.code(),
+            cell: t.mv.cell(),
+            ping: matches!(t.mv, Move::Ping(_)),
+            result: t.main(),
+            hits: cells(&t.results),
+            own: cells(&t.own),
+        })
         .collect()
 }
 
