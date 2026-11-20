@@ -29,7 +29,17 @@ export interface ItemSpec {
 /** What a supply crate holds. */
 export type Item = "ping" | "shield" | "repair" | "extra_shot";
 
-const TACTICS = raw as { mines: number; crates: number; combo: number; items: ItemSpec[]; powers: PowerSpec[] };
+const TACTICS = raw as {
+  upgrade_prices: number[];
+  bot_mk: Record<string, number>;
+  mines: number;
+  crates: number;
+  combo: number;
+  items: ItemSpec[];
+  powers: PowerSpec[];
+};
+/** Zero-Bot's Mk on each level (easy … master). */
+export const BOT_MK = TACTICS.bot_mk;
 export const POWERS = TACTICS.powers;
 export const ITEMS = TACTICS.items;
 /** Mines each side may hide; crates hidden in each sea; hits in a row for Overdrive. */
@@ -52,6 +62,24 @@ export const MK1: Levels = [1, 1, 1, 1, 1];
 /** A power's numbers at Mk `level` (clamped to 1–3). */
 export function powerLevel(power: number, level: number): PowerLevel {
   return POWERS[power].levels[Math.min(MAX_LEVEL, Math.max(1, level)) - 1];
+}
+
+export const MK_NAME = ["", "Mk I", "Mk II", "Mk III"];
+
+/** What the next Mk of `power` (now at `level`) improves, e.g. "cooldown 6 → 5 turns · 3 → 4 squares". */
+export function upgradeText(power: number, level: number): string {
+  if (level >= MAX_LEVEL) return "Fully upgraded";
+  const a = powerLevel(power, level);
+  const b = powerLevel(power, level + 1);
+  const parts: string[] = [];
+  if (b.cooldown !== a.cooldown) parts.push(`recharges in ${b.cooldown} turns instead of ${a.cooldown}`);
+  if (b.size !== a.size) {
+    if (power === AIR_STRIKE) parts.push(`hits ${b.size} squares instead of ${a.size}`);
+    else if (power === SALVO) parts.push(`${b.size} shots instead of ${a.size}`);
+    else if (power === TORPEDO) parts.push("can start from any edge");
+    else if (power === FLARE) parts.push("lights the whole 3×3 area");
+  }
+  return parts.join(" · ");
 }
 
 /** How a Tactics game is set up: Mk levels, the crate seed, crates per sea (like `Setup` in tactics.rs). */

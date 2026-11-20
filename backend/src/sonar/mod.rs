@@ -8,3 +8,4 @@ pub mod items;
 pub mod rules;
 pub mod tactics;
 pub mod view;
+pub mod workshop;

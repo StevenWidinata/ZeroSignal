@@ -208,6 +208,17 @@ pub async fn merge_into(
         .rows_affected() as i64;
     }
 
+    // Sonar Workshop upgrades: the higher Mk of each power wins.
+    sqlx::query(
+        r#"INSERT INTO sonar_upgrades (user_id, power, level)
+           SELECT $2, power, level FROM sonar_upgrades WHERE user_id = $1
+           ON CONFLICT (user_id, power) DO UPDATE SET level = GREATEST(sonar_upgrades.level, EXCLUDED.level)"#,
+    )
+    .bind(guest)
+    .bind(account)
+    .execute(&mut **tx)
+    .await?;
+
     // 4. Quest days the account doesn't have (e.g. the guest's earlier days).
     let days: Vec<NaiveDate> = sqlx::query_scalar(
         r#"INSERT INTO daily_quest_days (user_id, day, rerolled, bonus_claimed)

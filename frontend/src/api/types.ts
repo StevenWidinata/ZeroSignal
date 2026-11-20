@@ -955,6 +955,12 @@ export interface SonarPowers {
 
 export type SonarMode = "classic" | "tactics";
 
+/** The Ship Workshop: your Mk per power (fleet order) and the next Mk's price (null = maxed). */
+export interface SonarWorkshop {
+  levels: number[];
+  next_price: (number | null)[];
+}
+
 export interface SonarGame {
   id: string;
   level: SonarLevel;

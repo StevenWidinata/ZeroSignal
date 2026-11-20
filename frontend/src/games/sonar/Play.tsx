@@ -17,7 +17,8 @@ import Shop from "./Shop";
 import "./sonar.css";
 import { FleetSwatch, SeaSwatch } from "./Swatches";
 import { FLEET } from "./rules";
-import { MINES, POWERS } from "./tactics";
+import { BOT_MK, MINES, MK_NAME, POWERS } from "./tactics";
+import Workshop from "./Workshop";
 
 type Mode = "ai" | "daily" | "online" | "local";
 type Screen =
@@ -27,7 +28,8 @@ type Screen =
   | { kind: "daily" }
   | { kind: "local" }
   | { kind: "online"; code: string }
-  | { kind: "shop" };
+  | { kind: "shop" }
+  | { kind: "workshop" };
 
 const LEVELS: { id: SonarLevel; blurb: string; reward: string }[] = [
   { id: "easy", blurb: "Fires all over the place.", reward: "6 coins" },
@@ -201,6 +203,7 @@ export default function Play() {
   else if (screen.kind === "daily") body = <DailyHunt look={usable} onExit={back} />;
   else if (screen.kind === "local") body = <LocalGame names={[username, "Player 2"]} look={usable} tactics={tactics} onExit={back} />;
   else if (screen.kind === "shop") body = <Shop collection={collection} onCollection={setCollection} onBack={back} />;
+  else if (screen.kind === "workshop") body = <Workshop onBack={back} />;
   if (body)
     return (
       <>
@@ -282,6 +285,7 @@ export default function Play() {
                   <strong>{LEVEL_LABEL[l.id]}</strong>
                   <small>{l.blurb}</small>
                   <small>Win: {l.reward}</small>
+                  {tactics && <small>Its powers: {MK_NAME[BOT_MK[l.id]]}</small>}
                 </button>
               ))}
             </fieldset>
@@ -326,6 +330,11 @@ export default function Play() {
               <button className="btn" onClick={() => setScreen({ kind: "shop" })}>
                 🛍 Fleets & seas
               </button>
+              {mode === "ai" && (
+                <button className="btn" onClick={() => setScreen({ kind: "workshop" })}>
+                  🔧 Workshop
+                </button>
+              )}
             </div>
           )}
           {resume && mode === "ai" && <p className="hint">Starting a new battle gives up your unfinished one.</p>}

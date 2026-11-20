@@ -12,7 +12,8 @@ use uuid::Uuid;
 use super::ai::{bot_mines, choose_for, Level};
 use super::items::{self, Kind};
 use super::rules::{random_fleet, Duel, Fleet, Move, ShotResult, CELLS};
-use super::tactics::{levels_code, parse_levels, tactics_rules, Levels, Setup, MK1};
+use super::tactics::{levels_code, parse_levels, tactics_rules, Levels, Setup};
+use super::workshop::{bot_levels, levels_of};
 use super::view::{log_for, LogEntry, PowersView, SeaView};
 use crate::auth::jwt::AuthUser;
 use crate::economy::{self, game_xp, GameResult, Granted, Reward};
@@ -239,7 +240,11 @@ pub async fn create(State(state): State<AppState>, user: AuthUser, Json(req): Js
     };
     let (seed, levels, crates) = match mode {
         Mode::Classic => (0, None, 0),
-        Mode::Tactics => (i64::from(seed), Some(format!("{} {}", levels_code(&MK1), levels_code(&MK1))), i16::from(tactics_rules().crates)),
+        Mode::Tactics => {
+            // Your Workshop upgrades against Zero-Bot's level (Hard Mk II, Master Mk III).
+            let yours = levels_of(&state.pool, user.user_id).await?;
+            (i64::from(seed), Some(format!("{} {}", levels_code(&yours), levels_code(&bot_levels(level)))), i16::from(tactics_rules().crates))
+        }
     };
 
     let mut tx = state.pool.begin().await?;
@@ -564,13 +569,14 @@ mod tests {
 
     #[test]
     fn zero_bot_keeps_playing_while_it_has_the_turn() {
+        use crate::sonar::tactics::MK1;
         // A whole Tactics game played the way `fire` plays it: always a legal
         // move for you, then Zero-Bot until it's your turn again.
         let mut rng = ChaCha8Rng::seed_from_u64(4);
         let you = random_fleet(&mut rng);
         let mut bot = random_fleet(&mut rng);
         bot.mines = bot_mines(&bot, 2, Level::Master, &mut rng);
-        let mut d = Duel::new_tactics([&you, &bot], YOU, Setup::new([MK1, MK1], 99));
+        let mut d = Duel::new_tactics([&you, &bot], YOU, Setup::new([MK1, bot_levels(Level::Master)], 99));
         let mut turns = 0;
         while d.winner().is_none() {
             assert_eq!(d.to_move(), YOU);
@@ -580,7 +586,7 @@ mod tests {
             turns += 1;
             assert!(turns < 200);
         }
-        let again = Duel::replay_tactics([&you, &bot], YOU, Setup::new([MK1, MK1], 99), &d.move_string()).unwrap();
+        let again = Duel::replay_tactics([&you, &bot], YOU, Setup::new([MK1, bot_levels(Level::Master)], 99), &d.move_string()).unwrap();
         assert_eq!(again.winner(), d.winner());
         let (powers, _) = tally(&d, YOU);
         assert!(powers > 0);

@@ -61,3 +61,17 @@ describe("aiming Sonar powers", () => {
     for (const code of ["a43h", "b3.70", "r3", "k7", "t3l", "l55"]) expect(parseMove(code), code).not.toBeNull();
   });
 });
+
+describe("Workshop upgrade texts", () => {
+  it("says what each next Mk improves", async () => {
+    const { upgradeText, POWERS } = await import("./tactics");
+    const texts = POWERS.map((_, p) => [upgradeText(p, 1), upgradeText(p, 2)]);
+    expect(texts[AIR_STRIKE]).toEqual(["recharges in 5 turns instead of 6", "hits 4 squares instead of 3"]);
+    expect(texts[SALVO]).toEqual(["3 shots instead of 2", "recharges in 4 turns instead of 5"]);
+    expect(texts[TORPEDO][1]).toBe("can start from any edge");
+    expect(texts[FLARE]).toEqual(["recharges in 3 turns instead of 4", "lights the whole 3×3 area"]);
+    expect(upgradeText(RADAR, 3)).toBe("Fully upgraded");
+    // Every upgrade improves something.
+    for (const t of texts.flat()) expect(t).not.toBe("");
+  });
+});

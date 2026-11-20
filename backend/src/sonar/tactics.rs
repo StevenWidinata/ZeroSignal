@@ -58,6 +58,10 @@ pub struct ItemSpec {
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct TacticsRules {
+    /// Coins for Mk II and Mk III of one power (the Workshop).
+    pub upgrade_prices: Vec<i64>,
+    /// Zero-Bot's Mk on each level ("easy" … "master").
+    pub bot_mk: std::collections::HashMap<String, u8>,
     pub mines: u8,
     pub crates: u8,
     pub combo: u8,
@@ -223,9 +227,10 @@ mod tests {
         for (p, spec) in t.powers.iter().enumerate() {
             assert_eq!(spec.ship, rules().fleet[p].id, "power {} belongs to ship {p}", spec.id);
             assert_eq!(spec.levels.len(), usize::from(MAX_LEVEL));
-            // Upgrades never make a power worse.
+            // Every upgrade makes a power better, never worse.
             for w in spec.levels.windows(2) {
                 assert!(w[1].cooldown <= w[0].cooldown && w[1].size >= w[0].size, "{}", spec.id);
+                assert!(w[1].cooldown < w[0].cooldown || w[1].size > w[0].size, "{}: an upgrade that changes nothing", spec.id);
             }
         }
         assert_eq!(rules().fleet[usize::from(SILENT_SHIP)].id, "submarine");

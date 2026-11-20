@@ -16,6 +16,7 @@ import type {
   SonarGame,
   SonarLevel,
   SonarMode,
+  SonarWorkshop,
   ChessCollection,
   ChessGame,
   ChessLevel,
@@ -488,6 +489,13 @@ export const sonar = {
   },
   fire(id: string, cell: number, ping = false) {
     return post<SonarGame>(`${SONAR}/games/${encodeURIComponent(id)}/fire`, { cell, ping });
+  },
+  workshop() {
+    return request<SonarWorkshop>(`${SONAR}/workshop`);
+  },
+  /** Buy the next Mk of one Tactics power ("air_strike", "salvo", …). */
+  upgrade(power: string) {
+    return post<SonarWorkshop>(`${SONAR}/workshop/upgrade`, { power });
   },
   /** Any move as a code ("a12h", "o2", …: see games/sonar/rules.ts). */
   move(id: string, code: string) {
