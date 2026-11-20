@@ -994,10 +994,15 @@ export interface SonarCollection {
 /** Online Sonar: the board as your seat may see it. */
 export interface SonarRoomCells {
   phase: "placing" | "firing";
+  /** Classic or Tactics for the whole room. */
+  mode: SonarMode;
   placed: [boolean, boolean];
   your_fleet: string | null;
   your_sea?: SonarSea;
   target?: SonarSea;
   log?: SonarLogEntry[];
   their_fleet?: string | null;
+  /** Tactics: your powers and your friend's. */
+  powers?: SonarPowers | null;
+  their_powers?: SonarPowers | null;
 }

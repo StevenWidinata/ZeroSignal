@@ -578,8 +578,9 @@ export const checkers = {
 
 /** Online rooms: the server checks every move; `get` waits up to 20 s for news. */
 export const rooms = {
-  create(game: OnlineGame, bestOf: number) {
-    return post<RoomView>("/api/rooms", { game, best_of: bestOf });
+  /** `sonarMode` only for Sonar rooms (Classic or Tactics for the whole room). */
+  create(game: OnlineGame, bestOf: number, sonarMode?: SonarMode) {
+    return post<RoomView>("/api/rooms", { game, best_of: bestOf, ...(sonarMode ? { sonar_mode: sonarMode } : {}) });
   },
   join(code: string) {
     return post<RoomView>(`/api/rooms/${encodeURIComponent(code)}/join`);
@@ -599,6 +600,10 @@ export const rooms = {
   /** Sonar: hide your fleet for this game. */
   fleet(code: string, fleet: string) {
     return post<RoomView>(`/api/rooms/${encodeURIComponent(code)}/fleet`, { fleet });
+  },
+  /** Sonar Tactics: any move code ("a12h", "o2", …), sent like a checkers move. */
+  sonarMove(code: string, move: string) {
+    return post<RoomView>(`/api/rooms/${encodeURIComponent(code)}/move`, { uci: move });
   },
   /** Sonar: fire at a square, or ping the 3×3 area around it. */
   fire(code: string, cell: number, ping = false) {

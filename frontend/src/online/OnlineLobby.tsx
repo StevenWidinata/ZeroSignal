@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { rooms } from "../api/client";
-import type { OnlineEntry, OnlineGame } from "../api/types";
+import type { OnlineEntry, OnlineGame, SonarMode } from "../api/types";
 import Avatar from "../character/Avatar";
 import { playSfx } from "../platform/sound";
 
@@ -8,6 +8,7 @@ import { playSfx } from "../platform/sound";
 export default function OnlineLobby({ game, onEnter }: { game: OnlineGame; onEnter: (code: string) => void }) {
   // Chess and Sonar games are long, so one game is the default there.
   const [bestOf, setBestOf] = useState(game === "chess" || game === "sonar" || game === "checkers" ? 1 : 3);
+  const [sonarMode, setSonarMode] = useState<SonarMode>("classic");
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -24,7 +25,7 @@ export default function OnlineLobby({ game, onEnter }: { game: OnlineGame; onEnt
     setBusy(true);
     setError(null);
     try {
-      const r = await rooms.create(game, bestOf);
+      const r = await rooms.create(game, bestOf, game === "sonar" ? sonarMode : undefined);
       playSfx("click");
       onEnter(r.code);
     } catch (e) {
@@ -60,6 +61,24 @@ export default function OnlineLobby({ game, onEnter }: { game: OnlineGame; onEnt
             ))}
           </div>
         </div>
+        {game === "sonar" && (
+          <div className="row-label">
+            <span id="online-rules">Rules</span>
+            <div className="segmented" role="radiogroup" aria-labelledby="online-rules">
+              {(["classic", "tactics"] as const).map((m) => (
+                <button
+                  key={m}
+                  role="radio"
+                  aria-checked={sonarMode === m}
+                  className={`btn-sm${sonarMode === m ? "" : " btn-ghost"}`}
+                  onClick={() => setSonarMode(m)}
+                >
+                  {m === "classic" ? "🎯 Classic" : "⚡ Tactics"}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         <button className="btn-green" onClick={() => void create()} disabled={busy}>
           {busy ? "Opening…" : "▶ Create room"}
         </button>

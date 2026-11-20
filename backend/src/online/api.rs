@@ -12,7 +12,10 @@ use serde::{Deserialize, Serialize};
 use sqlx::{Postgres, Transaction};
 use uuid::Uuid;
 
-use super::{clean_code, new_code, play, play_checkers, play_sonar, play_uci, replay, seat_of, series_xp, sonar_state, Game, GameState, Seat, Series, EMOTES};
+use super::{
+    clean_code, new_code, play, play_checkers, play_sonar, play_uci, replay, seat_of, series_xp, sonar_setup, sonar_shot, sonar_state, Game, GameState, Seat, Series,
+    EMOTES,
+};
 use crate::auth::jwt::AuthUser;
 use crate::connect_four::board::Outcome;
 use crate::economy::{self, Reward};
@@ -61,6 +64,10 @@ struct Room {
     /// Sonar: each seat's secret fleet this game.
     host_fleet: Option<String>,
     guest_fleet: Option<String>,
+    /// Sonar: "classic" or "tactics" for the whole room.
+    sonar_mode: String,
+    /// Sonar Tactics: this game's seed (hides the crates; new every game).
+    sonar_seed: i64,
 }
 
 impl Room {
@@ -71,9 +78,21 @@ impl Room {
     /// The board as `viewer` may see it (0 = nobody in particular).
     fn state(&self, viewer: Seat) -> Result<GameState, &'static str> {
         match self.game() {
-            Game::Sonar => sonar_state(&self.moves, [self.host_fleet.as_deref(), self.guest_fleet.as_deref()], self.first_seat as u8, viewer),
+            Game::Sonar => {
+                sonar_state(&self.moves, [self.host_fleet.as_deref(), self.guest_fleet.as_deref()], self.first_seat as u8, viewer, self.sonar_setup())
+            }
             g => replay(g, &self.moves),
         }
+    }
+
+    /// Sonar: this game's Tactics setup (None = Classic).
+    fn sonar_setup(&self) -> Option<crate::sonar::tactics::Setup> {
+        sonar_setup(self.sonar_mode == "tactics", self.sonar_seed as u32)
+    }
+
+    /// A fresh seed for the next Sonar game.
+    fn new_sonar_seed(&mut self) {
+        self.sonar_seed = i64::from(rand::Rng::gen::<u32>(&mut rand::thread_rng()));
     }
 
     /// Sonar: both fleets hidden, so firing can start.
@@ -223,7 +242,7 @@ async fn save(tx: &mut Transaction<'_, Postgres>, r: &Room) -> AppResult<()> {
                host_wins = $7, guest_wins = $8, draws = $9, game_over = $10, winner = $11, rewarded = $12,
                host_rematch = $13, guest_rematch = $14, host_emote = $15, host_emote_at = $16,
                guest_emote = $17, guest_emote_at = $18, host_seen = $19, guest_seen = $20,
-               draw_offer = $21, host_fleet = $22, guest_fleet = $23, version = version + 1, updated_at = now()
+               draw_offer = $21, host_fleet = $22, guest_fleet = $23, sonar_seed = $24, version = version + 1, updated_at = now()
            WHERE id = $1"#,
     )
     .bind(r.id)
@@ -249,6 +268,7 @@ async fn save(tx: &mut Transaction<'_, Postgres>, r: &Room) -> AppResult<()> {
     .bind(r.draw_offer)
     .bind(&r.host_fleet)
     .bind(&r.guest_fleet)
+    .bind(r.sonar_seed)
     .execute(&mut **tx)
     .await?;
     Ok(())
@@ -322,6 +342,9 @@ pub struct CreateRequest {
     pub game: String,
     #[serde(default = "default_best_of")]
     pub best_of: i16,
+    /// Sonar only: "classic" (default) or "tactics".
+    #[serde(default)]
+    pub sonar_mode: Option<String>,
 }
 
 fn default_best_of() -> i16 {
@@ -334,17 +357,26 @@ pub async fn create(State(state): State<AppState>, user: AuthUser, Json(req): Js
     if ![1, 3, 5].contains(&req.best_of) {
         return Err(AppError::Validation("best_of must be 1, 3 or 5".into()));
     }
+    let sonar_mode = match (game, req.sonar_mode.as_deref()) {
+        (_, None) => "classic",
+        (Game::Sonar, Some(m @ ("classic" | "tactics"))) => m,
+        (Game::Sonar, Some(_)) => return Err(AppError::Validation("sonar_mode must be classic or tactics".into())),
+        (_, Some(_)) => return Err(AppError::Validation("sonar_mode is only for Sonar rooms".into())),
+    };
+    let seed = i64::from(rand::Rng::gen::<u32>(&mut rand::thread_rng()));
     // A fresh code; retry on the rare clash.
     for _ in 0..5 {
         let code = new_code(&mut rand::thread_rng());
         let r: Option<Room> = sqlx::query_as(
-            r#"INSERT INTO online_rooms (code, game, best_of, host_id) VALUES ($1, $2, $3, $4)
+            r#"INSERT INTO online_rooms (code, game, best_of, host_id, sonar_mode, sonar_seed) VALUES ($1, $2, $3, $4, $5, $6)
                ON CONFLICT (code) DO NOTHING RETURNING *"#,
         )
         .bind(&code)
         .bind(game.as_str())
         .bind(req.best_of)
         .bind(user.user_id)
+        .bind(sonar_mode)
+        .bind(seed)
         .fetch_optional(&state.pool)
         .await?;
         if let Some(r) = r {
@@ -444,6 +476,16 @@ pub struct MoveRequest {
     pub ping: Option<bool>,
 }
 
+/// A Sonar move from a request: a shot or ping at `cell`, or (Tactics) a
+/// move code in `uci` ("a12h", "o2", …).
+fn sonar_move(cell: Option<u8>, code: Option<&str>, ping: bool) -> Result<crate::sonar::rules::Move, &'static str> {
+    match (cell, code) {
+        (Some(c), _) => sonar_shot(c, ping),
+        (None, Some(code)) => crate::sonar::rules::Move::parse(code).ok_or("that isn't a Sonar move"),
+        (None, None) => Err("send the square to fire at"),
+    }
+}
+
 /// `POST /api/rooms/:code/move`
 pub async fn make_move(
     State(state): State<AppState>,
@@ -467,13 +509,15 @@ pub async fn make_move(
         return Err(AppError::Conflict("it's your friend's turn".into()));
     }
     r.moves = match (r.game(), req.cell, req.uci.as_deref()) {
-        (Game::Sonar, Some(cell), _) => play_sonar(
-            &r.moves,
-            [r.host_fleet.as_deref().unwrap_or_default(), r.guest_fleet.as_deref().unwrap_or_default()],
-            r.first_seat as u8,
-            cell,
-            req.ping.unwrap_or(false),
-        ),
+        (Game::Sonar, cell, code) => sonar_move(cell, code, req.ping.unwrap_or(false)).and_then(|m| {
+            play_sonar(
+                &r.moves,
+                [r.host_fleet.as_deref().unwrap_or_default(), r.guest_fleet.as_deref().unwrap_or_default()],
+                r.first_seat as u8,
+                r.sonar_setup(),
+                m,
+            )
+        }),
         (Game::Chess, _, Some(uci)) => play_uci(&r.moves, uci),
         (Game::Chess, _, None) => Err("send a chess move as uci"),
         (Game::Checkers, _, Some(mv)) => play_checkers(&r.moves, mv),
@@ -566,6 +610,9 @@ pub async fn fleet(
     if r.game() != Game::Sonar || r.status != "playing" || r.game_over {
         return Err(AppError::Conflict("there's no Sonar game to place a fleet in".into()));
     }
+    if r.sonar_mode != "tactics" && !fleet.mines.is_empty() {
+        return Err(AppError::Validation("mines are only for Tactics games".into()));
+    }
     let slot = if seat == 1 { &mut r.host_fleet } else { &mut r.guest_fleet };
     if slot.is_some() {
         return Err(AppError::Conflict("your fleet is already hidden".into()));
@@ -587,6 +634,7 @@ pub async fn next_game(State(state): State<AppState>, user: AuthUser, Path(code)
         r.moves.clear();
         r.host_fleet = None;
         r.guest_fleet = None;
+        r.new_sonar_seed();
         r.game_over = false;
         r.game_no += 1;
         r.first_seat = 3 - r.first_seat;
@@ -676,6 +724,7 @@ pub async fn rematch(State(state): State<AppState>, user: AuthUser, Path(code): 
         r.moves.clear();
         r.host_fleet = None;
         r.guest_fleet = None;
+        r.new_sonar_seed();
         r.game_over = false;
         r.game_no = 1;
         r.first_seat = 3 - r.first_seat;
@@ -770,6 +819,8 @@ mod tests {
             draw_offer: None,
             host_fleet: None,
             guest_fleet: None,
+            sonar_mode: "classic".into(),
+            sonar_seed: 0,
         }
     }
 
