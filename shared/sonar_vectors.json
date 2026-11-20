@@ -43,6 +43,34 @@
     {
       "code": "a1h a3h a5h a7h a11h",
       "error": "bad_code"
+    },
+    {
+      "code": "a1h a3h a5h a7h a9h mh2 mh4",
+      "error": null
+    },
+    {
+      "code": "a1h a3h a5h a7h a9h mf1",
+      "error": "bad_mine"
+    },
+    {
+      "code": "a1h a3h a5h a7h a9h ma2",
+      "error": "bad_mine"
+    },
+    {
+      "code": "a1h a3h a5h a7h a9h mh2 mh2",
+      "error": "bad_mine"
+    },
+    {
+      "code": "a1h a3h a5h a7h a9h mh2 mh4 mh6",
+      "error": "too_many_mines"
+    },
+    {
+      "code": "a1h mh2 a3h a5h a7h a9h",
+      "error": "bad_code"
+    },
+    {
+      "code": "a1h a3h a5h a7h a9h mz2",
+      "error": "bad_code"
     }
   ],
   "games": [
@@ -599,6 +627,253 @@
         {
           "o": [
             99
+          ]
+        }
+      ]
+    },
+    {
+      "about": "mines, crates (extra shot, shield, repair), a shield blocking a hit, Overdrive charging a torpedo; a sunk carrier can't take Overdrive",
+      "fleets": [
+        "a1h a3h a5h a7h a9h mh2 mh4",
+        "a1v c1v e1v g1v i1v ma8 mj9"
+      ],
+      "first": 0,
+      "levels": [
+        [
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1,
+          1,
+          1
+        ]
+      ],
+      "seed": 5,
+      "crates": 3,
+      "moves": "f0 f0 f63 f10 f38 f20 f1 f69 f17 f30 f2 f40 f3 f20 f4 t2u f50 o3 t2u o0",
+      "results": [
+        "0:hit",
+        "0:hit",
+        "63:crate:extra_shot",
+        "10:hit",
+        "38:crate:shield",
+        "20:blocked",
+        "1:hit",
+        "69:crate:repair",
+        "17:mine",
+        "30:hit",
+        "2:hit",
+        "40:hit",
+        "3:hit",
+        "20:sunk:carrier",
+        "4:hit",
+        "2:hit",
+        "50:miss",
+        "0:charged:torpedo",
+        "12:hit"
+      ],
+      "own": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "0:repaired",
+        "2:exposed",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "error": "power_lost",
+      "next": 1,
+      "winner": null,
+      "charge": [
+        [
+          6,
+          5,
+          5,
+          0,
+          4
+        ],
+        [
+          6,
+          5,
+          5,
+          5,
+          4
+        ]
+      ],
+      "combo": [
+        2,
+        0
+      ],
+      "overdrive": [
+        false,
+        true
+      ],
+      "marks": [
+        {
+          "o": [
+            50
+          ],
+          "x": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "*": [
+            0
+          ],
+          "m": [
+            17
+          ],
+          "c": [
+            38
+          ]
+        },
+        {
+          "x": [
+            2,
+            12
+          ],
+          "s": [
+            0,
+            10,
+            20,
+            30,
+            40
+          ],
+          "-": [
+            1,
+            11,
+            21,
+            31,
+            41,
+            50,
+            51
+          ],
+          "c": [
+            63,
+            69
+          ]
+        }
+      ]
+    },
+    {
+      "about": "a Mk III flare shows crates and a mine (which can't go off now); an extra-ping crate allows a third ping; the silent sub",
+      "fleets": [
+        "a1h a3h a5h a7h a9h mh2 mh4",
+        "a1v c1v e1v g1v i1v ma8 mj9"
+      ],
+      "first": 0,
+      "levels": [
+        [
+          3,
+          3,
+          3,
+          3,
+          3
+        ],
+        [
+          1,
+          1,
+          1,
+          1,
+          1
+        ]
+      ],
+      "seed": 5,
+      "crates": 3,
+      "moves": "f99 f99 f98 f98 l79 f97 f79 f96 p14 f95 p15 f94 p16 f93 p24",
+      "results": [
+        "99:miss",
+        "99:miss",
+        "98:miss",
+        "98:miss",
+        "68:clear,69:crate_seen,78:clear,79:crate_seen,88:clear,89:mine_seen",
+        "97:miss",
+        "79:crate:ping",
+        "96:miss",
+        "14:ping:3",
+        "95:miss",
+        "15:ping:3",
+        "94:miss",
+        "16:ping:0",
+        "93:miss"
+      ],
+      "error": "no_pings_left",
+      "next": 0,
+      "winner": null,
+      "charge": [
+        [
+          5,
+          4,
+          3,
+          4,
+          3
+        ],
+        [
+          6,
+          5,
+          5,
+          5,
+          4
+        ]
+      ],
+      "combo": [
+        0,
+        0
+      ],
+      "overdrive": [
+        false,
+        false
+      ],
+      "marks": [
+        {
+          "o": [
+            93,
+            94,
+            95,
+            96,
+            97,
+            98,
+            99
+          ]
+        },
+        {
+          "o": [
+            98,
+            99
+          ],
+          "-": [
+            68,
+            78,
+            88
+          ],
+          "m": [
+            89
+          ],
+          "+": [
+            69
+          ],
+          "c": [
+            79
           ]
         }
       ]

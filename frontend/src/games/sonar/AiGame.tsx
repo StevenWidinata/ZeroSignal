@@ -20,6 +20,14 @@ export const SOUND: Record<SonarResult["kind"], Sfx> = {
   seen: "zap",
   clear: "splash",
   dud: "whiff",
+  mine: "boom",
+  mine_seen: "zap",
+  crate: "reward",
+  crate_seen: "zap",
+  blocked: "clank",
+  exposed: "bonk",
+  repaired: "reward",
+  charged: "fever",
 };
 
 export default function AiGame({ initial, onExit, onRematch }: { initial: SonarGame; onExit: () => void; onRematch: () => void }) {

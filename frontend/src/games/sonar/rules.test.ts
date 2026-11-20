@@ -1,6 +1,25 @@
 import { describe, expect, it } from "vitest";
 import vectors from "../../../../shared/sonar_vectors.json";
-import { cellName, Duel, FLEET, fleetCode, isError, markChar, moveCode, parseCell, parseFleet, parseMove, pingArea, randomFleet, Sea, shortResult, validateFleet, type Placement } from "./rules";
+import { cellName, Duel, FLEET, fleetCode, isError, markChar, moveCode, parseCell, parseFleet, parseMove, pingArea, randomFleet, Sea, shortResult, validateFleet, type Fleet } from "./rules";
+
+interface TacticsCase {
+  about: string;
+  fleets: string[];
+  first: number;
+  levels: number[][] | null;
+  seed?: number;
+  crates?: number;
+  moves: string;
+  results: string[];
+  own?: string[];
+  error: string | null;
+  next: number;
+  winner: number | null;
+  charge: number[][] | null;
+  combo?: number[];
+  overdrive?: boolean[];
+  marks: Record<string, number[]>[];
+}
 import { POWERS } from "./tactics";
 
 describe("sonar rules (same vectors as the server)", () => {
@@ -30,7 +49,7 @@ describe("sonar rules (same vectors as the server)", () => {
       const [a, b] = c.fleets.map((f) => {
         const r = parseFleet(f);
         if ("error" in r) throw new Error(r.error);
-        return r.ships;
+        return r;
       });
       const d = Duel.replay([a, b], c.first as 0 | 1, c.moves);
       if (isError(d)) throw new Error(d);
@@ -43,13 +62,14 @@ describe("sonar rules (same vectors as the server)", () => {
   });
 
   it("plays Tactics powers like the server", () => {
-    const fleetOf = (f: string): Placement[] => {
+    const fleetOf = (f: string): Fleet => {
       const r = parseFleet(f);
       if ("error" in r) throw new Error(r.error);
-      return r.ships;
+      return r;
     };
-    for (const c of vectors.tactics) {
-      const d = new Duel([fleetOf(c.fleets[0]), fleetOf(c.fleets[1])], c.first as 0 | 1, c.levels as [number[], number[]] | null);
+    for (const c of vectors.tactics as TacticsCase[]) {
+      const setup = c.levels ? { levels: c.levels as [number[], number[]], seed: c.seed ?? 0, crates: c.crates ?? 0 } : null;
+      const d = new Duel([fleetOf(c.fleets[0]), fleetOf(c.fleets[1])], c.first as 0 | 1, setup);
       const tokens = c.moves.split(" ");
       let error: string | null = null;
       tokens.forEach((t, i) => {
@@ -62,6 +82,10 @@ describe("sonar rules (same vectors as the server)", () => {
         }
       });
       expect(d.log.map((l) => l.results.map(([cell, r]) => `${cell}:${shortResult(r)}`).join(",")), c.about).toEqual(c.results);
+      const own = d.log.map((l) => l.own.map(([cell, r]) => `${cell}:${shortResult(r)}`).join(","));
+      expect(own, `${c.about}: own seas`).toEqual(c.own ?? own.map(() => ""));
+      if (c.combo) expect(d.tactics?.combo, c.about).toEqual(c.combo);
+      if (c.overdrive) expect(d.tactics?.overdrive, c.about).toEqual(c.overdrive);
       expect(error, c.about).toBe(c.error);
       expect(d.toMove(), c.about).toBe(c.next);
       expect(d.winner(), c.about).toBe(c.winner);
@@ -75,11 +99,11 @@ describe("sonar rules (same vectors as the server)", () => {
   });
 
   it("writes and reads every move code", () => {
-    for (const code of ["f0", "p99", "a12h", "a90v", "b1.2", "b1.2.3", "r0", "k9", "t3l", "t3r", "t0u", "t9d", "l45"]) {
+    for (const code of ["f0", "p99", "a12h", "a90v", "b1.2", "b1.2.3", "r0", "k9", "t3l", "t3r", "t0u", "t9d", "l45", "o0", "o4"]) {
       const m = parseMove(code);
       expect(m && moveCode(m)).toBe(code);
     }
-    for (const bad of ["", "f", "f100", "f+3", "a12", "a12x", "b1", "b1.2.3.4", "r10", "t3", "t3x", "l100", "z1"]) expect(parseMove(bad), bad).toBeNull();
+    for (const bad of ["", "f", "f100", "f+3", "a12", "a12x", "b1", "b1.2.3.4", "r10", "t3", "t3x", "l100", "z1", "o5", "o"]) expect(parseMove(bad), bad).toBeNull();
   });
 
   it("gives every ship one power, in fleet order", () => {

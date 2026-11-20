@@ -11,10 +11,18 @@
 //! - A sunk ship's power is gone. The submarine also runs silent: while it is
 //!   afloat, enemy pings and radar don't count it.
 //! - Each side has its own Mk level (1–3) per power (Workshop upgrades).
+//! - Extras: each side may hide 2 mines with its fleet (shooting one shows
+//!   the mine's owner one of the shooter's ship squares); 3 supply crates are
+//!   hidden in each sea from the game seed (shooting one gives its item); and
+//!   3 firing moves in a row that hit fill Overdrive, which instantly charges
+//!   one power ("o2") and keeps the turn.
 
 use std::sync::OnceLock;
 
 use serde::{Deserialize, Serialize};
+
+use super::rules::{neighbours, Fleet, CELLS};
+use crate::rng::Rng;
 
 const TACTICS_JSON: &str = include_str!("../../../shared/sonar_tactics.json");
 
@@ -44,8 +52,56 @@ pub struct PowerSpec {
 }
 
 #[derive(Debug, Clone, Deserialize)]
+pub struct ItemSpec {
+    pub id: String,
+}
+
+#[derive(Debug, Clone, Deserialize)]
 pub struct TacticsRules {
+    pub mines: u8,
+    pub crates: u8,
+    pub combo: u8,
+    pub items: Vec<ItemSpec>,
     pub powers: Vec<PowerSpec>,
+}
+
+/// What a supply crate holds (same order as `items` in the JSON).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Item {
+    Ping,
+    Shield,
+    Repair,
+    ExtraShot,
+}
+
+impl Item {
+    pub const ALL: [Item; 4] = [Item::Ping, Item::Shield, Item::Repair, Item::ExtraShot];
+
+    pub fn id(self) -> &'static str {
+        match self {
+            Item::Ping => "ping",
+            Item::Shield => "shield",
+            Item::Repair => "repair",
+            Item::ExtraShot => "extra_shot",
+        }
+    }
+}
+
+/// How a Tactics game is set up: each side's Mk levels, the seed that hides
+/// the crates, and how many crates each sea gets.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Setup {
+    pub levels: [Levels; 2],
+    pub seed: u32,
+    pub crates: u8,
+}
+
+impl Setup {
+    /// A normal game: Mk levels as given, the usual number of crates.
+    pub fn new(levels: [Levels; 2], seed: u32) -> Setup {
+        Setup { levels, seed, crates: tactics_rules().crates }
+    }
 }
 
 pub fn tactics_rules() -> &'static TacticsRules {
@@ -62,11 +118,15 @@ pub fn power_level(power: usize, level: u8) -> PowerLevel {
 pub type Levels = [u8; POWERS];
 pub const MK1: Levels = [1; POWERS];
 
-/// Both sides' power charges.
+/// Both sides' power charges, combo counts and Overdrive.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Tactics {
     pub levels: [Levels; 2],
     pub charge: [[u8; POWERS]; 2],
+    /// Firing moves in a row that hit (resets on a firing move that doesn't).
+    pub combo: [u8; 2],
+    /// A full Overdrive, ready to spend.
+    pub overdrive: [bool; 2],
 }
 
 impl Tactics {
@@ -77,7 +137,7 @@ impl Tactics {
                 charge[side][p] = power_level(p, levels[side][p]).cooldown / 2;
             }
         }
-        Tactics { levels, charge }
+        Tactics { levels, charge, combo: [0; 2], overdrive: [false; 2] }
     }
 
     pub fn spec(&self, side: usize, power: usize) -> PowerLevel {
@@ -94,6 +154,51 @@ impl Tactics {
             self.charge[side][p] = if used == Some(p) { 0 } else { (self.charge[side][p] + 1).min(self.spec(side, p).cooldown) };
         }
     }
+
+    /// After a firing move by `side`: count the combo and fill Overdrive.
+    /// (Pings, radar and flares don't fire, so they leave the combo alone.)
+    pub fn after_firing(&mut self, side: usize, hit: bool) {
+        if !hit {
+            self.combo[side] = 0;
+            return;
+        }
+        let full = tactics_rules().combo;
+        self.combo[side] = (self.combo[side] + 1).min(full);
+        if self.combo[side] == full && !self.overdrive[side] {
+            self.overdrive[side] = true;
+            self.combo[side] = 0;
+        }
+    }
+
+    /// Spend Overdrive to charge `power` right away.
+    pub fn spend_overdrive(&mut self, side: usize, power: usize) {
+        self.overdrive[side] = false;
+        self.charge[side][power] = self.spec(side, power).cooldown;
+    }
+}
+
+/// The seed that hides sea `side`'s crates (mixed so the two seas differ).
+pub fn crate_seed(seed: u32, side: usize) -> u32 {
+    seed ^ 0xC8A7_E5A1u32.wrapping_add(side as u32)
+}
+
+/// Hide `n` supply crates in a sea: on open water, not next to a ship and
+/// not on a mine. Same picks as `hideCrates` in tactics.ts.
+pub fn hide_crates(fleet: &Fleet, seed: u32, n: u8) -> Vec<(usize, Item)> {
+    let occ = fleet.occupancy();
+    let mut spots: Vec<usize> =
+        (0..CELLS).filter(|&c| occ[c].is_none() && neighbours(c).all(|x| occ[x].is_none()) && !fleet.mines.contains(&c)).collect();
+    let mut rng = Rng::new(seed);
+    let mut out = Vec::new();
+    for _ in 0..n {
+        if spots.is_empty() {
+            break;
+        }
+        let cell = spots.remove(rng.below(spots.len() as u32) as usize);
+        let item = Item::ALL[rng.below(Item::ALL.len() as u32) as usize];
+        out.push((cell, item));
+    }
+    out
 }
 
 /// "1,1,2,3,1" -> Mk levels (None if malformed).
@@ -126,6 +231,30 @@ mod tests {
         assert_eq!(rules().fleet[usize::from(SILENT_SHIP)].id, "submarine");
         let codes: Vec<&str> = t.powers.iter().map(|p| p.code.as_str()).collect();
         assert_eq!(codes, ["a", "b", "r", "t", "l"]);
+        let items: Vec<&str> = t.items.iter().map(|i| i.id.as_str()).collect();
+        assert_eq!(items, Item::ALL.map(Item::id));
+    }
+
+    #[test]
+    fn three_hits_in_a_row_fill_overdrive() {
+        let mut t = Tactics::new([MK1, MK1]);
+        t.after_firing(0, true);
+        t.after_firing(0, false);
+        t.after_firing(0, true);
+        t.after_firing(0, true);
+        assert!(!t.overdrive[0]);
+        t.after_firing(0, true);
+        assert!(t.overdrive[0]);
+        assert_eq!(t.combo[0], 0);
+        // A second full meter waits until the first is spent.
+        for _ in 0..4 {
+            t.after_firing(0, true);
+        }
+        assert_eq!(t.combo[0], 3);
+        t.spend_overdrive(0, AIR_STRIKE);
+        assert!(t.ready(0, AIR_STRIKE) && !t.overdrive[0]);
+        t.after_firing(0, true);
+        assert!(t.overdrive[0]);
     }
 
     #[test]
@@ -149,3 +278,4 @@ mod tests {
         assert_eq!(levels_code(&[3, 3, 3, 3, 3]), "3,3,3,3,3");
     }
 }
+

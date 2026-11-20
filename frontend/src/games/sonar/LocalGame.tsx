@@ -51,7 +51,7 @@ export default function LocalGame({ names, look, onExit }: { names: [string, str
           else {
             const a = parseFleet(next[0]!);
             const b = parseFleet(code);
-            if ("ships" in a && "ships" in b) setDuel(new Duel([a.ships, b.ships], 0));
+            if ("ships" in a && "ships" in b) setDuel(new Duel([a, b], 0));
             setPhase({ kind: "cover", who: 0, then: "turn" });
           }
         }}

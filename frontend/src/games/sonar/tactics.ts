@@ -19,7 +19,23 @@ export interface PowerSpec {
   levels: PowerLevel[];
 }
 
-export const POWERS = (raw as { powers: PowerSpec[] }).powers;
+export interface ItemSpec {
+  id: Item;
+  name: string;
+  icon: string;
+  text: string;
+}
+
+/** What a supply crate holds. */
+export type Item = "ping" | "shield" | "repair" | "extra_shot";
+
+const TACTICS = raw as { mines: number; crates: number; combo: number; items: ItemSpec[]; powers: PowerSpec[] };
+export const POWERS = TACTICS.powers;
+export const ITEMS = TACTICS.items;
+/** Mines each side may hide; crates hidden in each sea; hits in a row for Overdrive. */
+export const MINES = TACTICS.mines;
+export const CRATES = TACTICS.crates;
+export const COMBO = TACTICS.combo;
 export const AIR_STRIKE = 0;
 export const SALVO = 1;
 export const RADAR = 2;
@@ -38,10 +54,21 @@ export function powerLevel(power: number, level: number): PowerLevel {
   return POWERS[power].levels[Math.min(MAX_LEVEL, Math.max(1, level)) - 1];
 }
 
-/** Both sides' power charges (like `Tactics` in tactics.rs). */
+/** How a Tactics game is set up: Mk levels, the crate seed, crates per sea (like `Setup` in tactics.rs). */
+export interface Setup {
+  levels: [Levels, Levels];
+  seed: number;
+  crates: number;
+}
+
+/** Both sides' power charges, combo counts and Overdrive (like `Tactics` in tactics.rs). */
 export class Tactics {
   readonly levels: [Levels, Levels];
   charge: [number[], number[]];
+  /** Firing moves in a row that hit. */
+  combo: [number, number] = [0, 0];
+  /** A full Overdrive, ready to spend. */
+  overdrive: [boolean, boolean] = [false, false];
 
   constructor(levels: [Levels, Levels]) {
     this.levels = levels;
@@ -59,5 +86,24 @@ export class Tactics {
   /** After `side` moved: the power it used (if any) starts over, the rest charge up. */
   afterMove(side: number, used: number | null) {
     this.charge[side] = this.charge[side].map((c, p) => (used === p ? 0 : Math.min(c + 1, this.spec(side, p).cooldown)));
+  }
+
+  /** After a firing move by `side`: count the combo and fill Overdrive. */
+  afterFiring(side: number, hit: boolean) {
+    if (!hit) {
+      this.combo[side] = 0;
+      return;
+    }
+    this.combo[side] = Math.min(this.combo[side] + 1, COMBO);
+    if (this.combo[side] === COMBO && !this.overdrive[side]) {
+      this.overdrive[side] = true;
+      this.combo[side] = 0;
+    }
+  }
+
+  /** Spend Overdrive to charge `power` right away. */
+  spendOverdrive(side: number, power: number) {
+    this.overdrive[side] = false;
+    this.charge[side][power] = this.spec(side, power).cooldown;
   }
 }

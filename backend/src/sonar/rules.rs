@@ -19,6 +19,8 @@ use std::sync::OnceLock;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 
+use super::tactics::{crate_seed, hide_crates, Item, Setup, Tactics};
+
 const RULES_JSON: &str = include_str!("../../../shared/sonar_rules.json");
 
 pub const SIZE: usize = 10;
@@ -51,6 +53,10 @@ pub enum FleetError {
     OffGrid,
     Overlap,
     Touching,
+    /// Tactics: a mine on or next to a ship, off the grid, or two on one square.
+    BadMine,
+    /// Tactics: more mines than allowed.
+    TooManyMines,
 }
 
 impl FleetError {
@@ -61,6 +67,8 @@ impl FleetError {
             FleetError::OffGrid => "a ship sticks out of the grid",
             FleetError::Overlap => "two ships overlap",
             FleetError::Touching => "ships can't touch, not even corner to corner",
+            FleetError::BadMine => "mines go on open water, not on or next to a ship",
+            FleetError::TooManyMines => "too many mines",
         }
     }
 }
@@ -90,10 +98,13 @@ pub struct Placement {
     pub horizontal: bool,
 }
 
-/// A whole fleet, ships in `rules().fleet` order.
+/// A whole fleet, ships in `rules().fleet` order. Tactics fleets also hide
+/// up to 2 mines, written after the ships as "m" + square: "… mc7 mh2"
+/// (Classic games ignore them).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Fleet {
     pub ships: Vec<Placement>,
+    pub mines: Vec<usize>,
 }
 
 impl Fleet {
@@ -101,8 +112,17 @@ impl Fleet {
     pub fn parse(code: &str) -> Result<Fleet, FleetError> {
         let tokens: Vec<&str> = code.split_whitespace().collect();
         let mut ships = Vec::with_capacity(tokens.len());
+        let mut mines = Vec::new();
         for t in &tokens {
             let t = t.to_ascii_lowercase();
+            if let Some(m) = t.strip_prefix('m') {
+                mines.push(parse_cell(m).ok_or(FleetError::BadCode)?);
+                continue;
+            }
+            if !mines.is_empty() {
+                // Mines come after all the ships.
+                return Err(FleetError::BadCode);
+            }
             let (cell, dir) = t.split_at(t.len().saturating_sub(1));
             let horizontal = match dir {
                 "h" => true,
@@ -112,7 +132,7 @@ impl Fleet {
             let bow = parse_cell(cell).ok_or(FleetError::BadCode)?;
             ships.push(Placement { bow, horizontal });
         }
-        let f = Fleet { ships };
+        let f = Fleet { ships, mines };
         f.validate()?;
         Ok(f)
     }
@@ -121,8 +141,14 @@ impl Fleet {
         self.ships
             .iter()
             .map(|p| format!("{}{}", cell_name(p.bow), if p.horizontal { 'h' } else { 'v' }))
+            .chain(self.mines.iter().map(|&m| format!("m{}", cell_name(m))))
             .collect::<Vec<_>>()
             .join(" ")
+    }
+
+    /// The same ships without mines (what a Classic game uses).
+    pub fn without_mines(&self) -> Fleet {
+        Fleet { ships: self.ships.clone(), mines: Vec::new() }
     }
 
     /// The cells of ship `i`, or None if it leaves the grid.
@@ -155,6 +181,14 @@ impl Fleet {
                         return Err(FleetError::Touching);
                     }
                 }
+            }
+        }
+        if self.mines.len() > usize::from(super::tactics::tactics_rules().mines) {
+            return Err(FleetError::TooManyMines);
+        }
+        for (i, &m) in self.mines.iter().enumerate() {
+            if m >= CELLS || owner[m] != usize::MAX || neighbours(m).any(|n| owner[n] != usize::MAX) || self.mines[..i].contains(&m) {
+                return Err(FleetError::BadMine);
             }
         }
         Ok(())
@@ -210,7 +244,7 @@ pub fn random_fleet(rng: &mut impl Rng) -> Fleet {
                     continue;
                 }
                 ships.push(p);
-                if (Fleet { ships: ships.clone() }).partial_ok() {
+                if (Fleet { ships: ships.clone(), mines: Vec::new() }).partial_ok() {
                     placed = true;
                     break;
                 }
@@ -220,7 +254,7 @@ pub fn random_fleet(rng: &mut impl Rng) -> Fleet {
                 continue 'again;
             }
         }
-        return Fleet { ships };
+        return Fleet { ships, mines: Vec::new() };
     }
 }
 
@@ -261,13 +295,20 @@ pub enum Mark {
     /// Water next to a sunk ship (ships can't touch, so it's known empty),
     /// or water lit up by a flare.
     Empty,
-    /// Tactics: a ship square seen (by a flare) but not hit yet.
+    /// Tactics: a ship square seen (by a flare, a mine or a shield) but not hit yet.
     Spotted,
+    /// Tactics: a mine found (set off, or seen by a flare). Harmless now.
+    Mine,
+    /// Tactics: a supply crate seen by a flare, still there to shoot.
+    CrateSeen,
+    /// Tactics: an opened supply crate (water).
+    Crate,
 }
 
 impl Mark {
     /// One letter per square, as sent to the browser: '.' unknown, 'o' miss,
-    /// 'x' hit, 's' sunk ship, '-' known water, '*' spotted ship.
+    /// 'x' hit, 's' sunk ship, '-' known water, '*' spotted ship, 'm' mine,
+    /// '+' crate seen, 'c' opened crate.
     pub fn ch(self) -> char {
         match self {
             Mark::Unknown => '.',
@@ -276,12 +317,15 @@ impl Mark {
             Mark::Sunk(_) => 's',
             Mark::Empty => '-',
             Mark::Spotted => '*',
+            Mark::Mine => 'm',
+            Mark::CrateSeen => '+',
+            Mark::Crate => 'c',
         }
     }
 
     /// Squares you can still fire at.
     pub fn open(self) -> bool {
-        matches!(self, Mark::Unknown | Mark::Spotted)
+        matches!(self, Mark::Unknown | Mark::Spotted | Mark::CrateSeen)
     }
 }
 
@@ -300,6 +344,22 @@ pub enum ShotResult {
     Clear,
     /// Tactics: a torpedo that ran off the far edge (reported at its last square).
     Dud,
+    /// Tactics: you set off a mine (one of your ship squares is shown to its owner).
+    Mine,
+    /// Tactics: a flare shows a mine (now harmless).
+    MineSeen,
+    /// Tactics: you opened a supply crate.
+    Crate { item: Item },
+    /// Tactics: a flare shows a supply crate.
+    CrateSeen,
+    /// Tactics: a shield stopped the shot (but a ship is there).
+    Blocked,
+    /// Tactics, your own sea: a mine you set off showed this ship square.
+    Exposed,
+    /// Tactics, your own sea: a repair kit fixed this square.
+    Repaired,
+    /// Tactics: Overdrive charged this power.
+    Charged { power: u8 },
 }
 
 impl ShotResult {
@@ -314,18 +374,32 @@ impl ShotResult {
             ShotResult::Seen => "seen".into(),
             ShotResult::Clear => "clear".into(),
             ShotResult::Dud => "dud".into(),
+            ShotResult::Mine => "mine".into(),
+            ShotResult::MineSeen => "mine_seen".into(),
+            ShotResult::Crate { item } => format!("crate:{}", item.id()),
+            ShotResult::CrateSeen => "crate_seen".into(),
+            ShotResult::Blocked => "blocked".into(),
+            ShotResult::Exposed => "exposed".into(),
+            ShotResult::Repaired => "repaired".into(),
+            ShotResult::Charged { power } => format!("charged:{}", super::tactics::tactics_rules().powers[usize::from(power)].id),
         }
+    }
+
+    /// Hit or sunk: counts for a combo.
+    pub fn struck(self) -> bool {
+        matches!(self, ShotResult::Hit | ShotResult::Sunk { .. })
     }
 
     /// How much a result matters, for picking a move's headline result.
     fn weight(self) -> u8 {
         match self {
-            ShotResult::Sunk { .. } => 5,
-            ShotResult::Hit => 4,
-            ShotResult::Seen => 3,
-            ShotResult::Ping { .. } | ShotResult::Radar { .. } => 2,
+            ShotResult::Sunk { .. } => 6,
+            ShotResult::Hit => 5,
+            ShotResult::Crate { .. } | ShotResult::Mine => 4,
+            ShotResult::Blocked | ShotResult::Seen | ShotResult::CrateSeen | ShotResult::MineSeen => 3,
+            ShotResult::Ping { .. } | ShotResult::Radar { .. } | ShotResult::Charged { .. } => 2,
             ShotResult::Clear | ShotResult::Miss => 1,
-            ShotResult::Dud => 0,
+            ShotResult::Dud | ShotResult::Exposed | ShotResult::Repaired => 0,
         }
     }
 }
@@ -342,6 +416,10 @@ pub enum ShotError {
     NotReady,
     /// The ship with that power has sunk.
     PowerLost,
+    /// Overdrive isn't full.
+    NoOverdrive,
+    /// Overdrive on a power that is already charged.
+    AlreadyReady,
 }
 
 impl ShotError {
@@ -354,6 +432,8 @@ impl ShotError {
             ShotError::NotTactics => "ship powers are only in Tactics games",
             ShotError::NotReady => "that power is still charging",
             ShotError::PowerLost => "that ship has sunk, so its power is gone",
+            ShotError::NoOverdrive => "Overdrive isn't full yet",
+            ShotError::AlreadyReady => "that power is already charged",
         }
     }
 
@@ -367,6 +447,8 @@ impl ShotError {
             ShotError::NotTactics => "not_tactics",
             ShotError::NotReady => "not_ready",
             ShotError::PowerLost => "power_lost",
+            ShotError::NoOverdrive => "no_overdrive",
+            ShotError::AlreadyReady => "already_ready",
         }
     }
 }
@@ -431,6 +513,14 @@ pub struct Sea {
     pub sweeps: Vec<Sweep>,
     /// Tactics: this ship doesn't show in pings or radar while afloat.
     silent: Option<u8>,
+    /// Tactics: mines still armed.
+    mines: Vec<usize>,
+    /// Tactics: hidden supply crates (square, item) not opened yet.
+    crates: Vec<(usize, Item)>,
+    /// Tactics: extra pings the shooter found in crates in this sea.
+    pub bonus_pings: u8,
+    /// Tactics: shields guarding this sea's ships.
+    pub shields: u8,
     /// Shots and pings so far.
     pub moves: Vec<String>,
 }
@@ -453,6 +543,8 @@ pub enum Move {
     Torpedo { line: usize, edge: Edge },
     /// "l45": lights up around 45.
     Flare(usize),
+    /// "o2": spend Overdrive to charge power 2 now (keeps the turn).
+    Overdrive(usize),
 }
 
 impl Move {
@@ -465,6 +557,7 @@ impl Move {
             "f" => Some(Move::Fire(cell(rest)?)),
             "p" => Some(Move::Ping(cell(rest)?)),
             "l" => Some(Move::Flare(cell(rest)?)),
+            "o" => Some(Move::Overdrive(num(rest).filter(|&p| p < super::tactics::POWERS)?)),
             "r" => Some(Move::Radar { line: line(rest)?, row: true }),
             "k" => Some(Move::Radar { line: line(rest)?, row: false }),
             "a" | "t" if !rest.is_empty() => {
@@ -504,6 +597,7 @@ impl Move {
             Move::Radar { line, row } => format!("{}{line}", if row { 'r' } else { 'k' }),
             Move::Torpedo { line, edge } => format!("t{line}{}", edge.ch()),
             Move::Flare(c) => format!("l{c}"),
+            Move::Overdrive(p) => format!("o{p}"),
         }
     }
 
@@ -511,7 +605,7 @@ impl Move {
     pub fn power(self) -> Option<usize> {
         use super::tactics::{AIR_STRIKE, FLARE, RADAR, SALVO, TORPEDO};
         match self {
-            Move::Fire(_) | Move::Ping(_) => None,
+            Move::Fire(_) | Move::Ping(_) | Move::Overdrive(_) => None,
             Move::AirStrike { .. } => Some(AIR_STRIKE),
             Move::Salvo { .. } => Some(SALVO),
             Move::Radar { .. } => Some(RADAR),
@@ -527,7 +621,13 @@ impl Move {
             Move::Salvo { cells, .. } => cells[0],
             Move::Radar { line, row } => line_cells(line, row)[0],
             Move::Torpedo { line, edge } => torpedo_path(line, edge)[0],
+            Move::Overdrive(_) => 0,
         }
+    }
+
+    /// Moves that fire shots (they count for combos).
+    pub fn fires(self) -> bool {
+        matches!(self, Move::Fire(_) | Move::AirStrike { .. } | Move::Salvo { .. } | Move::Torpedo { .. })
     }
 }
 
@@ -566,17 +666,22 @@ impl Sea {
             pings: Vec::new(),
             sweeps: Vec::new(),
             silent: None,
+            mines: Vec::new(),
+            crates: Vec::new(),
+            bonus_pings: 0,
+            shields: 0,
             moves: Vec::new(),
         }
     }
 
-    /// A Tactics sea: the submarine runs silent.
-    pub fn new_tactics(fleet: &Fleet) -> Sea {
-        Sea { silent: Some(super::tactics::SILENT_SHIP), ..Sea::new(fleet) }
+    /// A Tactics sea: the submarine runs silent, the fleet's mines are armed
+    /// and `crates` are hidden (see `tactics::hide_crates`).
+    pub fn new_tactics(fleet: &Fleet, crates: Vec<(usize, Item)>) -> Sea {
+        Sea { silent: Some(super::tactics::SILENT_SHIP), mines: fleet.mines.clone(), crates, ..Sea::new(fleet) }
     }
 
     pub fn pings_left(&self) -> u8 {
-        rules().pings.saturating_sub(self.pings.len() as u8)
+        (rules().pings + self.bonus_pings).saturating_sub(self.pings.len() as u8)
     }
 
     pub fn all_sunk(&self) -> bool {
@@ -609,10 +714,25 @@ impl Sea {
 
     /// Fire at an open square.
     fn fire_at(&mut self, cell: usize) -> ShotResult {
+        if let Some(i) = self.mines.iter().position(|&m| m == cell) {
+            self.mines.remove(i);
+            self.marks[cell] = Mark::Mine;
+            return ShotResult::Mine;
+        }
+        if let Some(i) = self.crates.iter().position(|&(c, _)| c == cell) {
+            let (_, item) = self.crates.remove(i);
+            self.marks[cell] = Mark::Crate;
+            return ShotResult::Crate { item };
+        }
         match self.occ[cell] {
             None => {
                 self.marks[cell] = Mark::Miss;
                 ShotResult::Miss
+            }
+            Some(_) if self.shields > 0 => {
+                self.shields -= 1;
+                self.marks[cell] = Mark::Spotted;
+                ShotResult::Blocked
             }
             Some(ship) => {
                 let s = ship as usize;
@@ -726,6 +846,7 @@ impl Sea {
                     None => vec![(path[SIZE - 1], ShotResult::Dud)],
                 }
             }
+            Move::Overdrive(_) => return Err(ShotError::BadMove),
             Move::Flare(center) => {
                 let area = flare_area(center, size);
                 if !area.iter().any(|&c| self.marks[c] == Mark::Unknown) {
@@ -739,6 +860,13 @@ impl Sea {
                     if self.occ[c].is_some() {
                         self.marks[c] = Mark::Spotted;
                         v.push((c, ShotResult::Seen));
+                    } else if let Some(i) = self.mines.iter().position(|&m| m == c) {
+                        self.mines.remove(i);
+                        self.marks[c] = Mark::Mine;
+                        v.push((c, ShotResult::MineSeen));
+                    } else if self.crates.iter().any(|&(x, _)| x == c) {
+                        self.marks[c] = Mark::CrateSeen;
+                        v.push((c, ShotResult::CrateSeen));
                     } else {
                         self.marks[c] = Mark::Empty;
                         v.push((c, ShotResult::Clear));
@@ -766,6 +894,29 @@ impl Sea {
     pub fn ship_at(&self, cell: usize) -> Option<u8> {
         self.occ[cell]
     }
+
+    /// A mine went off: show one ship square the other side doesn't know yet
+    /// (`pick(n)` chooses 0..n). Returns the square, if any was left.
+    fn expose(&mut self, pick: impl FnOnce(usize) -> usize) -> Option<usize> {
+        let hidden: Vec<usize> = (0..CELLS).filter(|&c| self.occ[c].is_some() && self.marks[c] == Mark::Unknown).collect();
+        if hidden.is_empty() {
+            return None;
+        }
+        let c = hidden[pick(hidden.len())];
+        self.marks[c] = Mark::Spotted;
+        Some(c)
+    }
+
+    /// A repair kit: fix the first hit square (it goes back to "spotted"), or
+    /// None if no ship afloat is hit.
+    fn repair(&mut self) -> Option<usize> {
+        let c = (0..CELLS).find(|&c| self.marks[c] == Mark::Hit)?;
+        if let Some(s) = self.occ[c] {
+            self.hits[usize::from(s)] -= 1;
+        }
+        self.marks[c] = Mark::Spotted;
+        Some(c)
+    }
 }
 
 /// One move in a duel and what it did, square by square.
@@ -773,7 +924,11 @@ impl Sea {
 pub struct Turn {
     pub side: usize,
     pub mv: Move,
+    /// What happened in the other side's sea.
     pub results: Vec<(usize, ShotResult)>,
+    /// Tactics: what happened in the mover's own sea (a mine showed a ship
+    /// square, a repair kit fixed one).
+    pub own: Vec<(usize, ShotResult)>,
 }
 
 impl Turn {
@@ -783,9 +938,9 @@ impl Turn {
     }
 }
 
-/// Two sides firing in turn. Side 0 and side 1; `first` moves first. Whose turn
-/// it is comes from the moves played (`next`), not from counting them, so a
-/// move can later grant an extra turn. Every move (a ping too) passes the turn.
+/// Two sides firing in turn. Side 0 and side 1; `first` moves first. Every
+/// move (a ping too) passes the turn, except in Tactics an Extra shot crate
+/// and spending Overdrive, which keep it.
 /// `log` holds both sides' moves in order; side s fires at the other side's
 /// fleet. A Tactics duel (`tactics` is set) also allows ship powers.
 #[derive(Debug, Clone)]
@@ -795,30 +950,28 @@ pub struct Duel {
     /// The side to move now.
     next: usize,
     pub log: Vec<Turn>,
-    pub tactics: Option<super::tactics::Tactics>,
+    pub tactics: Option<Tactics>,
+    /// Tactics: picks which ship square a mine shows.
+    seed: u32,
 }
 
 impl Duel {
     pub fn new(fleets: [&Fleet; 2], first: usize) -> Duel {
-        Duel { seas: [Sea::new(fleets[0]), Sea::new(fleets[1])], next: first, log: Vec::new(), tactics: None }
+        Duel { seas: [Sea::new(fleets[0]), Sea::new(fleets[1])], next: first, log: Vec::new(), tactics: None, seed: 0 }
     }
 
-    /// A Tactics duel with each side's power Mk levels.
-    pub fn new_tactics(fleets: [&Fleet; 2], first: usize, levels: [super::tactics::Levels; 2]) -> Duel {
-        Duel {
-            seas: [Sea::new_tactics(fleets[0]), Sea::new_tactics(fleets[1])],
-            next: first,
-            log: Vec::new(),
-            tactics: Some(super::tactics::Tactics::new(levels)),
-        }
+    /// A Tactics duel (Mk levels, crates and the seed come from `setup`).
+    pub fn new_tactics(fleets: [&Fleet; 2], first: usize, setup: Setup) -> Duel {
+        let sea = |s: usize| Sea::new_tactics(fleets[s], hide_crates(fleets[s], crate_seed(setup.seed, s), setup.crates));
+        Duel { seas: [sea(0), sea(1)], next: first, log: Vec::new(), tactics: Some(Tactics::new(setup.levels)), seed: setup.seed }
     }
 
     pub fn replay(fleets: [&Fleet; 2], first: usize, moves: &str) -> Result<Duel, ShotError> {
         Duel::new(fleets, first).replayed(moves)
     }
 
-    pub fn replay_tactics(fleets: [&Fleet; 2], first: usize, levels: [super::tactics::Levels; 2], moves: &str) -> Result<Duel, ShotError> {
-        Duel::new_tactics(fleets, first, levels).replayed(moves)
+    pub fn replay_tactics(fleets: [&Fleet; 2], first: usize, setup: Setup, moves: &str) -> Result<Duel, ShotError> {
+        Duel::new_tactics(fleets, first, setup).replayed(moves)
     }
 
     fn replayed(mut self, moves: &str) -> Result<Duel, ShotError> {
@@ -845,6 +998,23 @@ impl Duel {
             return Err(ShotError::Over);
         }
         let side = self.to_move();
+        if let Move::Overdrive(p) = m {
+            let t = self.tactics.as_mut().ok_or(ShotError::NotTactics)?;
+            if !t.overdrive[side] {
+                return Err(ShotError::NoOverdrive);
+            }
+            if self.seas[side].is_sunk(p) {
+                return Err(ShotError::PowerLost);
+            }
+            if t.ready(side, p) {
+                return Err(ShotError::AlreadyReady);
+            }
+            t.spend_overdrive(side, p);
+            let r = ShotResult::Charged { power: p as u8 };
+            // A free action: the turn stays.
+            self.log.push(Turn { side, mv: m, results: vec![(0, r)], own: Vec::new() });
+            return Ok(r);
+        }
         let power = m.power();
         let mut size = 0;
         if let Some(p) = power {
@@ -863,13 +1033,39 @@ impl Duel {
             }
         }
         let results = self.seas[1 - side].strike(m, size)?;
+        let mut own = Vec::new();
+        let mut extra_turn = false;
+        for &(_, r) in &results {
+            match r {
+                ShotResult::Mine => {
+                    let salt = 0x5EED_0000u32.wrapping_add(self.log.len() as u32);
+                    let mut rng = crate::rng::Rng::new(self.seed ^ salt);
+                    if let Some(c) = self.seas[side].expose(|n| rng.below(n as u32) as usize) {
+                        own.push((c, ShotResult::Exposed));
+                    }
+                }
+                ShotResult::Crate { item } => match item {
+                    Item::Ping => self.seas[1 - side].bonus_pings += 1,
+                    Item::Shield => self.seas[side].shields += 1,
+                    Item::Repair => match self.seas[side].repair() {
+                        Some(c) => own.push((c, ShotResult::Repaired)),
+                        None => self.seas[side].shields += 1,
+                    },
+                    Item::ExtraShot => extra_turn = true,
+                },
+                _ => {}
+            }
+        }
         if let Some(t) = self.tactics.as_mut() {
             t.after_move(side, power);
+            if m.fires() {
+                t.after_firing(side, results.iter().any(|&(_, r)| r.struck()));
+            }
         }
-        let turn = Turn { side, mv: m, results };
+        let turn = Turn { side, mv: m, results, own };
         let main = turn.main();
         self.log.push(turn);
-        self.next = 1 - side;
+        self.next = if extra_turn { side } else { 1 - side };
         Ok(main)
     }
 
@@ -913,6 +1109,10 @@ mod tests {
         fleets: [String; 2],
         first: usize,
         levels: Option<[crate::sonar::tactics::Levels; 2]>,
+        #[serde(default)]
+        seed: u32,
+        #[serde(default)]
+        crates: u8,
         moves: String,
         /// Per move: "cell:result,cell:result".
         results: Vec<String>,
@@ -921,6 +1121,10 @@ mod tests {
         next: usize,
         winner: Option<usize>,
         charge: Option<[[u8; 5]; 2]>,
+        /// Per move: effects in the mover's own sea (checked when given).
+        own: Option<Vec<String>>,
+        combo: Option<[u8; 2]>,
+        overdrive: Option<[bool; 2]>,
         /// Per sea: mark letter -> squares (the rest unknown).
         marks: [std::collections::BTreeMap<char, Vec<usize>>; 2],
     }
@@ -985,7 +1189,7 @@ mod tests {
             let a = Fleet::parse(&c.fleets[0]).unwrap();
             let b = Fleet::parse(&c.fleets[1]).unwrap();
             let mut d = match c.levels {
-                Some(l) => Duel::new_tactics([&a, &b], c.first, l),
+                Some(levels) => Duel::new_tactics([&a, &b], c.first, Setup { levels, seed: c.seed, crates: c.crates }),
                 None => Duel::new([&a, &b], c.first),
             };
             let tokens: Vec<&str> = c.moves.split_whitespace().collect();
@@ -1002,6 +1206,21 @@ mod tests {
                 .map(|t| t.results.iter().map(|(cell, r)| format!("{cell}:{}", r.short())).collect::<Vec<_>>().join(","))
                 .collect();
             assert_eq!(got, c.results, "{}", c.about);
+            let own: Vec<String> = d
+                .log
+                .iter()
+                .map(|t| t.own.iter().map(|(cell, r)| format!("{cell}:{}", r.short())).collect::<Vec<_>>().join(","))
+                .collect();
+            match &c.own {
+                Some(want) => assert_eq!(&own, want, "{}: own seas", c.about),
+                None => assert!(own.iter().all(String::is_empty), "{}: own seas", c.about),
+            }
+            if let Some(combo) = c.combo {
+                assert_eq!(d.tactics.as_ref().unwrap().combo, combo, "{}", c.about);
+            }
+            if let Some(o) = c.overdrive {
+                assert_eq!(d.tactics.as_ref().unwrap().overdrive, o, "{}", c.about);
+            }
             assert_eq!(error, c.error, "{}", c.about);
             assert_eq!(d.to_move(), c.next, "{}", c.about);
             assert_eq!(d.winner(), c.winner, "{}", c.about);
@@ -1017,8 +1236,8 @@ mod tests {
                 assert_eq!(got, want.iter().collect::<String>(), "{}: sea {s}", c.about);
             }
             // Replaying the moves played so far gives the same duel.
-            if let Some(l) = c.levels {
-                let again = Duel::replay_tactics([&a, &b], c.first, l, &d.move_string()).unwrap();
+            if let Some(levels) = c.levels {
+                let again = Duel::replay_tactics([&a, &b], c.first, Setup { levels, seed: c.seed, crates: c.crates }, &d.move_string()).unwrap();
                 assert_eq!(again.tactics, d.tactics);
             }
         }
@@ -1026,10 +1245,10 @@ mod tests {
 
     #[test]
     fn move_codes_round_trip() {
-        for code in ["f0", "p99", "a12h", "a90v", "b1.2", "b1.2.3", "r0", "k9", "t3l", "t3r", "t0u", "t9d", "l45"] {
+        for code in ["f0", "p99", "a12h", "a90v", "b1.2", "b1.2.3", "r0", "k9", "t3l", "t3r", "t0u", "t9d", "l45", "o0", "o4"] {
             assert_eq!(Move::parse(code).map(|m| m.code()).as_deref(), Some(code));
         }
-        for bad in ["", "f", "f100", "f+3", "a12", "a12x", "b1", "b1.2.3.4", "r10", "t3", "t3x", "l100", "z1"] {
+        for bad in ["", "f", "f100", "f+3", "a12", "a12x", "b1", "b1.2.3.4", "r10", "t3", "t3x", "l100", "z1", "o5", "o"] {
             assert_eq!(Move::parse(bad), None, "{bad}");
         }
     }
@@ -1038,7 +1257,7 @@ mod tests {
     fn a_classic_sea_ignores_powers_and_hears_the_sub() {
         let f = Fleet::parse("a1v c1v e1v g1v i1v").unwrap();
         assert_eq!(Sea::new(&f).play(Move::Ping(16)), Ok(ShotResult::Ping { count: 3 }));
-        assert_eq!(Sea::new_tactics(&f).play(Move::Ping(16)), Ok(ShotResult::Ping { count: 0 }));
+        assert_eq!(Sea::new_tactics(&f, Vec::new()).play(Move::Ping(16)), Ok(ShotResult::Ping { count: 0 }));
         assert_eq!(Sea::new(&f).play(Move::Flare(0)), Err(ShotError::NotTactics));
     }
 

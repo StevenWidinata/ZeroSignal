@@ -888,7 +888,7 @@ export interface ChessPuzzle {
 
 export type SonarLevel = "easy" | "medium" | "hard" | "master";
 
-/** Same shape as `ShotResult` in games/sonar/rules.ts (radar, seen, clear and dud are Tactics only). */
+/** Same shape as `ShotResult` in games/sonar/rules.ts (everything after ping is Tactics only). */
 export type SonarResult =
   | { kind: "miss" }
   | { kind: "hit" }
@@ -897,11 +897,19 @@ export type SonarResult =
   | { kind: "radar"; count: number }
   | { kind: "seen" }
   | { kind: "clear" }
-  | { kind: "dud" };
+  | { kind: "dud" }
+  | { kind: "mine" }
+  | { kind: "mine_seen" }
+  | { kind: "crate"; item: "ping" | "shield" | "repair" | "extra_shot" }
+  | { kind: "crate_seen" }
+  | { kind: "blocked" }
+  | { kind: "exposed" }
+  | { kind: "repaired" }
+  | { kind: "charged"; power: number };
 
 /** What a shooter knows about a sea. */
 export interface SonarSea {
-  /** 100 chars: '.' unknown, 'o' miss, 'x' hit, 's' sunk, '-' known water, '*' spotted ship (Tactics). */
+  /** 100 chars: '.' unknown, 'o' miss, 'x' hit, 's' sunk, '-' known water; Tactics: '*' spotted ship, 'm' mine, '+' crate seen, 'c' opened crate. */
   marks: string;
   sunk: { ship: number; cells: number[] }[];
   pings: { center: number; count: number }[];

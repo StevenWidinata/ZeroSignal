@@ -5,7 +5,8 @@
  * Tactics powers: see tactics.ts.
  */
 import raw from "../../../../shared/sonar_rules.json";
-import { SILENT_SHIP, Tactics, type Levels } from "./tactics";
+import { Rng } from "../../platform/seeded";
+import { MINES, POWERS, SILENT_SHIP, Tactics, type Item, type Setup } from "./tactics";
 
 export interface ShipSpec {
   id: string;
@@ -18,7 +19,7 @@ export const SIZE = 10;
 export const CELLS = SIZE * SIZE;
 export const FLEET = RULES.fleet;
 
-export type FleetError = "bad_code" | "wrong_count" | "off_grid" | "overlap" | "touching";
+export type FleetError = "bad_code" | "wrong_count" | "off_grid" | "overlap" | "touching" | "bad_mine" | "too_many_mines";
 
 export const FLEET_ERROR_TEXT: Record<FleetError, string> = {
   bad_code: "That isn't a fleet.",
@@ -26,6 +27,8 @@ export const FLEET_ERROR_TEXT: Record<FleetError, string> = {
   off_grid: "A ship sticks out of the grid.",
   overlap: "Two ships overlap.",
   touching: "Ships can't touch, not even corner to corner.",
+  bad_mine: "Mines go on open water, not on or next to a ship.",
+  too_many_mines: "Too many mines.",
 };
 
 /** "c7" -> 62. */
@@ -75,23 +78,68 @@ export function pingArea(center: number): number[] {
   return [...neighbours(center), center].sort((a, b) => a - b);
 }
 
-export function parseFleet(code: string): { ships: Placement[] } | { error: FleetError } {
+/** A fleet: ships in FLEET order, plus (Tactics) up to 2 mines written "… mc7 mh2". */
+export interface Fleet {
+  ships: Placement[];
+  mines: number[];
+}
+
+export function parseFleet(code: string): Fleet | { error: FleetError } {
   const tokens = code.split(/\s+/).filter(Boolean);
   const ships: Placement[] = [];
+  const mines: number[] = [];
   for (const raw of tokens) {
     const t = raw.toLowerCase();
+    if (t.startsWith("m")) {
+      const m = parseCell(t.slice(1));
+      if (m === null) return { error: "bad_code" };
+      mines.push(m);
+      continue;
+    }
+    // Mines come after all the ships.
+    if (mines.length) return { error: "bad_code" };
     const dir = t.slice(-1);
     if (dir !== "h" && dir !== "v") return { error: "bad_code" };
     const bow = parseCell(t.slice(0, -1));
     if (bow === null) return { error: "bad_code" };
     ships.push({ bow, horizontal: dir === "h" });
   }
-  const error = validateFleet(ships);
-  return error ? { error } : { ships };
+  const error = validateFleet(ships) ?? validateMines(ships, mines);
+  return error ? { error } : { ships, mines };
 }
 
-export function fleetCode(ships: Placement[]): string {
-  return ships.map((p) => `${cellName(p.bow)}${p.horizontal ? "h" : "v"}`).join(" ");
+export function fleetCode(ships: Placement[], mines: number[] = []): string {
+  return [...ships.map((p) => `${cellName(p.bow)}${p.horizontal ? "h" : "v"}`), ...mines.map((m) => `m${cellName(m)}`)].join(" ");
+}
+
+/** null = the mines are fine: at most MINES, on open water, not next to a ship, no two on one square. */
+export function validateMines(ships: (Placement | null)[], mines: number[]): FleetError | null {
+  if (mines.length > MINES) return "too_many_mines";
+  const occ = occupancy(ships);
+  for (let i = 0; i < mines.length; i++) {
+    const m = mines[i];
+    if (m < 0 || m >= CELLS || occ[m] !== -1 || neighbours(m).some((n) => occ[n] !== -1) || mines.indexOf(m) !== i) return "bad_mine";
+  }
+  return null;
+}
+
+/** The seed that hides sea `side`'s crates (like `crate_seed` in tactics.rs). */
+export const crateSeed = (seed: number, side: number) => (seed ^ (0xc8a7e5a1 + side)) >>> 0;
+
+const ITEM_ORDER: Item[] = ["ping", "shield", "repair", "extra_shot"];
+
+/** Hide `n` crates on open water, not next to a ship, not on a mine (like `hide_crates` in tactics.rs). */
+export function hideCrates(fleet: Fleet, seed: number, n: number): [number, Item][] {
+  const occ = occupancy(fleet.ships);
+  const spots: number[] = [];
+  for (let c = 0; c < CELLS; c++) if (occ[c] === -1 && neighbours(c).every((x) => occ[x] === -1) && !fleet.mines.includes(c)) spots.push(c);
+  const rng = new Rng(seed);
+  const out: [number, Item][] = [];
+  for (let i = 0; i < n && spots.length; i++) {
+    const cell = spots.splice(rng.below(spots.length), 1)[0];
+    out.push([cell, ITEM_ORDER[rng.below(ITEM_ORDER.length)]]);
+  }
+  return out;
 }
 
 /** null = a legal fleet. With `partial`, checks only the ships given so far. */
@@ -154,17 +202,21 @@ export function randomFleet(rand: () => number = Math.random): Placement[] {
   }
 }
 
-/** What the shooter knows about a cell ("spotted" = a ship seen by a flare, not hit yet). */
-export type Mark = "unknown" | "miss" | "hit" | { sunk: number } | "empty" | "spotted";
+/**
+ * What the shooter knows about a cell. Tactics adds "spotted" (a ship seen by
+ * a flare, a mine or a shield, not hit yet), "mine" (found, harmless now),
+ * "crate_seen" (a crate seen by a flare, still to shoot) and "crate" (opened).
+ */
+export type Mark = "unknown" | "miss" | "hit" | { sunk: number } | "empty" | "spotted" | "mine" | "crate_seen" | "crate";
 
 /** One letter per square, as the server sends it (see `Mark::ch` in rules.rs). */
 export function markChar(m: Mark): string {
   if (typeof m === "object") return "s";
-  return { unknown: ".", miss: "o", hit: "x", empty: "-", spotted: "*" }[m];
+  return { unknown: ".", miss: "o", hit: "x", empty: "-", spotted: "*", mine: "m", crate_seen: "+", crate: "c" }[m];
 }
 
 /** Squares you can still fire at. */
-const isOpen = (m: Mark) => m === "unknown" || m === "spotted";
+const isOpen = (m: Mark) => m === "unknown" || m === "spotted" || m === "crate_seen";
 
 export type ShotResult =
   | { kind: "miss" }
@@ -174,7 +226,15 @@ export type ShotResult =
   | { kind: "radar"; count: number }
   | { kind: "seen" }
   | { kind: "clear" }
-  | { kind: "dud" };
+  | { kind: "dud" }
+  | { kind: "mine" }
+  | { kind: "mine_seen" }
+  | { kind: "crate"; item: Item }
+  | { kind: "crate_seen" }
+  | { kind: "blocked" }
+  | { kind: "exposed" }
+  | { kind: "repaired" }
+  | { kind: "charged"; power: number };
 
 /** Where a torpedo starts: l/r along a row, u (top) / d (bottom) along a column. */
 export type Edge = "l" | "r" | "u" | "d";
@@ -185,7 +245,8 @@ export type Move =
   | { kind: "air_strike"; cell: number; horizontal: boolean }
   | { kind: "salvo"; cells: number[] }
   | { kind: "radar"; line: number; row: boolean }
-  | { kind: "torpedo"; line: number; edge: Edge };
+  | { kind: "torpedo"; line: number; edge: Edge }
+  | { kind: "overdrive"; power: number };
 
 export function moveCode(m: Move): string {
   switch (m.kind) {
@@ -203,6 +264,8 @@ export function moveCode(m: Move): string {
       return `${m.row ? "r" : "k"}${m.line}`;
     case "torpedo":
       return `t${m.line}${m.edge}`;
+    case "overdrive":
+      return `o${m.power}`;
   }
 }
 
@@ -221,6 +284,10 @@ export function parseMove(s: string): Move | null {
   if (k === "f" || k === "p" || k === "l") {
     const c = cell(rest);
     return c === null ? null : { kind: k === "f" ? "fire" : k === "p" ? "ping" : "flare", cell: c };
+  }
+  if (k === "o") {
+    const p = num(rest);
+    return p === null || p >= POWERS.length ? null : { kind: "overdrive", power: p };
   }
   if (k === "r" || k === "k") {
     const l = line(rest);
@@ -270,8 +337,12 @@ export function flareArea(center: number, size: number): number[] {
   return [...neighbours(center).filter((n) => Math.floor(n / SIZE) === r || n % SIZE === c), center].sort((a, b) => a - b);
 }
 
+/** Moves that fire shots (they count for combos). */
+export const moveFires = (m: Move) => m.kind === "fire" || m.kind === "air_strike" || m.kind === "salvo" || m.kind === "torpedo";
+
 /** The square a move is shown at (a ping's centre, a line's first square). */
 export function moveCell(m: Move): number {
+  if (m.kind === "overdrive") return 0;
   if (m.kind === "salvo") return m.cells[0];
   if (m.kind === "radar") return lineCells(m.line, m.row)[0];
   if (m.kind === "torpedo") return torpedoPath(m.line, m.edge)[0];
@@ -281,10 +352,32 @@ export function moveCell(m: Move): number {
 export function shortResult(r: ShotResult): string {
   if (r.kind === "sunk") return `sunk:${FLEET[r.ship].id}`;
   if (r.kind === "ping" || r.kind === "radar") return `${r.kind}:${r.count}`;
+  if (r.kind === "crate") return `crate:${r.item}`;
+  if (r.kind === "charged") return `charged:${POWERS[r.power].id}`;
   return r.kind;
 }
 
-const WEIGHT: Record<ShotResult["kind"], number> = { sunk: 5, hit: 4, seen: 3, ping: 2, radar: 2, clear: 1, miss: 1, dud: 0 };
+/** Hit or sunk: counts for a combo. */
+export const struck = (r: ShotResult) => r.kind === "hit" || r.kind === "sunk";
+
+const WEIGHT: Record<ShotResult["kind"], number> = {
+  sunk: 6,
+  hit: 5,
+  crate: 4,
+  mine: 4,
+  blocked: 3,
+  seen: 3,
+  crate_seen: 3,
+  mine_seen: 3,
+  ping: 2,
+  radar: 2,
+  charged: 2,
+  clear: 1,
+  miss: 1,
+  dud: 0,
+  exposed: 0,
+  repaired: 0,
+};
 
 /** The result that matters most (a sinking beats a hit beats a miss). */
 export function mainResult(results: [number, ShotResult][]): ShotResult {
@@ -298,7 +391,16 @@ export function mainResult(results: [number, ShotResult][]): ShotResult {
   return best;
 }
 
-export type ShotError = "bad_move" | "already_known" | "no_pings_left" | "over" | "not_tactics" | "not_ready" | "power_lost";
+export type ShotError =
+  | "bad_move"
+  | "already_known"
+  | "no_pings_left"
+  | "over"
+  | "not_tactics"
+  | "not_ready"
+  | "power_lost"
+  | "no_overdrive"
+  | "already_ready";
 
 export const SHOT_ERROR_TEXT: Record<ShotError, string> = {
   bad_move: "That isn't a square on the grid.",
@@ -308,6 +410,8 @@ export const SHOT_ERROR_TEXT: Record<ShotError, string> = {
   not_tactics: "Ship powers are only in Tactics games.",
   not_ready: "That power is still charging.",
   power_lost: "That ship has sunk, so its power is gone.",
+  no_overdrive: "Overdrive isn't full yet.",
+  already_ready: "That power is already charged.",
 };
 
 /** One side's sea as the other side fires at it. */
@@ -320,15 +424,26 @@ export class Sea {
   sweeps: { line: number; row: boolean; count: number }[] = [];
   /** Tactics: this ship doesn't show in pings or radar while afloat. */
   readonly silent: number | null;
+  /** Tactics: mines still armed. */
+  private mines: number[];
+  /** Tactics: hidden supply crates not opened yet. */
+  private crates: [number, Item][];
+  /** Tactics: extra pings the shooter found in crates in this sea. */
+  bonusPings = 0;
+  /** Tactics: shields guarding this sea's ships. */
+  shields = 0;
   moves: string[] = [];
 
-  constructor(ships: Placement[], tactics = false) {
+  /** `tactics` (mines and hidden crates) makes it a Tactics sea, where the sub also runs silent. */
+  constructor(ships: Placement[], tactics: { mines: number[]; crates: [number, Item][] } | null = null) {
     this.occ = occupancy(ships);
     this.silent = tactics ? SILENT_SHIP : null;
+    this.mines = tactics ? [...tactics.mines] : [];
+    this.crates = tactics ? [...tactics.crates] : [];
   }
 
   pingsLeft(): number {
-    return Math.max(0, RULES.pings - this.pings.length);
+    return Math.max(0, RULES.pings + this.bonusPings - this.pings.length);
   }
 
   allSunk(): boolean {
@@ -348,10 +463,27 @@ export class Sea {
   }
 
   private fireAt(cell: number): ShotResult {
+    const mine = this.mines.indexOf(cell);
+    if (mine !== -1) {
+      this.mines.splice(mine, 1);
+      this.marks[cell] = "mine";
+      return { kind: "mine" };
+    }
+    const crate = this.crates.findIndex(([c]) => c === cell);
+    if (crate !== -1) {
+      const [, item] = this.crates.splice(crate, 1)[0];
+      this.marks[cell] = "crate";
+      return { kind: "crate", item };
+    }
     const ship = this.occ[cell];
     if (ship === -1) {
       this.marks[cell] = "miss";
       return { kind: "miss" };
+    }
+    if (this.shields > 0) {
+      this.shields--;
+      this.marks[cell] = "spotted";
+      return { kind: "blocked" };
     }
     this.hits[ship]++;
     this.marks[cell] = "hit";
@@ -427,9 +559,17 @@ export class Sea {
         out = [];
         for (const c of area) {
           if (this.marks[c] !== "unknown") continue;
+          const mine = this.mines.indexOf(c);
           if (this.occ[c] !== -1) {
             this.marks[c] = "spotted";
             out.push([c, { kind: "seen" }]);
+          } else if (mine !== -1) {
+            this.mines.splice(mine, 1);
+            this.marks[c] = "mine";
+            out.push([c, { kind: "mine_seen" }]);
+          } else if (this.crates.some(([x]) => x === c)) {
+            this.marks[c] = "crate_seen";
+            out.push([c, { kind: "crate_seen" }]);
           } else {
             this.marks[c] = "empty";
             out.push([c, { kind: "clear" }]);
@@ -437,9 +577,30 @@ export class Sea {
         }
         break;
       }
+      case "overdrive":
+        return "bad_move";
     }
     this.moves.push(moveCode(m));
     return out;
+  }
+
+  /** A mine went off: show one ship square the other side doesn't know yet (`pick(n)` chooses 0..n). */
+  expose(pick: (n: number) => number): number | null {
+    const hidden: number[] = [];
+    for (let c = 0; c < CELLS; c++) if (this.occ[c] !== -1 && this.marks[c] === "unknown") hidden.push(c);
+    if (!hidden.length) return null;
+    const c = hidden[pick(hidden.length)];
+    this.marks[c] = "spotted";
+    return c;
+  }
+
+  /** A repair kit: fix the first hit square (back to "spotted"), or null if no ship afloat is hit. */
+  repair(): number | null {
+    const c = this.marks.indexOf("hit");
+    if (c === -1) return null;
+    this.hits[this.occ[c]]--;
+    this.marks[c] = "spotted";
+    return c;
   }
 }
 
@@ -449,33 +610,40 @@ export const isError = <T>(r: T | ShotError): r is ShotError => typeof r === "st
 export interface Turn {
   side: 0 | 1;
   move: Move;
+  /** What happened in the other side's sea. */
   results: [number, ShotResult][];
+  /** Tactics: what happened in the mover's own sea (a mine showed a ship square, a repair kit fixed one). */
+  own: [number, ShotResult][];
   /** The headline result (see `mainResult`). */
   result: ShotResult;
 }
 
 /**
  * Two sides firing in turn (like `Duel` in rules.rs). Side 0 and side 1;
- * `first` moves first. Whose turn it is comes from the moves played, not from
- * counting them, so a move can later grant an extra turn. seas[s] is side s's
- * own sea. A Tactics duel (`tactics` set) also allows ship powers.
+ * `first` moves first. Every move passes the turn, except in Tactics an Extra
+ * shot crate and spending Overdrive. seas[s] is side s's own sea. A Tactics
+ * duel (`tactics` set) also has powers, mines and crates.
  */
 export class Duel {
   readonly seas: [Sea, Sea];
   readonly tactics: Tactics | null;
   log: Turn[] = [];
   private next: 0 | 1;
+  private readonly seed: number;
 
-  /** `levels` (each side's power Mk levels) makes it a Tactics duel. */
-  constructor(fleets: [Placement[], Placement[]], first: 0 | 1, levels: [Levels, Levels] | null = null) {
-    this.seas = [new Sea(fleets[0], !!levels), new Sea(fleets[1], !!levels)];
-    this.tactics = levels ? new Tactics(levels) : null;
+  /** `setup` makes it a Tactics duel (Classic ignores the fleets' mines). */
+  constructor(fleets: [Fleet, Fleet], first: 0 | 1, setup: Setup | null = null) {
+    const sea = (s: number) =>
+      new Sea(fleets[s].ships, setup ? { mines: fleets[s].mines, crates: hideCrates(fleets[s], crateSeed(setup.seed, s), setup.crates) } : null);
+    this.seas = [sea(0), sea(1)];
+    this.tactics = setup ? new Tactics(setup.levels) : null;
+    this.seed = setup?.seed ?? 0;
     this.next = first;
   }
 
   /** Replay a move list ("f37 p44 …"); the first bad move is returned as an error. */
-  static replay(fleets: [Placement[], Placement[]], first: 0 | 1, moves: string, levels: [Levels, Levels] | null = null): Duel | ShotError {
-    const d = new Duel(fleets, first, levels);
+  static replay(fleets: [Fleet, Fleet], first: 0 | 1, moves: string, setup: Setup | null = null): Duel | ShotError {
+    const d = new Duel(fleets, first, setup);
     for (const t of moves.split(/\s+/).filter(Boolean)) {
       const m = parseMove(t);
       if (!m) return "bad_move";
@@ -508,6 +676,18 @@ export class Duel {
   play(m: Move): ShotResult | ShotError {
     if (this.winner() !== null) return "over";
     const side = this.next;
+    if (m.kind === "overdrive") {
+      const t = this.tactics;
+      if (!t) return "not_tactics";
+      if (!t.overdrive[side]) return "no_overdrive";
+      if (this.seas[side].isSunk(m.power)) return "power_lost";
+      if (t.ready(side, m.power)) return "already_ready";
+      t.spendOverdrive(side, m.power);
+      const r: ShotResult = { kind: "charged", power: m.power };
+      // A free action: the turn stays.
+      this.log.push({ side, move: m, results: [[0, r]], own: [], result: r });
+      return r;
+    }
     const power = movePower(m);
     let size = 0;
     if (power !== null) {
@@ -518,10 +698,30 @@ export class Duel {
     }
     const results = this.seas[1 - side].strike(m, size);
     if (isError(results)) return results;
-    this.tactics?.afterMove(side, power);
+    const own: [number, ShotResult][] = [];
+    let extraTurn = false;
+    for (const [, r] of results) {
+      if (r.kind === "mine") {
+        const rng = new Rng((this.seed ^ (0x5eed0000 + this.log.length)) >>> 0);
+        const c = this.seas[side].expose((n) => rng.below(n));
+        if (c !== null) own.push([c, { kind: "exposed" }]);
+      } else if (r.kind === "crate") {
+        if (r.item === "ping") this.seas[1 - side].bonusPings++;
+        else if (r.item === "shield") this.seas[side].shields++;
+        else if (r.item === "repair") {
+          const c = this.seas[side].repair();
+          if (c === null) this.seas[side].shields++;
+          else own.push([c, { kind: "repaired" }]);
+        } else extraTurn = true;
+      }
+    }
+    if (this.tactics) {
+      this.tactics.afterMove(side, power);
+      if (moveFires(m)) this.tactics.afterFiring(side, results.some(([, r]) => struck(r)));
+    }
     const result = mainResult(results);
-    this.log.push({ side, move: m, results, result });
-    this.next = (1 - side) as 0 | 1;
+    this.log.push({ side, move: m, results, own, result });
+    this.next = extraTurn ? side : ((1 - side) as 0 | 1);
     return result;
   }
 
