@@ -701,6 +701,11 @@ impl Sea {
         self.moves.len()
     }
 
+    /// Tactics: the silent ship, while it is afloat.
+    pub fn silent_afloat(&self) -> Option<u8> {
+        self.silent.filter(|&s| !self.is_sunk(usize::from(s)))
+    }
+
     /// Ship squares in `cells` that pings and radar can hear (a silent sub can't be heard).
     fn heard(&self, cells: &[usize]) -> u8 {
         cells
