@@ -1,0 +1,13 @@
+{
+  "about": "Sudoku board themes. price null = free for everyone. art: page = board background, cell = square, line = thin lines, box = thick 3x3 lines, given = printed numbers, entry = your numbers, hint = numbers a hint filled, select = the selected square, same = squares sharing a number or a line with it.",
+  "themes": [
+    { "id": "paper", "name": "Paper", "rarity": "common", "price": null, "art": { "page": "#2B2A26", "cell": "#FBF8EF", "line": "#C9C2AE", "box": "#2B2A26", "given": "#1E1D1A", "entry": "#2F5FBF", "hint": "#2E8B57", "select": "#FFE08A", "same": "#F1E9D2" } },
+    { "id": "night", "name": "Night", "rarity": "common", "price": null, "art": { "page": "#05070F", "cell": "#141A2B", "line": "#2A3350", "box": "#8C9BC9", "given": "#E8ECF7", "entry": "#6FB8FF", "hint": "#5FD39A", "select": "#3A4A7A", "same": "#1E2740" } },
+    { "id": "mint", "name": "Mint", "rarity": "common", "price": null, "art": { "page": "#1F4A3A", "cell": "#EEF9F2", "line": "#B7DCC6", "box": "#1F4A3A", "given": "#173A2D", "entry": "#1C7C8C", "hint": "#B85C1E", "select": "#BFEBD0", "same": "#DDF2E5" } },
+    { "id": "ocean", "name": "Ocean", "rarity": "common", "price": null, "art": { "page": "#0E3550", "cell": "#E8F3FA", "line": "#B3D3E6", "box": "#0E3550", "given": "#0B2738", "entry": "#1F6FB2", "hint": "#2E8B57", "select": "#BFE0F5", "same": "#D6EAF6" } },
+    { "id": "sakura", "name": "Sakura", "rarity": "rare", "price": 400, "art": { "page": "#6B2944", "cell": "#FFF1F5", "line": "#F2C4D3", "box": "#6B2944", "given": "#4A1C2F", "entry": "#C2417A", "hint": "#3F8F5F", "select": "#FFD0E0", "same": "#FBE2EA" } },
+    { "id": "terminal", "name": "Terminal", "rarity": "rare", "price": 500, "art": { "page": "#000000", "cell": "#071207", "line": "#123A12", "box": "#2BFF6A", "given": "#B8FFC9", "entry": "#2BFF6A", "hint": "#FFD23F", "select": "#14401F", "same": "#0C230F" } },
+    { "id": "neon", "name": "Neon Grid", "rarity": "epic", "price": 750, "art": { "page": "#12001F", "cell": "#1C0630", "line": "#4B1E72", "box": "#FF3FA4", "given": "#F3E8FF", "entry": "#3FE0FF", "hint": "#FFE14D", "select": "#4A1470", "same": "#2A0B45" } },
+    { "id": "royal", "name": "Royal Gold", "rarity": "legendary", "price": 1200, "art": { "page": "#2A1A05", "cell": "#FFF8E6", "line": "#E6CF96", "box": "#8A5A10", "given": "#3B2606", "entry": "#B07A12", "hint": "#2F6FD6", "select": "#FFE3A0", "same": "#F7EBC8" } }
+  ]
+}

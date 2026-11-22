@@ -49,6 +49,8 @@ pub enum Event {
     SonarTactics { result: GameResult, powers: i64, crates: i64 },
     /// A finished Snake Signal run (100+ ticks): score and best combo (1/2/3/5).
     SnakeRun { score: i64, best_combo: i64 },
+    /// A solved Sudoku (`level` 1 Easy … 4 Expert; the Daily counts as 2).
+    SudokuWin { level: i64, daily: bool, hints: i64 },
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -84,6 +86,8 @@ enum Goal {
     SnakeRuns,
     SnakeScore(i64),
     SnakeCombo(i64),
+    SudokuWins { min_level: i64 },
+    SudokuDaily,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -151,6 +155,8 @@ impl QuestDef {
             (Goal::SnakeRuns, SnakeRun { .. }) => 1,
             (Goal::SnakeScore(min), SnakeRun { score, .. }) => hit(score >= min),
             (Goal::SnakeCombo(min), SnakeRun { best_combo, .. }) => hit(best_combo >= min),
+            (Goal::SudokuWins { min_level }, SudokuWin { level, .. }) => hit(level >= min_level),
+            (Goal::SudokuDaily, SudokuWin { daily, .. }) => hit(daily),
             _ => 0,
         }
     }
@@ -162,7 +168,7 @@ const fn q(id: &'static str, title: &'static str, goal: Goal, target: i32, coins
 
 use Game::{ConnectFour as CF, TicTacToe as TTT};
 
-pub const POOL: [QuestDef; 37] = [
+pub const POOL: [QuestDef; 40] = [
     q("cf_play_3", "Play 3 Connect Four games vs the AI", Goal::PlayAi(CF), 3, 20, 30),
     q("cf_win_2_medium", "Win 2 Connect Four games vs Medium or harder",
         Goal::WinAi { game: Some(CF), min_level: 2 }, 2, 40, 60),
@@ -207,6 +213,9 @@ pub const POOL: [QuestDef; 37] = [
     q("snake_play_3", "Play 3 Snake Signal runs", Goal::SnakeRuns, 3, 20, 30),
     q("snake_score_3000", "Score 3,000 in one Snake Signal run", Goal::SnakeScore(3_000), 1, 40, 60),
     q("snake_combo_5", "Reach a ×5 combo in Snake Signal", Goal::SnakeCombo(5), 1, 30, 40),
+    q("sudoku_solve_2", "Solve 2 Sudoku puzzles", Goal::SudokuWins { min_level: 1 }, 2, 20, 30),
+    q("sudoku_solve_hard", "Solve a Hard or Expert Sudoku", Goal::SudokuWins { min_level: 3 }, 1, 40, 60),
+    q("sudoku_daily", "Solve today's Sudoku Daily", Goal::SudokuDaily, 1, 30, 40),
 ];
 
 pub fn find(id: &str) -> Option<&'static QuestDef> {
@@ -315,6 +324,18 @@ mod tests {
         assert_eq!(quest("mf_no_hints").progress(&win(2, 1)), 0);
         assert_eq!(quest("mf_no_hints").progress(&win(1, 0)), 1);
         assert_eq!(quest("wam_play_3").progress(&win(1, 0)), 0);
+    }
+
+    #[test]
+    fn sudoku_quests() {
+        let win = |level, daily| Event::SudokuWin { level, daily, hints: 0 };
+        assert_eq!(quest("sudoku_solve_2").progress(&win(1, false)), 1);
+        assert_eq!(quest("sudoku_solve_2").progress(&win(2, true)), 1);
+        assert_eq!(quest("sudoku_solve_hard").progress(&win(2, false)), 0);
+        assert_eq!(quest("sudoku_solve_hard").progress(&win(4, false)), 1);
+        assert_eq!(quest("sudoku_daily").progress(&win(4, false)), 0);
+        assert_eq!(quest("sudoku_daily").progress(&win(2, true)), 1);
+        assert_eq!(quest("mf_clear_2").progress(&win(4, false)), 0);
     }
 
     #[test]

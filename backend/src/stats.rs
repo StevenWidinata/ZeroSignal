@@ -40,6 +40,15 @@ pub struct MinefieldRow {
     pub best_time_ms: Option<i32>,
 }
 
+/// Sudoku per level (easy … expert, daily): finished games, solved, best time.
+#[derive(Serialize, sqlx::FromRow)]
+pub struct SudokuRow {
+    pub level: String,
+    pub played: i64,
+    pub won: i64,
+    pub best_time_ms: Option<i32>,
+}
+
 #[derive(Serialize, sqlx::FromRow, Default)]
 pub struct WhackRow {
     pub rounds: i64,
@@ -109,6 +118,7 @@ pub struct StatsView {
     pub series: Vec<SeriesRow>,
     pub boards: Vec<BoardRow>,
     pub minefield: Vec<MinefieldRow>,
+    pub sudoku: Vec<SudokuRow>,
     pub whack: WhackRow,
     pub snake: SnakeRow,
     pub chess: ChessStats,
@@ -168,6 +178,18 @@ pub async fn my_stats(State(state): State<AppState>, user: AuthUser) -> AppResul
                   ROUND(AVG(score))::BIGINT AS average
            FROM scores WHERE user_id = $1
            GROUP BY game_id, level ORDER BY game_id, level"#,
+    )
+    .bind(id)
+    .fetch_all(pool)
+    .await?;
+
+    let sudoku: Vec<SudokuRow> = sqlx::query_as(
+        r#"SELECT level, COUNT(*) AS played,
+                  COUNT(*) FILTER (WHERE status = 'won') AS won,
+                  MIN(time_ms) FILTER (WHERE status = 'won') AS best_time_ms
+           FROM sudoku_games WHERE user_id = $1 AND status <> 'playing'
+           GROUP BY level
+           ORDER BY CASE level WHEN 'easy' THEN 1 WHEN 'medium' THEN 2 WHEN 'hard' THEN 3 WHEN 'expert' THEN 4 ELSE 5 END"#,
     )
     .bind(id)
     .fetch_all(pool)
@@ -284,6 +306,7 @@ pub async fn my_stats(State(state): State<AppState>, user: AuthUser) -> AppResul
         series,
         boards,
         minefield,
+        sudoku,
         whack,
         snake,
         chess: ChessStats { levels: chess_levels, puzzles_played, puzzles_solved },
