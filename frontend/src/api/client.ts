@@ -65,6 +65,9 @@ import type {
   G2048Run,
   MfDifficulty,
   MfGame,
+  SudokuCollection,
+  SudokuGame,
+  SudokuMode,
   WamCollection,
   WeeklyClaim,
   WeeklyPrizes,
@@ -475,6 +478,36 @@ export const minefield = {
   },
   forfeit(id: string) {
     return post<MfGame | null>(`${MF}/${encodeURIComponent(id)}/forfeit`);
+  },
+};
+
+const SUDOKU = "/api/games/sudoku";
+
+/** Sudoku: the server keeps the solution and the clock; you send your grid. */
+export const sudoku = {
+  create(level: SudokuMode) {
+    return post<SudokuGame>(`${SUDOKU}/games`, { level });
+  },
+  active() {
+    return request<SudokuGame | null>(`${SUDOKU}/games/active`);
+  },
+  save(id: string, entries: string) {
+    return post<SudokuGame>(`${SUDOKU}/games/${encodeURIComponent(id)}/save`, { entries });
+  },
+  check(id: string, entries: string) {
+    return post<SudokuGame>(`${SUDOKU}/games/${encodeURIComponent(id)}/check`, { entries });
+  },
+  hint(id: string, entries: string) {
+    return post<SudokuGame>(`${SUDOKU}/games/${encodeURIComponent(id)}/hint`, { entries });
+  },
+  giveUp(id: string) {
+    return post<SudokuGame>(`${SUDOKU}/games/${encodeURIComponent(id)}/give-up`);
+  },
+  collection() {
+    return request<SudokuCollection>(`${SUDOKU}/collection`);
+  },
+  buy(id: string) {
+    return post<SudokuCollection>(`${SUDOKU}/buy`, { id });
   },
 };
 

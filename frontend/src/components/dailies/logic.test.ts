@@ -5,6 +5,7 @@ describe("dailies", () => {
   it("links straight to each Daily", () => {
     expect(dailyLink("snake-signal")).toBe("/play/snake-signal?daily=1");
     expect(dailyLink("chess")).toBe("/play/chess?mode=puzzle");
+    expect(dailyLink("sudoku")).toBe("/play/sudoku");
     expect(wantsDaily("?daily=1")).toBe(true);
     expect(wantsDaily("?room=AB")).toBe(false);
   });

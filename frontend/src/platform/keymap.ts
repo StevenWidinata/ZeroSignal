@@ -105,6 +105,24 @@ export const KEYMAPS: GameKeymap[] = [
     note: "Right-click or long-press flags too. Click the board first to use the keys.",
   },
   {
+    gameId: "sudoku",
+    groups: [
+      {
+        actions: [
+          { id: "up", label: "Move up", keys: ["ArrowUp"] },
+          { id: "down", label: "Move down", keys: ["ArrowDown"] },
+          { id: "left", label: "Move left", keys: ["ArrowLeft"] },
+          { id: "right", label: "Move right", keys: ["ArrowRight"] },
+          ...[1, 2, 3, 4, 5, 6, 7, 8, 9].map((d) => ({ id: `n${d}`, label: `Number ${d}`, keys: [`Digit${d}`, `Numpad${d}`] })),
+          { id: "erase", label: "Erase", keys: ["Backspace", "Delete", "Digit0", "Numpad0"] },
+          { id: "notes", label: "Notes on / off", keys: ["KeyN"] },
+          { id: "hint", label: "Hint", keys: ["KeyH"] },
+        ],
+      },
+    ],
+    note: "Tap a square, then a number. Notes mode writes small pencil numbers instead.",
+  },
+  {
     gameId: "2048",
     groups: [
       {

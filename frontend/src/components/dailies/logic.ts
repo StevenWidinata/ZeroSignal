@@ -1,7 +1,8 @@
 /** Link that opens a game on its Daily. */
 export function dailyLink(gameId: string): string {
   if (gameId === "chess" || gameId === "checkers") return `/play/${gameId}?mode=puzzle`;
-  if (gameId === "minefield") return "/play/minefield";
+  // Their menus open on the Daily card.
+  if (gameId === "minefield" || gameId === "sudoku") return `/play/${gameId}`;
   return `/play/${gameId}?daily=1`;
 }
 

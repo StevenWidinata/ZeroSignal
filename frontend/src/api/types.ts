@@ -586,6 +586,52 @@ export interface SnakeCollection {
 // Minefield
 // ---------------------------------------------------------------------------
 
+export type SudokuMode = "easy" | "medium" | "hard" | "expert" | "daily";
+
+export interface SudokuResult {
+  won: boolean;
+  time_ms: number | null;
+  score: number | null;
+  checks: number;
+  hints: number;
+  /** Only in the reply that ended the game. */
+  previous_best: number | null;
+  new_best: boolean | null;
+  rewards: Granted | null;
+  /** A lucky theme drop, e.g. "theme:neon". */
+  drop: string | null;
+}
+
+export interface SudokuGame {
+  id: string;
+  mode: SudokuMode;
+  /** WIB day of a Daily. */
+  day: string | null;
+  status: "playing" | "won" | "gave_up";
+  /** 81 characters, "." = empty. */
+  givens: string;
+  /** The grid as you left it (givens included). */
+  entries: string;
+  /** Squares filled by hints (locked). */
+  hinted: number[];
+  hints_used: number;
+  hints_left: number;
+  checks: number;
+  /** Time so far, hint time included. */
+  elapsed_ms: number;
+  /** Only once the game is over. */
+  solution: string | null;
+  /** Reply to a Check that found wrong numbers. */
+  wrong: number[] | null;
+  /** Reply to a hint. */
+  hint: { cell: number; digit: number; technique: string | null; reason: string } | null;
+  result: SudokuResult | null;
+}
+
+export interface SudokuCollection {
+  themes: WamItemView[];
+}
+
 export type MfDifficulty = "beginner" | "intermediate" | "expert" | "daily";
 
 export interface MfResult {
