@@ -5211,6 +5211,25 @@ kbd.key {
   margin: 0 0 14px;
   color: var(--muted);
 }
+/* Phones: the three chips share one row. */
+@media (max-width: 520px) {
+  .play-filter {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .play-chip {
+    justify-content: center;
+    gap: 5px;
+    padding: 8px 4px;
+    font-size: 0.85rem;
+  }
+}
+@media (max-width: 360px) {
+  .play-chip > span[aria-hidden] {
+    display: none;
+  }
+}
 .play-badges {
   display: flex;
   flex-wrap: wrap;

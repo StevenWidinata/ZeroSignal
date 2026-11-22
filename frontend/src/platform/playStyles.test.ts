@@ -18,13 +18,15 @@ describe("play styles", () => {
 
   it("filters the live games", () => {
     expect(ids("all")).toHaveLength(LIVE_GAMES.length);
-    expect(ids("online")).toEqual(expect.arrayContaining(["chess", "sonar", "connect-four", "tic-tac-toe"]));
-    expect(ids("online")).not.toContain("snake-signal");
-    expect(ids("solo")).toEqual(expect.arrayContaining(["snake-signal", "2048", "sling-squad"]));
-    expect(ids("daily")).toEqual(
-      expect.arrayContaining(["chess", "sonar", "minefield", "2048", "whack-a-mole", "snake-signal"]),
-    );
-    expect(countBy(LIVE_GAMES, "local")).toBe(ids("local").length);
+    expect(ids("online")).toEqual(expect.arrayContaining(["chess", "checkers", "sonar", "connect-four", "tic-tac-toe"]));
+    expect(ids("offline")).toEqual(expect.arrayContaining(["snake-signal", "2048", "sling-squad", "minefield", "whack-a-mole"]));
+    // Two groups that split every game.
+    expect(countBy(LIVE_GAMES, "online") + countBy(LIVE_GAMES, "offline")).toBe(LIVE_GAMES.length);
+    expect(ids("online").filter((id) => ids("offline").includes(id))).toEqual([]);
+  });
+
+  it("every online game can also be played on one device", () => {
+    for (const g of filterGames(GAMES, "online")) expect(g.meta.play, g.meta.id).toContain("local");
   });
 
   it("orders a game's styles like the chips", () => {

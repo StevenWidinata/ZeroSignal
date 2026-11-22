@@ -1,7 +1,7 @@
 import type { GameModule, PlayStyle } from "./types";
 
-/** Hub filter: one play style, or every game. */
-export type PlayFilter = "all" | PlayStyle;
+/** Hub filter: games you can play with a friend (online or on one device), games you play on your own, or every game. */
+export type PlayFilter = "all" | "online" | "offline";
 
 export interface PlayStyleInfo {
   id: PlayStyle;
@@ -29,12 +29,29 @@ export const PLAY_STYLES: PlayStyleInfo[] = [
   { id: "daily", label: "Daily", badge: "Daily", icon: "📅", hint: "A new challenge every day, the same for everyone." },
 ];
 
-export const PLAY_FILTERS: PlayFilter[] = ["all", ...PLAY_STYLES.map((p) => p.id)];
+export interface FilterInfo {
+  id: Exclude<PlayFilter, "all">;
+  label: string;
+  icon: string;
+  hint: string;
+}
+
+/** The Hub chips after "All games". Every game with Online also has Same device, so they are one group. */
+export const FILTERS: FilterInfo[] = [
+  { id: "online", label: "Online", icon: "🌐", hint: "Play a friend, on another device or the same one." },
+  { id: "offline", label: "Offline", icon: "👤", hint: "Play on your own." },
+];
+
+export const PLAY_FILTERS: PlayFilter[] = ["all", ...FILTERS.map((f) => f.id)];
+
+export const filterInfo = (id: PlayFilter): FilterInfo | null => FILTERS.find((f) => f.id === id) ?? null;
 
 export const playInfo = (id: PlayStyle): PlayStyleInfo => PLAY_STYLES.find((p) => p.id === id) ?? PLAY_STYLES[0];
 
 export function filterGames(games: GameModule[], f: PlayFilter): GameModule[] {
-  return f === "all" ? games : games.filter((g) => g.meta.play.includes(f));
+  if (f === "all") return games;
+  const online = (g: GameModule) => g.meta.play.includes("online");
+  return games.filter((g) => (f === "online" ? online(g) : !online(g)));
 }
 
 export function countBy(games: GameModule[], f: PlayFilter): number {

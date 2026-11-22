@@ -378,6 +378,9 @@ Commits go to `main` step by step (each step live once tested); owner is the onl
   (`refactor/run-kit`) now used by Whack-a-Mole, 2048 and Snake Signal.
 
 ### Dailies everywhere + polish (`feat/daily-hub`; agreed and done 2026-11-16)
+- **Changed 2026-11-22 (owner):** the Today's Dailies block left the Hub ("useless");
+  each game keeps its Daily. Hub filters are now All · Online · Offline: every
+  online game also plays on one device, so Online and Same device were one group.
 - **Today's Dailies** on the Hub: every game's Daily (Snake Signal, Whack-a-Mole,
   Minefield, 2048, Chess puzzle, Sonar Hunt) with played / in progress / done,
   your score and today's rank; ▶ opens the game on its Daily (`?daily=1`), 🏆

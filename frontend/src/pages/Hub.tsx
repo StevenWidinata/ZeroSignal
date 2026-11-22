@@ -8,6 +8,7 @@ import {
   PLAY_FILTERS,
   countBy,
   filterGames,
+  filterInfo,
   loadFilter,
   playInfo,
   saveFilter,
@@ -198,7 +199,7 @@ function PlayFilterBar({ value, onChange }: { value: PlayFilter; onChange: (f: P
   return (
     <div className="play-filter" role="radiogroup" aria-label="Show games you can play">
       {PLAY_FILTERS.map((f) => {
-        const info = f === "all" ? null : playInfo(f);
+        const info = filterInfo(f);
         const n = countBy(LIVE_GAMES, f);
         return (
           <button
@@ -229,7 +230,7 @@ export default function Hub() {
   };
   const liveShown = filterGames(LIVE_GAMES, filter);
   const soonShown = filterGames(GAMES.filter((g) => g.meta.status !== "live"), filter);
-  const filterInfo = filter === "all" ? null : playInfo(filter);
+  const shownInfo = filterInfo(filter);
   const [stats, setStats] = useState<StatsView | null>(null);
   const recent = useMemo(() => recentGames().filter((id) => findGame(id)?.meta.status === "live"), []);
 
@@ -297,9 +298,18 @@ export default function Hub() {
             {isMember(user) ? (
               <QuestList />
             ) : (
-              <p className="stats-empty">
-                Your quest progress is counting. <Link to="/register">Register</Link> to claim the rewards.
-              </p>
+              <div className="recent-item">
+                <span className="recent-icon" aria-hidden="true">
+                  📜
+                </span>
+                <span className="recent-text">
+                  <strong>Your quests are counting</strong>
+                  <small>Register to claim the rewards.</small>
+                </span>
+                <Link to="/register" className="btn btn-sm">
+                  Register
+                </Link>
+              </div>
             )}
           </section>
         </div>
@@ -310,7 +320,7 @@ export default function Hub() {
           Choose your game
         </h2>
         <PlayFilterBar value={filter} onChange={pickFilter} />
-        {filterInfo && <p className="play-filter-hint">{filterInfo.hint}</p>}
+        {shownInfo && <p className="play-filter-hint">{shownInfo.hint}</p>}
         {liveShown.length === 0 ? (
           <p className="stats-empty">No games like that yet. More are coming soon.</p>
         ) : (
