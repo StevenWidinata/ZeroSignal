@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import { api } from "../api/client";
 import type { StatsView } from "../api/types";
 import QuestList from "../components/QuestList";
-import TodaysDailies from "../components/dailies/TodaysDailies";
 import WeeklyPrizes from "../components/WeeklyPrizes";
 import {
   PLAY_FILTERS,
@@ -284,7 +283,6 @@ export default function Hub() {
       {user && (
         <div className="hub-top">
           <RecentRow ids={recent} stats={stats} />
-          <TodaysDailies />
           <section aria-labelledby="quests-heading" className="hub-quests">
             <div className="hub-quests-head">
               <h2 id="quests-heading" className="section-title">
