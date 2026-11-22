@@ -419,6 +419,33 @@ Commits go to `main` step by step (each step live once tested); owner is the onl
   pieces (light pieces have an inner ring, kings a crown).
 - Next (agreed): Reversi, then Dots & Boxes (2 players), then rooms for 3–4 players.
 
+### Sonar Tactics (`feat/sonar-tactics`; agreed 2026-11-19, done 2026-11-22)
+- **Tactics mode** next to Classic (vs Zero-Bot, online, same device; the
+  Daily Hunt stays Classic). One power per ship that recharges every few
+  moves: Air Strike, Salvo, Radar Sweep, Torpedo (+ the sub runs silent) and
+  Flare. 2 mines each, 3 supply crates per sea, Overdrive after 3 hits in a
+  row. Zero-Bot plays every power at every level.
+- **Screens (owner picked):** power cards under the grids (2 rows on phones)
+  with an Overdrive / Shield / Pings line; aim = pick a power, tap a square to
+  preview, tap again or Fire to confirm (R turns lines); mines are their own
+  step after ships; a Classic / Tactics switch above the levels.
+- **Ship Workshop:** Mk II 150 coins, Mk III 350 per power; only vs Zero-Bot
+  and in the Campaign (online and same device stay Mk I). Zero-Bot is Mk I on
+  Easy/Medium, Mk II on Hard, Mk III on Master. One full-width row per power.
+- **Campaign:** 12 missions (Shakedown, Fog Bank, Minefield, Supply Run, Short
+  on Ammo, Silent Fleet, Powerless, Iron Hull, Night Raid, Ghost Ships, Last
+  Stand, Iron Admiral boss), opened one by one. Stars = win / within the move
+  target / no ship lost; each new star pays 10 × the mission number once; no
+  leaderboard points.
+- **Extras:** 3 quests (win a Tactics game, use 6 powers, open 2 crates), 4
+  achievements with titles (Tactician, Shipwright, Commodore, Iron Admiral),
+  3 new tutorial pages. Migrations 0029–0032 (one per step).
+- **One site (owner, 2026-11-22):** Sonar stays inside Zero Signal because it
+  shares accounts, coins, quests, achievements and leaderboards. Its code is
+  self-contained (`backend/src/sonar/`, `frontend/src/games/sonar/`,
+  `shared/sonar_*.json`), so it can still be split off later if it grows its
+  own audience.
+
 ## Phase 3b (planned)
 
 - Weekly leaderboards (reset each week, all-time board stays) — done.

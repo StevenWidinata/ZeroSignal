@@ -17,7 +17,7 @@ A hub of fun browser games with a retro arcade UI and real, **server-verified le
 | Minefield    | Live        | No-guess boards in 3 sizes + a Daily; the server keeps the mines |
 | 2048         | Live        | Classic 4×4, Big 5×5, Tiny 3×3 + a Daily; saved as you play; the server replays every move |
 | Chess        | Live        | vs Zero-Bot (4 levels), online vs a friend, same device, a Daily "mate in 2"; 12 boards and 8 piece sets |
-| Sonar        | Live        | Battleship-style with sonar pings: vs Zero-Bot (4 levels), online, same device and a Daily Hunt; 8 fleets and 8 seas |
+| Sonar        | Live        | Battleship-style with sonar pings: Classic or Tactics (ship powers, mines, crates) vs Zero-Bot (4 levels), a 12-mission Campaign, a Ship Workshop, online, same device and a Daily Hunt; 8 fleets and 8 seas |
 | Snake Signal | Live        | Neon snake: Classic, Wrap and a Daily on 3 board sizes; power-ups, glitch hazards, ×5 combos and a fading signal; 8 skins, 8 arenas, 6 trails; the server replays every turn |
 | Checkers     | Live        | Classic 8×8 draughts: vs Zero-Bot (4 levels), online vs a friend on another device, same device and a Daily "win in 2–4" puzzle; 8 boards and 8 piece sets |
 | 7 more       | Coming soon | Brick Breaker, Signal Flap, Memory Match, Pixel Picross, Block Drop, Sudoku, Pong Online (see `/roadmap`) |
@@ -135,6 +135,9 @@ A slingshot physics game with its own cast: **Pip** (balanced), **Zip** (dash), 
 
 - **Rules:** a 10×10 grid and a fleet of 5 ships (Carrier 5, Battleship 4, Cruiser 3, Submarine 3, Destroyer 2) in straight lines that **can't touch, not even corner to corner**. Players take turns: one shot per turn answers miss, hit or sunk; a sunk ship shows with the water around it. Each player also has **2 sonar pings**: instead of firing, ping a square to learn how many ship squares are in the 3×3 area around it.
 - **Modes:** 🤖 vs **Zero-Bot** (Easy fires all over, Medium hunts around hits, Hard keeps a map of where ships can still be, Master adds clever pings), 📅 **Daily Hunt** (the same hidden fleet for everyone each WIB day; sink it in as few shots as you can, pings count as shots, one try), 🌐 **Online** (rooms, below) and 👥 **Same device** (each player hides a fleet, then a cover screen hides the boards between turns).
+- **Tactics mode** (vs Zero-Bot, online and same device; the Daily Hunt stays Classic): every ship has a power that recharges as you move (it starts half charged, and a sunk ship's power is gone): Carrier **Air Strike** (a line of squares), Battleship **Salvo** (several shots anywhere), Cruiser **Radar Sweep** (counts the ship squares in a row or column), Submarine **Torpedo** (runs in from an edge and hits the first ship it meets; the sub also runs silent, hidden from pings and radar) and Destroyer **Flare** (shows ship or water without firing). Each side hides **2 mines** on open water: firing on one shows its owner one of the shooter's ship squares. **3 supply crates** hide in each sea (extra ping, shield, repair kit or extra shot). **Overdrive:** 3 hits in a row charge one power at once and keep your turn. Powers and items live in `shared/sonar_tactics.json`; Zero-Bot uses every power at every level.
+- **Ship Workshop:** spend coins to upgrade each power to Mk II (150) and Mk III (350) for a shorter cooldown or a bigger effect (a longer Air Strike, a 3×3 Flare, a Torpedo from any edge). Upgrades count vs Zero-Bot and in the Campaign; online and same device are always Mk I. Zero-Bot is Mk I on Easy and Medium, Mk II on Hard and Mk III on Master.
+- **Campaign:** 12 Tactics missions vs Zero-Bot (`shared/sonar_campaign.json`), each with a twist: fog (a sunk ship doesn't show the water around it), a silent fleet, up to 6 mines, extra crates, shields, a move limit, or no powers for you, ending with the **Iron Admiral** boss. Missions open one by one. Stars: win, win within the mission's move target, and win without losing a ship; each new star pays 10 coins × the mission number, once. Campaign games give XP but no leaderboard points or lucky drops.
 - **Fair play:** the server keeps every fleet secret (Zero-Bot's, the Daily fleet and both online fleets) and only sends what you've found; the rules are shared by Rust and TypeScript and checked against the same test vectors (`shared/sonar_rules.json`, `shared/sonar_vectors.json`).
 - **Placing ships:** tap a ship then a square, tap or drag a placed ship to move it, R to turn it, or **Shuffle**. Keys: arrows + Enter/Space to fire, P for ping mode (rebindable in Settings → Controls).
 - **Rewards vs Zero-Bot:** win 6 / 15 / 30 / 60 coins (Easy → Master) with a 5–40% token chance, XP for every finished game, and a 20% **lucky drop** of a fleet or sea after a win vs Hard or Master. Daily Hunt: 40 coins for 30 shots or fewer, 25 for 45 or fewer, else 15. Online games pay XP only.
@@ -155,7 +158,7 @@ Chess rooms: whoever moves first in a game plays White (so colours swap game by 
 
 Sonar rooms: both players hide a fleet first (the server never sends one player's fleet to the other until the game ends), then take turns firing or pinging; whoever moves first that game fires first. Sonar rooms default to one game too.
 
-API: `POST /api/rooms` `{game, best_of}`, `POST /api/rooms/:code/{join,move,next,emote,leave,rematch}` (chess moves: `{uci}`; Sonar: `{cell, ping}`), `POST /api/rooms/:code/draw` `{action: offer|accept|decline}`, `POST /api/rooms/:code/fleet` `{fleet}` (Sonar), `GET /api/rooms/:code?since=<version>` (waits up to 20 s for a newer version), `GET /api/rooms/leaderboard?game=`.
+API: `POST /api/rooms` `{game, best_of, sonar_mode?}` (Sonar: `classic` or `tactics`), `POST /api/rooms/:code/{join,move,next,emote,leave,rematch}` (chess moves: `{uci}`; Sonar: `{cell, ping}`, or a Tactics move code in `uci`), `POST /api/rooms/:code/draw` `{action: offer|accept|decline}`, `POST /api/rooms/:code/fleet` `{fleet}` (Sonar), `GET /api/rooms/:code?since=<version>` (waits up to 20 s for a newer version), `GET /api/rooms/leaderboard?game=`.
 
 ## Coins, tokens and levels
 
@@ -220,10 +223,13 @@ Every day (00:00 WIB) you get 3 different random quests, shown on the Hub and on
 | Finish 3 Sonar games vs Zero-Bot | 20 | 30 |
 | Beat Zero-Bot at Sonar on Medium or harder | 40 | 60 |
 | Finish today's Sonar Daily Hunt | 30 | 40 |
+| Win a Sonar Tactics game vs Zero-Bot | 40 | 60 |
+| Use 6 ship powers in Sonar Tactics | 30 | 40 |
+| Open 2 supply crates in Sonar Tactics | 30 | 40 |
 
 ## Achievements
 
-The `/achievements` page lists 48 one-time achievements with progress bars; locked ones are visible too. The server works out progress from results it already verified (matches, scores, the coin ledger, owned items, login and quest history), so progress made before achievements existed counts as well. Press **Claim** to get the coins, the same amount of XP, and a **title** to wear. Achievement coins don't count toward the daily cap. Claimed achievements show on your public profile.
+The `/achievements` page lists 60 one-time achievements with progress bars; locked ones are visible too. The server works out progress from results it already verified (matches, scores, the coin ledger, owned items, login and quest history), so progress made before achievements existed counts as well. Press **Claim** to get the coins, the same amount of XP, and a **title** to wear. Achievement coins don't count toward the daily cap. Claimed achievements show on your public profile.
 
 | Achievement | Coins | Title |
 |-------------|-------|-------|
@@ -271,6 +277,10 @@ The `/achievements` page lists 48 one-time achievements with progress bars; lock
 | Beat Zero-Bot on Master in Sonar | 300 | Fleet Admiral |
 | Finish a Sonar Daily Hunt in 30 shots or fewer | 120 | Eagle Eye |
 | Beat Zero-Bot on Medium or harder in Sonar without losing a ship | 150 | Untouchable |
+| Beat Zero-Bot in a Sonar Tactics game | 60 | Tactician |
+| Upgrade a Sonar ship power to Mk III in the Workshop | 120 | Shipwright |
+| Win all 12 Sonar Campaign missions | 250 | Commodore |
+| Collect all 36 stars in the Sonar Campaign | 400 | Iron Admiral |
 
 ### Title looks
 
@@ -408,6 +418,8 @@ zero_signal/
 │   ├── chess_items.json        # chess boards + piece sets
 │   ├── chess_puzzles.json      # 180 checked "mate in 2" daily puzzles
 │   ├── sonar_rules.json        # Sonar grid, fleet and pings (+ sonar_vectors.json, sonar_items.json)
+│   ├── sonar_tactics.json      # Sonar Tactics powers, Mk levels, mines, crates, Workshop prices
+│   ├── sonar_campaign.json     # the 12 Sonar Campaign missions
 │   └── tic_tac_toe_items.json  # boards + faces (read by backend AND frontend)
 ├── backend/                    # Rust + Axum API
 │   ├── migrations/             # sqlx SQL migrations
@@ -418,9 +430,9 @@ zero_signal/
 │       ├── daily.rs            # WIB (UTC+7) day boundary for everything daily
 │       ├── daily_login.rs      # 7-day login streak reward
 │       ├── quests/             # daily quest pool, progress hooks, claim/reroll API
-│       ├── achievements.rs     # 48 achievements, live progress, claim + titles
+│       ├── achievements.rs     # 60 achievements, live progress, claim + titles
 │       ├── chess/              # rules (cozy-chess), Zero-Bot AI, games API, items, daily puzzles
-│       ├── sonar/              # rules, Zero-Bot (probability map + pings), games API, Daily Hunt, items
+│       ├── sonar/              # rules + Tactics, Zero-Bot (probability map, pings, powers), games API, Workshop, Campaign, Daily Hunt, items
 │       ├── character/          # item catalog, outfits, presets, shop, profiles
 │       ├── tic_tac_toe/        # rules, perfect AI, matches, boards/faces, photo
 │       ├── whack_a_mole/       # seeded mole schedule, tap replay scorer, runs API
@@ -459,7 +471,7 @@ zero_signal/
 | GET  | `/api/me/quests` | today's 3 quests, progress, reroll and bonus status (auth) |
 | POST | `/api/me/quests/:slot/claim` | claim a finished quest; the 3rd claim adds the bonus token (auth) |
 | POST | `/api/me/quests/:slot/reroll` | swap one unfinished quest, once per day (auth) |
-| GET  | `/api/me/achievements` | all 48 achievements with live progress (auth) |
+| GET  | `/api/me/achievements` | all 60 achievements with live progress (auth) |
 | POST | `/api/me/achievements/:id/claim` | claim an unlocked achievement: coins + XP + title (auth) |
 | GET  | `/api/me/character` | outfit, owned items, presets, wallet (auth) |
 | PUT  | `/api/me/character/loadout` | wear an outfit (server checks ownership) (auth) |
@@ -501,12 +513,15 @@ zero_signal/
 | POST | `/api/games/chess/buy` | `{kind: board|pieces, id}` buy with coins (auth) |
 | GET  | `/api/games/chess/puzzle` | today's puzzle and your try (auth) |
 | POST | `/api/games/chess/puzzle/move` | `{uci}`; right → Zero-Bot's reply or solved; wrong → costs a try (auth) |
-| POST | `/api/games/sonar/games` | `{level, fleet, fleet_skin, sea}` start a battle vs Zero-Bot (gives up an unfinished one) (auth) |
+| POST | `/api/games/sonar/games` | `{level, fleet, fleet_skin, sea, mode?, op?}` start a battle vs Zero-Bot (gives up an unfinished one); `mode` is `classic` (default), `tactics` or `campaign` with mission `op` (auth) |
 | GET  | `/api/games/sonar/games/active` | your unfinished battle, or null (auth) |
-| POST | `/api/games/sonar/games/:id/fire` | `{cell, ping?}`; your result, then Zero-Bot's move (auth) |
+| POST | `/api/games/sonar/games/:id/fire` | `{cell, ping?}` or a Tactics move code `{move}` ("a12h", "o2", …); your result, then Zero-Bot's moves (auth) |
 | POST | `/api/games/sonar/games/:id/resign` | give up (auth) |
 | GET  | `/api/games/sonar/collection` | fleets and seas with ownership (auth) |
 | POST | `/api/games/sonar/buy` | `{kind: fleet|sea, id}` buy with coins (auth) |
+| GET  | `/api/games/sonar/workshop` | your Mk per Tactics power and the next prices (auth) |
+| POST | `/api/games/sonar/workshop/upgrade` | `{power}` buy the next Mk of one power (auth) |
+| GET  | `/api/games/sonar/campaign` | your stars, best moves and open missions (auth) |
 | GET  | `/api/games/sonar/daily` | today's Daily Hunt and your shots (auth) |
 | POST | `/api/games/sonar/daily/fire` | `{cell, ping?}` one shot or ping at today's fleet (auth) |
 | POST | `/api/games/connect-four/matches` | start an AI series `{difficulty, best_of, skin}` (auth) |
