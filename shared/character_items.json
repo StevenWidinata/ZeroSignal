@@ -284,6 +284,10 @@
     { "id": "title-first-crown", "slot": "title", "name": "First Crown", "rarity": "common", "unlock": { "kind": "achievement" }, "art": { "text": "First Crown", "tier": "bronze", "color": "#c8323c", "icon": "👑" } },
     { "id": "title-draughts-master", "slot": "title", "name": "Draughts Master", "rarity": "legendary", "unlock": { "kind": "achievement" }, "art": { "text": "Draughts Master", "tier": "mythic", "color": "#e8b923", "icon": "⛀", "effect": "shimmer" } },
     { "id": "title-iron-wall", "slot": "title", "name": "Iron Wall", "rarity": "epic", "unlock": { "kind": "achievement" }, "art": { "text": "Iron Wall", "tier": "gold", "color": "#7c7f86", "icon": "🛡️", "effect": "glow" } },
-    { "id": "title-jump-master", "slot": "title", "name": "Jump Master", "rarity": "epic", "unlock": { "kind": "achievement" }, "art": { "text": "Jump Master", "tier": "gold", "color": "#2f7aa8", "icon": "🦘", "effect": "glow" } }
+    { "id": "title-jump-master", "slot": "title", "name": "Jump Master", "rarity": "epic", "unlock": { "kind": "achievement" }, "art": { "text": "Jump Master", "tier": "gold", "color": "#2f7aa8", "icon": "🦘", "effect": "glow" } },
+    { "id": "title-grid-filler", "slot": "title", "name": "Grid Filler", "rarity": "common", "unlock": { "kind": "achievement" }, "art": { "text": "Grid Filler", "tier": "bronze", "color": "#3fa34d", "icon": "🔢" } },
+    { "id": "title-number-sage", "slot": "title", "name": "Number Sage", "rarity": "legendary", "unlock": { "kind": "achievement" }, "art": { "text": "Number Sage", "tier": "mythic", "color": "#9b5de5", "icon": "🧠", "effect": "shimmer" } },
+    { "id": "title-quick-pencil", "slot": "title", "name": "Quick Pencil", "rarity": "epic", "unlock": { "kind": "achievement" }, "art": { "text": "Quick Pencil", "tier": "gold", "color": "#ff8c42", "icon": "✏️", "effect": "glow" } },
+    { "id": "title-week-of-nines", "slot": "title", "name": "Week of Nines", "rarity": "epic", "unlock": { "kind": "achievement" }, "art": { "text": "Week of Nines", "tier": "gold", "color": "#2f9ee8", "icon": "📅", "effect": "glow" } }
   ]
 }

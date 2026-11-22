@@ -54,8 +54,8 @@ describe("titles", () => {
     for (const t of titles.filter((x) => x.art.tier === "bronze")) expect(t.art.effect, t.id).toBeUndefined();
   });
 
-  it("there are 60 achievement-only titles", () => {
-    expect(titles.filter((t) => t.unlock.kind === "achievement")).toHaveLength(60);
+  it("there are 64 achievement-only titles", () => {
+    expect(titles.filter((t) => t.unlock.kind === "achievement")).toHaveLength(64);
   });
 
   it("builds tier and effect classes", () => {

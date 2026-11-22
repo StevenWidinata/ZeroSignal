@@ -3,8 +3,9 @@ import { Link } from "react-router-dom";
 import { api } from "../api/client";
 import type { StatsLevelRow, StatsSeries, StatsView } from "../api/types";
 import { formatTime } from "../games/minefield/logic";
+import { formatTime as formatClock } from "../games/sudoku/logic";
 import { findGame } from "../platform/registry";
-import { DIFFICULTY_NAME, MF_LEVEL, boardLabel, sumBoards, winRate } from "./statsLogic";
+import { DIFFICULTY_NAME, MF_LEVEL, SD_LEVEL, boardLabel, sumBoards, winRate } from "./statsLogic";
 import BackButton from "../components/BackButton";
 
 const fmt = (n: number) => n.toLocaleString();
@@ -157,6 +158,7 @@ export default function Stats() {
   const ab = sumBoards(s.boards, "sling-squad");
   const wamBoards = s.boards.filter((b) => b.game_id === "whack-a-mole");
   const mfBoards = s.boards.filter((b) => b.game_id === "minefield");
+  const sdBoards = s.boards.filter((b) => b.game_id === "sudoku");
   const boards2048 = s.boards.filter((b) => b.game_id === "2048");
   const snakeBoards = s.boards.filter((b) => b.game_id === "snake-signal");
   const totalGames =
@@ -164,6 +166,7 @@ export default function Stats() {
     ab.rounds +
     s.whack.rounds +
     s.minefield.reduce((n, r) => n + r.played, 0) +
+    s.sudoku.reduce((n, r) => n + r.played, 0) +
     s.g2048.games +
     s.snake.runs +
     s.chess.levels.reduce((n, r) => n + r.played, 0) +
@@ -472,6 +475,40 @@ export default function Stats() {
                       <td className="num">{best ? fmt(best) : "–"}</td>
                       <td>
                         <RateBar won={r.won} played={r.played} label={DIFFICULTY_NAME[r.difficulty] ?? r.difficulty} />
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </GameCard>
+
+        <GameCard id="sudoku" played={s.sudoku.length > 0}>
+          <div className="board-table-wrap">
+            <table className="board-table stats-table">
+              <thead>
+                <tr>
+                  <th scope="col">Level</th>
+                  <th scope="col">Games</th>
+                  <th scope="col">Solved</th>
+                  <th scope="col">Best time</th>
+                  <th scope="col">Best pts</th>
+                  <th scope="col">Solve rate</th>
+                </tr>
+              </thead>
+              <tbody>
+                {s.sudoku.map((r) => {
+                  const best = sdBoards.find((b) => b.level === SD_LEVEL[r.level])?.best;
+                  return (
+                    <tr key={r.level}>
+                      <th scope="row">{DIFFICULTY_NAME[r.level] ?? r.level}</th>
+                      <td className="num">{r.played}</td>
+                      <td className="num">{r.won}</td>
+                      <td className="num">{r.best_time_ms ? formatClock(r.best_time_ms) : "–"}</td>
+                      <td className="num">{best ? fmt(best) : "–"}</td>
+                      <td>
+                        <RateBar won={r.won} played={r.played} label={`Sudoku ${DIFFICULTY_NAME[r.level] ?? r.level}`} />
                       </td>
                     </tr>
                   );

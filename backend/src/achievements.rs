@@ -1,4 +1,4 @@
-//! Achievements: 60 one-time goals. Progress is computed live from data the
+//! Achievements: 64 one-time goals. Progress is computed live from data the
 //! server already verified (matches, scores, ledger, inventory), so older
 //! progress counts too. Claiming pays coins + the same XP once, plus a title.
 
@@ -95,6 +95,13 @@ pub struct Stats {
     pub checkers_master_wins: i64,
     pub checkers_iron_wins: i64,
     pub checkers_puzzle_streak: i64,
+    /// Sudoku: puzzles solved, Expert solves, Medium-or-harder solves (Daily
+    /// included) under 5 minutes without hints, and the longest run of
+    /// Dailies solved on days in a row.
+    pub sudoku_solves: i64,
+    pub sudoku_expert_solves: i64,
+    pub sudoku_quick_solves: i64,
+    pub sudoku_daily_streak: i64,
 }
 
 pub struct Achievement {
@@ -128,7 +135,7 @@ macro_rules! ach {
     };
 }
 
-pub static ACHIEVEMENTS: [Achievement; 60] = [
+pub static ACHIEVEMENTS: [Achievement; 64] = [
     ach!("cf_first_win", "First Drop", "Win your first Connect Four series", 30, "title-chip-dropper", 1, |s| s.cf_wins),
     ach!("cf_medium", "Thinking Ahead", "Win a Connect Four series vs Medium or harder", 40, "title-four-thinker", 1, |s| s.cf_wins_medium),
     ach!("cf_hard", "Hard Hitter", "Win a Connect Four series vs Hard or harder", 80, "title-grid-breaker", 1, |s| s.cf_wins_hard),
@@ -196,7 +203,12 @@ pub static ACHIEVEMENTS: [Achievement; 60] = [
     ach!("checkers_master", "Grandmaster of Draughts", "Beat Zero-Bot on Master at checkers", 300, "title-draughts-master", 1, |s| s.checkers_master_wins),
     ach!("checkers_iron_wall", "Iron Wall", "Beat Zero-Bot on Medium or harder at checkers with 10 or more pieces left", 150, "title-iron-wall", 1, |s| s.checkers_iron_wins),
     ach!("checkers_puzzle_streak", "Jump Master", "Solve the Daily checkers puzzle 7 days in a row", 150, "title-jump-master", 7, |s| s.checkers_puzzle_streak),
-    ach!("quest_days_7", "Quest Master", "Finish all 3 daily quests in one day, 7 times", 200, "title-quest-master", 7, |s| s.quest_full_days),
+    ach!("sudoku_first_solve", "Grid Filler", "Solve a Sudoku puzzle", 30, "title-grid-filler", 1, |s| s.sudoku_solves),
+    ach!("sudoku_expert", "Number Sage", "Solve an Expert Sudoku", 300, "title-number-sage", 1, |s| s.sudoku_expert_solves),
+    ach!("sudoku_quick", "Quick Pencil", "Solve a Medium or harder Sudoku in under 5 minutes without hints", 150, "title-quick-pencil", 1,
+        |s| s.sudoku_quick_solves),
+    ach!("sudoku_daily_streak", "Week of Nines", "Solve the Daily Sudoku 7 days in a row", 150, "title-week-of-nines", 7, |s| s.sudoku_daily_streak),
+    ach!("quest_days_7","Quest Master", "Finish all 3 daily quests in one day, 7 times", 200, "title-quest-master", 7, |s| s.quest_full_days),
 ];
 
 pub fn find(id: &str) -> Option<&'static Achievement> {
@@ -338,6 +350,26 @@ pub async fn load_stats(pool: &sqlx::PgPool, user_id: Uuid) -> AppResult<Stats> 
         user_id,
     )
     .await?;
+    let sudoku: (i64, i64, i64) = sqlx::query_as(
+        r#"SELECT COUNT(*),
+                  COUNT(*) FILTER (WHERE level = 'expert'),
+                  COUNT(*) FILTER (WHERE level <> 'easy' AND hints = 0 AND time_ms < 300000)
+           FROM sudoku_games WHERE user_id = $1 AND status = 'won'"#,
+    )
+    .bind(user_id)
+    .fetch_one(pool)
+    .await?;
+    let sudoku_daily_streak = count(
+        pool,
+        r#"SELECT MAX(n) FROM (
+               SELECT COUNT(*) AS n FROM (
+                   SELECT day - (ROW_NUMBER() OVER (ORDER BY day))::INT AS run
+                   FROM sudoku_games WHERE user_id = $1 AND level = 'daily' AND status = 'won'
+               ) d GROUP BY run
+           ) r"#,
+        user_id,
+    )
+    .await?;
     let chess_puzzle_streak = count(
         pool,
         r#"SELECT MAX(n) FROM (
@@ -432,6 +464,10 @@ pub async fn load_stats(pool: &sqlx::PgPool, user_id: Uuid) -> AppResult<Stats> 
         checkers_master_wins: checkers.1,
         checkers_iron_wins: checkers.2,
         checkers_puzzle_streak,
+        sudoku_solves: sudoku.0,
+        sudoku_expert_solves: sudoku.1,
+        sudoku_quick_solves: sudoku.2,
+        sudoku_daily_streak,
         sonar_wins: sonar.0,
         sonar_master_wins: sonar.1,
         sonar_flawless: sonar.2,
@@ -597,11 +633,11 @@ mod tests {
     use super::*;
 
     #[test]
-    fn there_are_60_unique_achievements() {
+    fn there_are_64_unique_achievements() {
         let mut ids: Vec<_> = ACHIEVEMENTS.iter().map(|a| a.id).collect();
         ids.sort();
         ids.dedup();
-        assert_eq!(ids.len(), 60);
+        assert_eq!(ids.len(), 64);
         assert!(ACHIEVEMENTS.iter().all(|a| a.coins > 0 && a.target > 0 && a.id.len() <= 32));
     }
 
@@ -616,9 +652,9 @@ mod tests {
         let mut titles: Vec<_> = ACHIEVEMENTS.iter().map(|a| a.title).collect();
         titles.sort();
         titles.dedup();
-        assert_eq!(titles.len(), 60);
+        assert_eq!(titles.len(), 64);
         let achievement_items = c.items.iter().filter(|i| i.unlock == Unlock::Achievement).count();
-        assert_eq!(achievement_items, 60, "orphan achievement-only items in catalog");
+        assert_eq!(achievement_items, 64, "orphan achievement-only items in catalog");
     }
 
     #[test]

@@ -713,6 +713,8 @@ export interface StatsView {
   series: StatsSeries[];
   boards: StatsBoard[];
   minefield: { difficulty: string; played: number; won: number; best_time_ms: number | null }[];
+  /** Finished Sudoku games per level (easy … expert, daily). */
+  sudoku: { level: string; played: number; won: number; best_time_ms: number | null }[];
   whack: {
     rounds: number;
     best_streak: number | null;
