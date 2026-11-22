@@ -6,6 +6,8 @@ import { SaveScorePrompt } from "../../components/Guest";
 import { playSfx, type Sfx } from "../../platform/sound";
 import { useWallet } from "../../store/wallet";
 import Battle from "./Battle";
+import { Stars } from "./Campaign";
+import { missionById } from "./missions";
 import { describe, fxFor, type Fx } from "./fleet";
 import { itemName } from "./items";
 
@@ -30,7 +32,18 @@ export const SOUND: Record<SonarResult["kind"], Sfx> = {
   charged: "fever",
 };
 
-export default function AiGame({ initial, onExit, onRematch }: { initial: SonarGame; onExit: () => void; onRematch: () => void }) {
+export default function AiGame({
+  initial,
+  onExit,
+  onRematch,
+  onNextMission,
+}: {
+  initial: SonarGame;
+  onExit: () => void;
+  onRematch: () => void;
+  /** Campaign: start the next mission (when there is one). */
+  onNextMission?: () => void;
+}) {
   const [game, setGame] = useState(initial);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -110,12 +123,17 @@ export default function AiGame({ initial, onExit, onRematch }: { initial: SonarG
 
   const result = game.status === "won" ? "win" : game.status === "active" ? null : "loss";
   let status: string;
-  if (game.status === "won") status = `🏆 You sank Zero-Bot's whole fleet on ${LEVEL_LABEL[game.level]}${game.mode === "tactics" ? " in Tactics" : ""}!`;
+  const mission = missionById(game.op);
+  const outOfMoves = game.status === "lost" && !!game.move_limit && game.target.shots >= game.move_limit && !game.your_sea.all_sunk;
+  if (game.status === "won")
+    status = mission ? `🏆 Mission ${mission.id} complete: ${mission.name}!` : `🏆 You sank Zero-Bot's whole fleet on ${LEVEL_LABEL[game.level]}${game.mode === "tactics" ? " in Tactics" : ""}!`;
+  else if (outOfMoves) status = `⏱️ Out of moves: you had ${game.move_limit}. Try again!`;
   else if (game.status === "lost") status = "💥 Zero-Bot sank your fleet. Try again!";
   else if (game.status === "resigned") status = "🏳 You gave up this battle.";
   else if (busy) status = news ?? "Zero-Bot is aiming…";
   else if (news) status = news.endsWith("Your turn again!") ? news : `${news} · Your turn`;
-  else status = game.mode === "tactics" ? "Your turn: fire, ping, or pick a ship power below." : "Your turn: pick a square on Zero-Bot's sea.";
+  else status = game.mode !== "classic" ? "Your turn: fire, ping, or pick a ship power below." : "Your turn: pick a square on Zero-Bot's sea.";
+  if (active && game.move_limit) status += ` · Moves ${game.target.shots}/${game.move_limit}`;
 
   return (
     <div className="c4-play sonar-play">
@@ -156,7 +174,7 @@ export default function AiGame({ initial, onExit, onRematch }: { initial: SonarG
               <strong>{game.target.shots}</strong> your moves
             </span>
             <span>
-              <strong>{game.your_sea.sunk.length}</strong> ships lost
+              <strong>{game.your_sea.sunk.length}</strong> {game.your_sea.sunk.length === 1 ? "ship" : "ships"} lost
             </span>
             {game.points !== null && game.points > 0 && (
               <span>
@@ -164,6 +182,12 @@ export default function AiGame({ initial, onExit, onRematch }: { initial: SonarG
               </span>
             )}
           </div>
+          {mission && (
+            <p className="sonar-mission-result">
+              <Stars n={game.stars?.stars ?? 0} />{" "}
+              {game.stars?.new_stars ? `${game.stars.new_stars} new star${game.stars.new_stars === 1 ? "" : "s"}: +${game.stars.coins} coins` : game.stars ? "No new stars this time" : ""}
+            </p>
+          )}
           {game.drop && <p className="unlock">🍀 Lucky drop: you won {itemName(game.drop)}!</p>}
           <p className="hint">Zero-Bot's hidden ships are shown faintly on its sea.</p>
         </div>
@@ -185,8 +209,13 @@ export default function AiGame({ initial, onExit, onRematch }: { initial: SonarG
               🏳 Give up
             </button>
           ))}
+        {!active && game.status === "won" && onNextMission && (
+          <button className="btn-green" onClick={onNextMission}>
+            ▶ Next mission
+          </button>
+        )}
         {!active && (
-          <button className="btn-green" onClick={onRematch}>
+          <button className={game.status === "won" && onNextMission ? "btn" : "btn-green"} onClick={onRematch}>
             ↻ Play again
           </button>
         )}

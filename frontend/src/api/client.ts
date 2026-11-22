@@ -16,6 +16,7 @@ import type {
   SonarGame,
   SonarLevel,
   SonarMode,
+  SonarOpProgress,
   SonarWorkshop,
   ChessCollection,
   ChessGame,
@@ -483,6 +484,13 @@ const SONAR = "/api/games/sonar";
 export const sonar = {
   create(level: SonarLevel, fleet: string, fleetSkin: string, sea: string, mode: SonarMode = "classic") {
     return post<SonarGame>(`${SONAR}/games`, { level, fleet, fleet_skin: fleetSkin, sea, mode });
+  },
+  /** Start Campaign mission `op` (its level comes from the mission). */
+  createMission(op: number, level: SonarLevel, fleet: string, fleetSkin: string, sea: string) {
+    return post<SonarGame>(`${SONAR}/games`, { level, fleet, fleet_skin: fleetSkin, sea, mode: "campaign", op });
+  },
+  campaign() {
+    return request<SonarOpProgress[]>(`${SONAR}/campaign`);
   },
   active() {
     return request<SonarGame | null>(`${SONAR}/games/active`);

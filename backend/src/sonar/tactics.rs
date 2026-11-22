@@ -93,19 +93,36 @@ impl Item {
 }
 
 /// How a Tactics game is set up: each side's Mk levels, the seed that hides
-/// the crates, and how many crates each sea gets.
+/// the crates, how many crates each sea gets, and any Campaign twists.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Setup {
     pub levels: [Levels; 2],
     pub seed: u32,
     pub crates: u8,
+    pub twists: Twists,
 }
 
 impl Setup {
     /// A normal game: Mk levels as given, the usual number of crates.
     pub fn new(levels: [Levels; 2], seed: u32) -> Setup {
-        Setup { levels, seed, crates: tactics_rules().crates }
+        Setup { levels, seed, crates: tactics_rules().crates, twists: Twists::default() }
     }
+}
+
+/// Campaign twists on top of the Tactics rules (all off in normal games).
+/// Arrays are per side: [side 0, side 1]; "sea s" is side s's own sea.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct Twists {
+    /// Sinking a ship doesn't show the water around it.
+    pub fog: bool,
+    /// Every ship in sea s hides from pings and radar (not just the sub).
+    pub silent_all: [bool; 2],
+    /// Shields sea s starts with.
+    pub shields: [u8; 2],
+    /// Crates hidden in each sea instead of `Setup::crates`.
+    pub crates: Option<[u8; 2]>,
+    /// Side s can't use ship powers (or Overdrive).
+    pub no_powers: [bool; 2],
 }
 
 pub fn tactics_rules() -> &'static TacticsRules {

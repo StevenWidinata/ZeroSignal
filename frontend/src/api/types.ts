@@ -955,6 +955,15 @@ export interface SonarPowers {
 
 export type SonarMode = "classic" | "tactics";
 
+/** Your progress on one Campaign mission. */
+export interface SonarOpProgress {
+  id: number;
+  /** 0 = not won yet. */
+  stars: number;
+  best_moves: number | null;
+  unlocked: boolean;
+}
+
 /** The Ship Workshop: your Mk per power (fleet order) and the next Mk's price (null = maxed). */
 export interface SonarWorkshop {
   levels: number[];
@@ -964,7 +973,11 @@ export interface SonarWorkshop {
 export interface SonarGame {
   id: string;
   level: SonarLevel;
-  mode: SonarMode;
+  mode: SonarMode | "campaign";
+  /** Campaign: the mission, its move limit, and the stars once it's won. */
+  op: number | null;
+  move_limit: number | null;
+  stars: { stars: number; new_stars: number; coins: number } | null;
   status: "active" | "won" | "lost" | "resigned";
   fleet: string;
   your_sea: SonarSea;

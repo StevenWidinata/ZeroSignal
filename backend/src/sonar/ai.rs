@@ -70,8 +70,9 @@ pub struct Knowledge {
     pub afloat_ids: Vec<usize>,
     /// Tactics: radar sweeps so far.
     pub sweeps: Vec<Sweep>,
-    /// Tactics: the afloat ship that pings and radar can't hear (the sub).
-    pub silent: Option<usize>,
+    /// Tactics: the afloat ships that pings and radar can't hear (the sub,
+    /// or in some Campaign missions every ship).
+    pub silent: Vec<usize>,
 }
 
 impl Sea {
@@ -86,7 +87,7 @@ impl Sea {
             afloat: afloat_ids.iter().map(|&i| rules().fleet[i].len).collect(),
             afloat_ids,
             sweeps: self.sweeps.clone(),
-            silent: self.silent_afloat().map(usize::from),
+            silent: self.silent_afloat().into_iter().map(usize::from).collect(),
         }
     }
 }
@@ -123,7 +124,7 @@ impl Knowledge {
         let mut w = [false; CELLS];
         for (area, count) in self.soundings() {
             let found = area.iter().filter(|&&c| self.found(c)).count() as u8;
-            if count == 0 || (self.silent.is_none() && found >= count) {
+            if count == 0 || (self.silent.is_empty() && found >= count) {
                 for c in area {
                     if self.marks[c] == Mark::Unknown {
                         w[c] = true;
@@ -191,7 +192,7 @@ impl Knowledge {
         let targeting = (0..CELLS).any(|c| matches!(self.marks[c], Mark::Hit | Mark::Spotted));
         for (&len, &id) in self.afloat.iter().zip(&self.afloat_ids) {
             let len = len as usize;
-            let water = if self.silent == Some(id) { &no_water } else { &water };
+            let water = if self.silent.contains(&id) { &no_water } else { &water };
             for bow in 0..CELLS {
                 for horizontal in [true, false] {
                     let (r, c) = (bow / SIZE, bow % SIZE);
@@ -315,9 +316,10 @@ impl Arsenal {
     /// `side`'s arsenal, or None in a Classic duel.
     pub fn of(d: &Duel, side: usize) -> Option<Arsenal> {
         let t = d.tactics.as_ref()?;
-        let mut a = Arsenal { ready: [false; POWERS], chargeable: [false; POWERS], size: [0; POWERS], overdrive: t.overdrive[side] };
+        let powerless = d.twists.no_powers[side];
+        let mut a = Arsenal { ready: [false; POWERS], chargeable: [false; POWERS], size: [0; POWERS], overdrive: t.overdrive[side] && !powerless };
         for p in 0..POWERS {
-            let afloat = !d.seas[side].is_sunk(p);
+            let afloat = !d.seas[side].is_sunk(p) && !powerless;
             a.ready[p] = afloat && t.ready(side, p);
             a.chargeable[p] = afloat && !t.ready(side, p);
             a.size[p] = t.spec(side, p).size;

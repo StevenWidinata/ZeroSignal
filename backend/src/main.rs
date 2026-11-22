@@ -200,6 +200,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/games/sonar/games/:id/fire", post(sonar::api::fire))
         .route("/api/games/sonar/games/:id/resign", post(sonar::api::resign))
         .route("/api/games/sonar/collection", get(sonar::api::collection))
+        .route("/api/games/sonar/campaign", get(sonar::campaign::get))
         .route("/api/games/sonar/workshop", get(sonar::workshop::get))
         .route("/api/games/sonar/workshop/upgrade", post(sonar::workshop::upgrade))
         .route("/api/games/sonar/buy", post(sonar::api::buy))

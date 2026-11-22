@@ -100,6 +100,9 @@ impl PowersView {
     /// `side`'s powers, or None in a Classic duel.
     pub fn of(d: &Duel, side: usize) -> Option<PowersView> {
         let t = d.tactics.as_ref()?;
+        if d.twists.no_powers[side] {
+            return None;
+        }
         Some(PowersView {
             charge: t.charge[side],
             cooldown: std::array::from_fn(|p| t.spec(side, p).cooldown),

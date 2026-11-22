@@ -3,6 +3,7 @@
 
 pub mod ai;
 pub mod api;
+pub mod campaign;
 pub mod daily;
 pub mod items;
 pub mod rules;

@@ -108,8 +108,14 @@ pub struct Fleet {
 }
 
 impl Fleet {
-    /// Parse and check a fleet code.
+    /// Parse and check a fleet code (with up to the usual number of mines).
     pub fn parse(code: &str) -> Result<Fleet, FleetError> {
+        Fleet::parse_with_mines(code, super::tactics::tactics_rules().mines)
+    }
+
+    /// Parse and check a fleet code that may hide up to `max_mines` mines
+    /// (Zero-Bot hides more in some Campaign missions).
+    pub fn parse_with_mines(code: &str, max_mines: u8) -> Result<Fleet, FleetError> {
         let tokens: Vec<&str> = code.split_whitespace().collect();
         let mut ships = Vec::with_capacity(tokens.len());
         let mut mines = Vec::new();
@@ -133,7 +139,7 @@ impl Fleet {
             ships.push(Placement { bow, horizontal });
         }
         let f = Fleet { ships, mines };
-        f.validate()?;
+        f.validate_with_mines(max_mines)?;
         Ok(f)
     }
 
@@ -157,6 +163,10 @@ impl Fleet {
     }
 
     pub fn validate(&self) -> Result<(), FleetError> {
+        self.validate_with_mines(super::tactics::tactics_rules().mines)
+    }
+
+    pub fn validate_with_mines(&self, max_mines: u8) -> Result<(), FleetError> {
         if self.ships.len() != rules().fleet.len() {
             return Err(FleetError::WrongCount);
         }
@@ -183,7 +193,7 @@ impl Fleet {
                 }
             }
         }
-        if self.mines.len() > usize::from(super::tactics::tactics_rules().mines) {
+        if self.mines.len() > usize::from(max_mines) {
             return Err(FleetError::TooManyMines);
         }
         for (i, &m) in self.mines.iter().enumerate() {
@@ -420,6 +430,8 @@ pub enum ShotError {
     NoOverdrive,
     /// Overdrive on a power that is already charged.
     AlreadyReady,
+    /// Campaign: this side has no ship powers.
+    NoPowers,
 }
 
 impl ShotError {
@@ -434,6 +446,7 @@ impl ShotError {
             ShotError::PowerLost => "that ship has sunk, so its power is gone",
             ShotError::NoOverdrive => "Overdrive isn't full yet",
             ShotError::AlreadyReady => "that power is already charged",
+            ShotError::NoPowers => "you have no ship powers in this mission",
         }
     }
 
@@ -449,6 +462,7 @@ impl ShotError {
             ShotError::PowerLost => "power_lost",
             ShotError::NoOverdrive => "no_overdrive",
             ShotError::AlreadyReady => "already_ready",
+            ShotError::NoPowers => "no_powers",
         }
     }
 }
@@ -511,8 +525,11 @@ pub struct Sea {
     pub pings: Vec<Ping>,
     /// Tactics: radar sweeps so far.
     pub sweeps: Vec<Sweep>,
-    /// Tactics: this ship doesn't show in pings or radar while afloat.
-    silent: Option<u8>,
+    /// Tactics: ships (bit per fleet index) that don't show in pings or
+    /// radar while afloat: the sub, or (Campaign) every ship.
+    silent: u8,
+    /// Campaign fog: sinking a ship doesn't show the water around it.
+    fog: bool,
     /// Tactics: mines still armed.
     mines: Vec<usize>,
     /// Tactics: hidden supply crates (square, item) not opened yet.
@@ -665,7 +682,8 @@ impl Sea {
             hits: vec![0; fleet.ships.len()],
             pings: Vec::new(),
             sweeps: Vec::new(),
-            silent: None,
+            silent: 0,
+            fog: false,
             mines: Vec::new(),
             crates: Vec::new(),
             bonus_pings: 0,
@@ -677,7 +695,13 @@ impl Sea {
     /// A Tactics sea: the submarine runs silent, the fleet's mines are armed
     /// and `crates` are hidden (see `tactics::hide_crates`).
     pub fn new_tactics(fleet: &Fleet, crates: Vec<(usize, Item)>) -> Sea {
-        Sea { silent: Some(super::tactics::SILENT_SHIP), mines: fleet.mines.clone(), crates, ..Sea::new(fleet) }
+        Sea { silent: 1 << super::tactics::SILENT_SHIP, mines: fleet.mines.clone(), crates, ..Sea::new(fleet) }
+    }
+
+    /// Campaign: every ship in this sea runs silent.
+    fn all_silent(mut self) -> Sea {
+        self.silent = (1u8 << self.lens.len()) - 1;
+        self
     }
 
     pub fn pings_left(&self) -> u8 {
@@ -701,9 +725,9 @@ impl Sea {
         self.moves.len()
     }
 
-    /// Tactics: the silent ship, while it is afloat.
-    pub fn silent_afloat(&self) -> Option<u8> {
-        self.silent.filter(|&s| !self.is_sunk(usize::from(s)))
+    /// Tactics: the silent ships still afloat.
+    pub fn silent_afloat(&self) -> Vec<u8> {
+        (0..self.lens.len() as u8).filter(|&s| self.silent & (1 << s) != 0 && !self.is_sunk(usize::from(s))).collect()
     }
 
     /// Ship squares in `cells` that pings and radar can hear (a silent sub can't be heard).
@@ -711,7 +735,7 @@ impl Sea {
         cells
             .iter()
             .filter(|&&c| match self.occ[c] {
-                Some(s) => self.silent != Some(s) || self.is_sunk(s as usize),
+                Some(s) => self.silent & (1 << s) == 0 || self.is_sunk(s as usize),
                 None => false,
             })
             .count() as u8
@@ -745,6 +769,14 @@ impl Sea {
                 self.marks[cell] = Mark::Hit;
                 if self.hits[s] < self.lens[s] {
                     return ShotResult::Hit;
+                }
+                if self.fog {
+                    for c in 0..CELLS {
+                        if self.occ[c] == Some(ship) {
+                            self.marks[c] = Mark::Sunk(ship);
+                        }
+                    }
+                    return ShotResult::Sunk { ship };
                 }
                 // Reveal the ship and the water around it.
                 for c in 0..CELLS {
@@ -958,17 +990,29 @@ pub struct Duel {
     pub tactics: Option<Tactics>,
     /// Tactics: picks which ship square a mine shows.
     seed: u32,
+    /// Campaign twists (all off otherwise).
+    pub twists: super::tactics::Twists,
 }
 
 impl Duel {
     pub fn new(fleets: [&Fleet; 2], first: usize) -> Duel {
-        Duel { seas: [Sea::new(fleets[0]), Sea::new(fleets[1])], next: first, log: Vec::new(), tactics: None, seed: 0 }
+        Duel { seas: [Sea::new(fleets[0]), Sea::new(fleets[1])], next: first, log: Vec::new(), tactics: None, seed: 0, twists: Default::default() }
     }
 
     /// A Tactics duel (Mk levels, crates and the seed come from `setup`).
     pub fn new_tactics(fleets: [&Fleet; 2], first: usize, setup: Setup) -> Duel {
-        let sea = |s: usize| Sea::new_tactics(fleets[s], hide_crates(fleets[s], crate_seed(setup.seed, s), setup.crates));
-        Duel { seas: [sea(0), sea(1)], next: first, log: Vec::new(), tactics: Some(Tactics::new(setup.levels)), seed: setup.seed }
+        let t = setup.twists;
+        let sea = |s: usize| {
+            let crates = t.crates.map_or(setup.crates, |c| c[s]);
+            let mut sea = Sea::new_tactics(fleets[s], hide_crates(fleets[s], crate_seed(setup.seed, s), crates));
+            if t.silent_all[s] {
+                sea = sea.all_silent();
+            }
+            sea.fog = t.fog;
+            sea.shields = t.shields[s];
+            sea
+        };
+        Duel { seas: [sea(0), sea(1)], next: first, log: Vec::new(), tactics: Some(Tactics::new(setup.levels)), seed: setup.seed, twists: t }
     }
 
     pub fn replay(fleets: [&Fleet; 2], first: usize, moves: &str) -> Result<Duel, ShotError> {
@@ -1003,6 +1047,9 @@ impl Duel {
             return Err(ShotError::Over);
         }
         let side = self.to_move();
+        if self.twists.no_powers[side] && (m.power().is_some() || matches!(m, Move::Overdrive(_))) {
+            return Err(ShotError::NoPowers);
+        }
         if let Move::Overdrive(p) = m {
             let t = self.tactics.as_mut().ok_or(ShotError::NotTactics)?;
             if !t.overdrive[side] {
@@ -1194,7 +1241,7 @@ mod tests {
             let a = Fleet::parse(&c.fleets[0]).unwrap();
             let b = Fleet::parse(&c.fleets[1]).unwrap();
             let mut d = match c.levels {
-                Some(levels) => Duel::new_tactics([&a, &b], c.first, Setup { levels, seed: c.seed, crates: c.crates }),
+                Some(levels) => Duel::new_tactics([&a, &b], c.first, Setup { levels, seed: c.seed, crates: c.crates, twists: Default::default() }),
                 None => Duel::new([&a, &b], c.first),
             };
             let tokens: Vec<&str> = c.moves.split_whitespace().collect();
@@ -1242,7 +1289,8 @@ mod tests {
             }
             // Replaying the moves played so far gives the same duel.
             if let Some(levels) = c.levels {
-                let again = Duel::replay_tactics([&a, &b], c.first, Setup { levels, seed: c.seed, crates: c.crates }, &d.move_string()).unwrap();
+                let again = Duel::replay_tactics([&a, &b], c.first, Setup { levels, seed: c.seed, crates: c.crates, twists: Default::default() }, &d.move_string())
+                    .unwrap();
                 assert_eq!(again.tactics, d.tactics);
             }
         }
@@ -1264,6 +1312,38 @@ mod tests {
         assert_eq!(Sea::new(&f).play(Move::Ping(16)), Ok(ShotResult::Ping { count: 3 }));
         assert_eq!(Sea::new_tactics(&f, Vec::new()).play(Move::Ping(16)), Ok(ShotResult::Ping { count: 0 }));
         assert_eq!(Sea::new(&f).play(Move::Flare(0)), Err(ShotError::NotTactics));
+    }
+
+    #[test]
+    fn campaign_twists() {
+        use crate::sonar::tactics::{Twists, MK1};
+        let a = Fleet::parse("a1h a3h a5h a7h a9h").unwrap();
+        let b = Fleet::parse_with_mines("a1v c1v e1v g1v i1v ma8 mj9 mb10 md10 mf10 mh10", 6).unwrap();
+        assert_eq!(Fleet::parse(&b.code()).err(), Some(FleetError::TooManyMines), "6 mines only where allowed");
+        let twists = Twists { fog: true, silent_all: [false, true], shields: [0, 2], crates: Some([0, 6]), no_powers: [true, false] };
+        let mut d = Duel::new_tactics([&a, &b], 0, Setup { levels: [MK1, MK1], seed: 5, crates: 3, twists });
+        // Side 0 has no powers; its shots at b's destroyer (8, 18) hit two shields first.
+        assert_eq!(d.play(Move::Flare(55)), Err(ShotError::NoPowers));
+        assert_eq!(d.play(Move::Fire(8)), Ok(ShotResult::Blocked));
+        d.play(Move::Fire(99)).unwrap();
+        assert_eq!(d.play(Move::Fire(18)), Ok(ShotResult::Blocked));
+        d.play(Move::Fire(98)).unwrap();
+        d.play(Move::Fire(8)).unwrap();
+        d.play(Move::Fire(97)).unwrap();
+        assert_eq!(d.play(Move::Fire(18)), Ok(ShotResult::Sunk { ship: 4 }));
+        // Fog: no free water around the sunk destroyer.
+        assert_eq!(d.seas[1].marks[7], Mark::Unknown);
+        assert_eq!(d.seas[1].marks[28], Mark::Unknown);
+        // Every ship of b is silent: side 1's sea is all quiet to pings.
+        d.play(Move::Fire(96)).unwrap();
+        assert_eq!(d.play(Move::Ping(15)), Ok(ShotResult::Ping { count: 0 }));
+        // Six crates in b's sea, none in a's.
+        let k: usize = (0..CELLS).filter(|&c| d.seas[0].crates.iter().any(|&(x, _)| x == c)).count();
+        assert_eq!(k, 0);
+        assert_eq!(d.seas[1].crates.len(), 6);
+        // Side 1 (no twist) may use its powers, but not the flare of its sunk destroyer.
+        assert_eq!(d.play(Move::Flare(55)), Err(ShotError::PowerLost));
+        assert!(d.play(Move::AirStrike { cell: 50, horizontal: true }).is_ok());
     }
 
     #[test]

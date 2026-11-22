@@ -7,6 +7,8 @@ import OnlineLobby from "../../online/OnlineLobby";
 import { playSfx } from "../../platform/sound";
 import { useAuth } from "../../store/auth";
 import AiGame, { LEVEL_LABEL } from "./AiGame";
+import Campaign from "./Campaign";
+import { MISSIONS, missionById } from "./missions";
 import DailyHunt from "./DailyHunt";
 import { FLEETS, SEAS } from "./items";
 import LocalGame from "./LocalGame";
@@ -20,7 +22,7 @@ import { FLEET } from "./rules";
 import { BOT_MK, MINES, MK_NAME, POWERS } from "./tactics";
 import Workshop from "./Workshop";
 
-type Mode = "ai" | "daily" | "online" | "local";
+type Mode = "ai" | "campaign" | "daily" | "online" | "local";
 type Screen =
   | { kind: "menu" }
   | { kind: "place" }
@@ -40,6 +42,7 @@ const LEVELS: { id: SonarLevel; blurb: string; reward: string }[] = [
 
 const MODES: { id: Mode; label: string }[] = [
   { id: "ai", label: "🤖 vs Zero-Bot" },
+  { id: "campaign", label: "🎖️ Campaign" },
   { id: "daily", label: "📅 Daily Hunt" },
   { id: "online", label: "🌐 Online" },
   { id: "local", label: "👥 Same device" },
@@ -93,6 +96,8 @@ export default function Play() {
   const [level, setLevel] = useState<SonarLevel>("easy");
   /** Tactics (ship powers, mines, crates) or Classic, for Zero-Bot and same-device games. */
   const [tactics, setTactics] = useState(false);
+  /** The Campaign mission being placed / played (null = a normal game). */
+  const [mission, setMission] = useState<number | null>(null);
   const [look, setLook] = useLook();
   const [collection, setCollection] = useState<SonarCollection | null>(null);
   const [resume, setResume] = useState<SonarGame | null>(null);
@@ -115,7 +120,10 @@ export default function Play() {
     setStarting(true);
     setError(null);
     try {
-      const g = await sonar.create(level, fleet, usable.fleet, usable.sea, tactics ? "tactics" : "classic");
+      const m = missionById(mission);
+      const g = m
+        ? await sonar.createMission(m.id, m.level, fleet, usable.fleet, usable.sea)
+        : await sonar.create(level, fleet, usable.fleet, usable.sea, tactics ? "tactics" : "classic");
       playSfx("click");
       setResume(null);
       setScreen({ kind: "ai", game: g });
@@ -136,7 +144,11 @@ export default function Play() {
       gameId="sonar"
       tag={
         <>
-          {(screen.kind === "ai" || screen.kind === "place") && (
+          {(() => {
+            const m = missionById(screen.kind === "ai" ? screen.game.op : screen.kind === "place" ? mission : null);
+            return m ? <span className="tag tag-green">🎖️ Mission {m.id} · {m.name}</span> : null;
+          })()}
+          {((screen.kind === "ai" && !screen.game.op) || (screen.kind === "place" && !mission)) && (
             <span className="tag tag-blue">vs Zero-Bot · {LEVEL_LABEL[screen.kind === "ai" ? screen.game.level : level]}</span>
           )}
           {((screen.kind === "ai" && screen.game.mode === "tactics") || ((screen.kind === "place" || screen.kind === "local") && tactics)) && (
@@ -168,8 +180,8 @@ export default function Play() {
         <Placement
           sea={usable.sea}
           fleetSkin={usable.fleet}
-          mines={tactics ? MINES : 0}
-          title="Hide your fleet from Zero-Bot"
+          mines={tactics || mission ? MINES : 0}
+          title={mission ? `Mission ${mission}: hide your fleet` : "Hide your fleet from Zero-Bot"}
           doneLabel="▶ Start the battle"
           busy={starting}
           onDone={(f) => void startAi(f)}
@@ -188,6 +200,7 @@ export default function Play() {
     );
   else if (screen.kind === "ai") {
     const again = screen.game.mode === "tactics";
+    const op = screen.game.op;
     body = (
       <AiGame
         key={screen.game.id}
@@ -195,8 +208,17 @@ export default function Play() {
         onExit={back}
         onRematch={() => {
           setTactics(again);
+          setMission(op);
           setScreen({ kind: "place" });
         }}
+        onNextMission={
+          op && op < MISSIONS.length
+            ? () => {
+                setMission(op + 1);
+                setScreen({ kind: "place" });
+              }
+            : undefined
+        }
       />
     );
   }
@@ -219,8 +241,16 @@ export default function Play() {
         {resume && (
           <div className="panel c4-resume">
             <span>
-              Unfinished {resume.mode === "tactics" ? "Tactics " : ""}battle vs <strong>Zero-Bot · {LEVEL_LABEL[resume.level]}</strong> ({resume.target.shots} shots
-              in)
+              {resume.op ? (
+                <>
+                  Unfinished <strong>Mission {resume.op}: {missionById(resume.op)?.name}</strong> ({resume.target.shots} {resume.target.shots === 1 ? "move" : "moves"} in)
+                </>
+              ) : (
+                <>
+                  Unfinished {resume.mode === "tactics" ? "Tactics " : ""}battle vs <strong>Zero-Bot · {LEVEL_LABEL[resume.level]}</strong> ({resume.target.shots}{" "}
+                  shots in)
+                </>
+              )}
             </span>
             <button className="btn-green btn-sm" onClick={() => setScreen({ kind: "ai", game: resume })}>
               ▶ Resume
@@ -261,6 +291,14 @@ export default function Play() {
                 </ul>
               )}
             </div>
+          )}
+          {mode === "campaign" && (
+            <Campaign
+              onPlay={(op) => {
+                setMission(op);
+                setScreen({ kind: "place" });
+              }}
+            />
           )}
           {mode === "online" && (
             <OnlineLobby
@@ -313,7 +351,13 @@ export default function Play() {
           {mode !== "online" && (
             <div className="game-controls">
               {mode === "ai" && (
-                <button className="btn-green" onClick={() => setScreen({ kind: "place" })}>
+                <button
+                  className="btn-green"
+                  onClick={() => {
+                    setMission(null);
+                    setScreen({ kind: "place" });
+                  }}
+                >
                   ▶ Hide my fleet
                 </button>
               )}
@@ -330,14 +374,14 @@ export default function Play() {
               <button className="btn" onClick={() => setScreen({ kind: "shop" })}>
                 🛍 Fleets & seas
               </button>
-              {mode === "ai" && (
+              {(mode === "ai" || mode === "campaign") && (
                 <button className="btn" onClick={() => setScreen({ kind: "workshop" })}>
                   🔧 Workshop
                 </button>
               )}
             </div>
           )}
-          {resume && mode === "ai" && <p className="hint">Starting a new battle gives up your unfinished one.</p>}
+          {resume && (mode === "ai" || mode === "campaign") && <p className="hint">Starting a new battle gives up your unfinished one.</p>}
           {mode === "ai" && <p className="hint">Sink Zero-Bot's fleet for coins and XP (more on harder levels). Wins vs Hard or Master can drop a new fleet or sea.</p>}
         </div>
       </div>
