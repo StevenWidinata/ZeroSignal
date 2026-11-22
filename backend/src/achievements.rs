@@ -1,4 +1,4 @@
-//! Achievements: 56 one-time goals. Progress is computed live from data the
+//! Achievements: 60 one-time goals. Progress is computed live from data the
 //! server already verified (matches, scores, ledger, inventory), so older
 //! progress counts too. Claiming pays coins + the same XP once, plus a title.
 
@@ -78,6 +78,12 @@ pub struct Stats {
     pub sonar_flawless: i64,
     /// Fewest shots in a finished Daily Hunt (0 = none yet).
     pub sonar_best_daily: i64,
+    /// Sonar Tactics: wins vs Zero-Bot (Campaign missions count), the best
+    /// Workshop Mk of any power, Campaign missions won and stars collected.
+    pub sonar_tactics_wins: i64,
+    pub sonar_best_mk: i64,
+    pub sonar_missions_won: i64,
+    pub sonar_stars: i64,
     /// Snake Signal: finished runs, longest snake, glitch bugs eaten, best score.
     pub snake_runs: i64,
     pub snake_longest: i64,
@@ -122,7 +128,7 @@ macro_rules! ach {
     };
 }
 
-pub static ACHIEVEMENTS: [Achievement; 56] = [
+pub static ACHIEVEMENTS: [Achievement; 60] = [
     ach!("cf_first_win", "First Drop", "Win your first Connect Four series", 30, "title-chip-dropper", 1, |s| s.cf_wins),
     ach!("cf_medium", "Thinking Ahead", "Win a Connect Four series vs Medium or harder", 40, "title-four-thinker", 1, |s| s.cf_wins_medium),
     ach!("cf_hard", "Hard Hitter", "Win a Connect Four series vs Hard or harder", 80, "title-grid-breaker", 1, |s| s.cf_wins_hard),
@@ -177,6 +183,11 @@ pub static ACHIEVEMENTS: [Achievement; 56] = [
     ach!("sonar_eagle_eye", "Eagle Eye", "Finish a Sonar Daily Hunt in 30 shots or fewer", 120, "title-eagle-eye", 1,
         |s| i64::from(s.sonar_best_daily > 0 && s.sonar_best_daily <= 30)),
     ach!("sonar_untouchable", "Untouchable", "Beat Zero-Bot on Medium or harder in Sonar without losing a ship", 150, "title-untouchable", 1, |s| s.sonar_flawless),
+    ach!("sonar_tactician", "Tactician", "Beat Zero-Bot in a Sonar Tactics game", 60, "title-tactician", 1, |s| s.sonar_tactics_wins),
+    ach!("sonar_shipwright", "Shipwright", "Upgrade a Sonar ship power to Mk III in the Workshop", 120, "title-shipwright", 1,
+        |s| i64::from(s.sonar_best_mk >= 3)),
+    ach!("sonar_commodore", "Commodore", "Win all 12 Sonar Campaign missions", 250, "title-commodore", 12, |s| s.sonar_missions_won),
+    ach!("sonar_iron_admiral", "Iron Admiral", "Collect all 36 stars in the Sonar Campaign", 400, "title-iron-admiral", 36, |s| s.sonar_stars),
     ach!("snake_first_run", "Signal Found", "Finish your first Snake Signal run", 20, "title-signal-found", 1, |s| s.snake_runs),
     ach!("snake_long", "Long Cable", "Grow your snake to 50 long in Snake Signal", 100, "title-long-cable", 50, |s| s.snake_longest),
     ach!("snake_glitch_eater", "Glitch Eater", "Eat the glitch bug while Boosted in Snake Signal", 150, "title-glitch-eater", 1, |s| s.snake_bugs),
@@ -290,6 +301,15 @@ pub async fn load_stats(pool: &sqlx::PgPool, user_id: Uuid) -> AppResult<Stats> 
         user_id,
     )
     .await?;
+    let sonar_tactics_wins = count(
+        pool,
+        "SELECT COUNT(*) FROM sonar_games WHERE user_id = $1 AND status = 'won' AND mode <> 'classic'",
+        user_id,
+    )
+    .await?;
+    let sonar_best_mk = count(pool, "SELECT MAX(level)::BIGINT FROM sonar_upgrades WHERE user_id = $1", user_id).await?;
+    let sonar_campaign: (i64, Option<i64>) =
+        sqlx::query_as("SELECT COUNT(*), SUM(stars)::BIGINT FROM sonar_campaign WHERE user_id = $1").bind(user_id).fetch_one(pool).await?;
     let snake: (i64, Option<i32>, Option<i64>, Option<i32>) = sqlx::query_as(
         r#"SELECT COUNT(*), MAX(max_length), SUM(bugs_eaten)::BIGINT, MAX(score)
            FROM snake_runs WHERE user_id = $1 AND finished_at IS NOT NULL"#,
@@ -416,6 +436,10 @@ pub async fn load_stats(pool: &sqlx::PgPool, user_id: Uuid) -> AppResult<Stats> 
         sonar_master_wins: sonar.1,
         sonar_flawless: sonar.2,
         sonar_best_daily,
+        sonar_tactics_wins,
+        sonar_best_mk,
+        sonar_missions_won: sonar_campaign.0,
+        sonar_stars: sonar_campaign.1.unwrap_or(0),
         snake_runs: snake.0,
         snake_longest: snake.1.unwrap_or(0).into(),
         snake_bugs: snake.2.unwrap_or(0),
@@ -573,11 +597,11 @@ mod tests {
     use super::*;
 
     #[test]
-    fn there_are_56_unique_achievements() {
+    fn there_are_60_unique_achievements() {
         let mut ids: Vec<_> = ACHIEVEMENTS.iter().map(|a| a.id).collect();
         ids.sort();
         ids.dedup();
-        assert_eq!(ids.len(), 56);
+        assert_eq!(ids.len(), 60);
         assert!(ACHIEVEMENTS.iter().all(|a| a.coins > 0 && a.target > 0 && a.id.len() <= 32));
     }
 
@@ -592,9 +616,9 @@ mod tests {
         let mut titles: Vec<_> = ACHIEVEMENTS.iter().map(|a| a.title).collect();
         titles.sort();
         titles.dedup();
-        assert_eq!(titles.len(), 56);
+        assert_eq!(titles.len(), 60);
         let achievement_items = c.items.iter().filter(|i| i.unlock == Unlock::Achievement).count();
-        assert_eq!(achievement_items, 56, "orphan achievement-only items in catalog");
+        assert_eq!(achievement_items, 60, "orphan achievement-only items in catalog");
     }
 
     #[test]
