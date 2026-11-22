@@ -26,6 +26,7 @@ mod scores;
 mod sonar;
 mod state;
 mod stats;
+mod sudoku;
 mod tic_tac_toe;
 mod weekly;
 mod whack_a_mole;
