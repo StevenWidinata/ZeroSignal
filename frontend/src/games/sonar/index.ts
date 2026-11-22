@@ -25,33 +25,18 @@ const sonar: GameModule = {
       },
       {
         icon: "🎯",
-        title: "Fire!",
-        text: "Take turns picking a square on the other sea. ✕ is a hit, • is a miss. Hit every square of a ship to sink it; the water around it is then shown.",
-      },
-      {
-        icon: "📡",
-        title: "Sonar pings",
-        text: "Twice a game you can ping instead of firing: it tells you how many ship squares are in the 3×3 area around a square.",
+        title: "Fire and ping",
+        text: "Take turns picking a square on the other sea: ✕ is a hit, • is a miss. Hit every square of a ship to sink it. Twice a game you can ping instead: it counts the ship squares in the 3×3 area around a square.",
       },
       {
         icon: "⚡",
-        title: "Tactics: ship powers",
-        text: "In Tactics every ship has a power that recharges as you play: Air Strike (Carrier), Salvo (Battleship), Radar Sweep (Cruiser), Torpedo (Submarine, which also hides from pings and radar) and Flare (Destroyer). Lose a ship and its power is gone.",
-      },
-      {
-        icon: "💣",
-        title: "Mines, crates and Overdrive",
-        text: "Hide 2 mines in your sea: whoever fires on one shows you where one of their ships is. Hidden crates give an extra ping, a shield, a repair kit or an extra shot. Hit 3 times in a row to fill Overdrive and charge a power at once.",
-      },
-      {
-        icon: "🎖️",
-        title: "Workshop and Campaign",
-        text: "Spend coins in the Workshop to upgrade powers to Mk II and Mk III (they count vs Zero-Bot and in the Campaign). The Campaign has 12 missions with twists: win one for up to 3 stars, and every new star pays coins.",
+        title: "Tactics",
+        text: "Every ship gets a power that recharges as you play: Air Strike, Salvo, Radar Sweep, Torpedo and Flare. Lose the ship and its power is gone. You also hide 2 mines, crates hold extra items, and 3 hits in a row fill Overdrive to charge a power at once.",
       },
       {
         icon: "🤖",
         title: "Pick your battle",
-        text: "Play Zero-Bot from Easy to Master in Classic or Tactics, the Campaign, the Daily Hunt (same fleet for everyone), a friend online, or pass and play on one device.",
+        text: "Zero-Bot from Easy to Master (Classic or Tactics), the 12-mission Campaign with stars, the Daily Hunt, a friend online, or one device. Upgrade your powers to Mk II and Mk III in the Workshop.",
       },
     ],
   },

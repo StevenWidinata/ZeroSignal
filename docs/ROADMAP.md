@@ -439,7 +439,8 @@ Commits go to `main` step by step (each step live once tested); owner is the onl
   leaderboard points.
 - **Extras:** 3 quests (win a Tactics game, use 6 powers, open 2 crates), 4
   achievements with titles (Tactician, Shipwright, Commodore, Iron Admiral),
-  3 new tutorial pages. Migrations 0029–0032 (one per step).
+  the tutorial covers Tactics, the Campaign and the Workshop (still 4 pages:
+  tutorials stay 3–4 pages). Migrations 0029–0032 (one per step).
 - **One site (owner, 2026-11-22):** Sonar stays inside Zero Signal because it
   shares accounts, coins, quests, achievements and leaderboards. Its code is
   self-contained (`backend/src/sonar/`, `frontend/src/games/sonar/`,
