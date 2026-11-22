@@ -9,4 +9,8 @@ pub mod items;
 pub mod rules;
 pub mod tactics;
 pub mod view;
+
+/// New games and rooms are always Tactics (ship powers); Classic (shots and
+/// pings only) was retired. Unfinished Classic games and rooms still play.
+pub const CLASSIC_RETIRED: &str = "Classic Sonar was retired: every battle has ship powers now. Reload the page.";
 pub mod workshop;

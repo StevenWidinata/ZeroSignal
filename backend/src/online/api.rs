@@ -20,6 +20,7 @@ use crate::auth::jwt::AuthUser;
 use crate::connect_four::board::Outcome;
 use crate::economy::{self, Reward};
 use crate::error::{AppError, AppResult};
+use crate::sonar::CLASSIC_RETIRED;
 use crate::state::AppState;
 
 /// Longest a `GET` waits for news.
@@ -342,7 +343,8 @@ pub struct CreateRequest {
     pub game: String,
     #[serde(default = "default_best_of")]
     pub best_of: i16,
-    /// Sonar only: "classic" (default) or "tactics".
+    /// Sonar only: "tactics" (the default and the only choice; old "classic"
+    /// rooms still play).
     #[serde(default)]
     pub sonar_mode: Option<String>,
 }
@@ -357,10 +359,13 @@ pub async fn create(State(state): State<AppState>, user: AuthUser, Json(req): Js
     if ![1, 3, 5].contains(&req.best_of) {
         return Err(AppError::Validation("best_of must be 1, 3 or 5".into()));
     }
+    // Every Sonar room is Tactics (ship powers). Other games store the unused
+    // column's old default.
     let sonar_mode = match (game, req.sonar_mode.as_deref()) {
+        (Game::Sonar, None | Some("tactics")) => "tactics",
         (_, None) => "classic",
-        (Game::Sonar, Some(m @ ("classic" | "tactics"))) => m,
-        (Game::Sonar, Some(_)) => return Err(AppError::Validation("sonar_mode must be classic or tactics".into())),
+        (Game::Sonar, Some("classic")) => return Err(AppError::Validation(CLASSIC_RETIRED.into())),
+        (Game::Sonar, Some(_)) => return Err(AppError::Validation("sonar_mode must be tactics".into())),
         (_, Some(_)) => return Err(AppError::Validation("sonar_mode is only for Sonar rooms".into())),
     };
     let seed = i64::from(rand::Rng::gen::<u32>(&mut rand::thread_rng()));

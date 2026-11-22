@@ -94,8 +94,6 @@ export default function Play() {
   const [screen, setScreen] = useState<Screen>(roomParam ? { kind: "online", code: roomParam.toUpperCase() } : { kind: "menu" });
   const [mode, setMode] = useState<Mode>(roomParam ? "online" : params.get("daily") ? "daily" : "ai");
   const [level, setLevel] = useState<SonarLevel>("easy");
-  /** Tactics (ship powers, mines, crates) or Classic, for Zero-Bot and same-device games. */
-  const [tactics, setTactics] = useState(false);
   /** The Campaign mission being placed / played (null = a normal game). */
   const [mission, setMission] = useState<number | null>(null);
   const [look, setLook] = useLook();
@@ -123,7 +121,7 @@ export default function Play() {
       const m = missionById(mission);
       const g = m
         ? await sonar.createMission(m.id, m.level, fleet, usable.fleet, usable.sea)
-        : await sonar.create(level, fleet, usable.fleet, usable.sea, tactics ? "tactics" : "classic");
+        : await sonar.create(level, fleet, usable.fleet, usable.sea);
       playSfx("click");
       setResume(null);
       setScreen({ kind: "ai", game: g });
@@ -151,9 +149,7 @@ export default function Play() {
           {((screen.kind === "ai" && !screen.game.op) || (screen.kind === "place" && !mission)) && (
             <span className="tag tag-blue">vs Zero-Bot · {LEVEL_LABEL[screen.kind === "ai" ? screen.game.level : level]}</span>
           )}
-          {((screen.kind === "ai" && screen.game.mode === "tactics") || ((screen.kind === "place" || screen.kind === "local") && tactics)) && (
-            <span className="tag tag-yellow">⚡ Tactics</span>
-          )}
+          {screen.kind === "ai" && screen.game.mode === "classic" && <span className="tag">🎯 Classic</span>}
           {screen.kind === "daily" && <span className="tag tag-green">📅 Daily Hunt</span>}
           {screen.kind === "local" && <span className="tag">2 players</span>}
           {screen.kind === "online" && <span className="tag tag-yellow">🌐 Online · {screen.code}</span>}
@@ -180,7 +176,7 @@ export default function Play() {
         <Placement
           sea={usable.sea}
           fleetSkin={usable.fleet}
-          mines={tactics || mission ? MINES : 0}
+          mines={MINES}
           title={mission ? `Mission ${mission}: hide your fleet` : "Hide your fleet from Zero-Bot"}
           doneLabel="▶ Start the battle"
           busy={starting}
@@ -199,7 +195,6 @@ export default function Play() {
       </>
     );
   else if (screen.kind === "ai") {
-    const again = screen.game.mode === "tactics";
     const op = screen.game.op;
     body = (
       <AiGame
@@ -207,7 +202,6 @@ export default function Play() {
         initial={screen.game}
         onExit={back}
         onRematch={() => {
-          setTactics(again);
           setMission(op);
           setScreen({ kind: "place" });
         }}
@@ -223,7 +217,7 @@ export default function Play() {
     );
   }
   else if (screen.kind === "daily") body = <DailyHunt look={usable} onExit={back} />;
-  else if (screen.kind === "local") body = <LocalGame names={[username, "Player 2"]} look={usable} tactics={tactics} onExit={back} />;
+  else if (screen.kind === "local") body = <LocalGame names={[username, "Player 2"]} look={usable} onExit={back} />;
   else if (screen.kind === "shop") body = <Shop collection={collection} onCollection={setCollection} onBack={back} />;
   else if (screen.kind === "workshop") body = <Workshop onBack={back} />;
   if (body)
@@ -247,7 +241,7 @@ export default function Play() {
                 </>
               ) : (
                 <>
-                  Unfinished {resume.mode === "tactics" ? "Tactics " : ""}battle vs <strong>Zero-Bot · {LEVEL_LABEL[resume.level]}</strong> ({resume.target.shots}{" "}
+                  Unfinished {resume.mode === "classic" ? "Classic " : ""}battle vs <strong>Zero-Bot · {LEVEL_LABEL[resume.level]}</strong> ({resume.target.shots}{" "}
                   shots in)
                 </>
               )}
@@ -268,28 +262,18 @@ export default function Play() {
 
           {(mode === "ai" || mode === "local") && (
             <div className="sonar-rules-pick">
-              <div className="segmented" role="radiogroup" aria-label="Rules">
-                <button role="radio" aria-checked={!tactics} className={tactics ? "btn-ghost" : ""} onClick={() => setTactics(false)}>
-                  🎯 Classic
-                </button>
-                <button role="radio" aria-checked={tactics} className={tactics ? "" : "btn-ghost"} onClick={() => setTactics(true)}>
-                  ⚡ Tactics
-                </button>
-              </div>
+              <h3>⚡ Every ship has a power</h3>
               <p className="hint">
-                {tactics
-                  ? "Every ship has a power that recharges while it's afloat. Hide 2 mines, shoot supply crates for prizes, and 3 hits in a row fill Overdrive."
-                  : "Shots and 2 sonar pings: the original game."}
+                Each power recharges while its ship is afloat, and it's gone when that ship sinks. You also get 2 sonar pings, hide 2 mines,
+                shoot supply crates for prizes, and 3 hits in a row fill Overdrive.
               </p>
-              {tactics && (
-                <ul className="sonar-power-list">
-                  {POWERS.map((p, i) => (
-                    <li key={p.id}>
-                      <span aria-hidden="true">{p.icon}</span> <strong>{p.name}</strong> <small>({FLEET[i].name})</small>: {p.text}
-                    </li>
-                  ))}
-                </ul>
-              )}
+              <ul className="sonar-power-list">
+                {POWERS.map((p, i) => (
+                  <li key={p.id}>
+                    <span aria-hidden="true">{p.icon}</span> <strong>{p.name}</strong> <small>({FLEET[i].name})</small>: {p.text}
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
           {mode === "campaign" && (
@@ -323,7 +307,7 @@ export default function Play() {
                   <strong>{LEVEL_LABEL[l.id]}</strong>
                   <small>{l.blurb}</small>
                   <small>Win: {l.reward}</small>
-                  {tactics && <small>Its powers: {MK_NAME[BOT_MK[l.id]]}</small>}
+                  <small>Its powers: {MK_NAME[BOT_MK[l.id]]}</small>
                 </button>
               ))}
             </fieldset>

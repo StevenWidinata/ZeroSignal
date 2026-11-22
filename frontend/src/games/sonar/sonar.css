@@ -397,6 +397,7 @@
   display: grid;
   gap: 6px;
 }
+.sonar-rules-pick h3,
 .sonar-rules-pick .hint {
   margin: 0;
 }

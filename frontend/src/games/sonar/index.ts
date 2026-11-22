@@ -30,13 +30,13 @@ const sonar: GameModule = {
       },
       {
         icon: "⚡",
-        title: "Tactics",
-        text: "Every ship gets a power that recharges as you play: Air Strike, Salvo, Radar Sweep, Torpedo and Flare. Lose the ship and its power is gone. You also hide 2 mines, crates hold extra items, and 3 hits in a row fill Overdrive to charge a power at once.",
+        title: "Ship powers",
+        text: "Every ship has a power that recharges as you play: Air Strike, Salvo, Radar Sweep, Torpedo and Flare. Lose the ship and its power is gone. You also hide 2 mines, crates hold extra items, and 3 hits in a row fill Overdrive to charge a power at once.",
       },
       {
         icon: "🤖",
         title: "Pick your battle",
-        text: "Zero-Bot from Easy to Master (Classic or Tactics), the 12-mission Campaign with stars, the Daily Hunt, a friend online, or one device. Upgrade your powers to Mk II and Mk III in the Workshop.",
+        text: "Zero-Bot from Easy to Master, the 12-mission Campaign with stars, the Daily Hunt, a friend online, or one device. Upgrade your powers to Mk II and Mk III in the Workshop.",
       },
     ],
   },

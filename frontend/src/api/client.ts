@@ -15,7 +15,6 @@ import type {
   SonarDaily,
   SonarGame,
   SonarLevel,
-  SonarMode,
   SonarOpProgress,
   SonarWorkshop,
   ChessCollection,
@@ -515,8 +514,8 @@ const SONAR = "/api/games/sonar";
 
 /** Sonar vs Zero-Bot, the Daily Hunt and the fleet / sea shop. */
 export const sonar = {
-  create(level: SonarLevel, fleet: string, fleetSkin: string, sea: string, mode: SonarMode = "classic") {
-    return post<SonarGame>(`${SONAR}/games`, { level, fleet, fleet_skin: fleetSkin, sea, mode });
+  create(level: SonarLevel, fleet: string, fleetSkin: string, sea: string) {
+    return post<SonarGame>(`${SONAR}/games`, { level, fleet, fleet_skin: fleetSkin, sea, mode: "tactics" });
   },
   /** Start Campaign mission `op` (its level comes from the mission). */
   createMission(op: number, level: SonarLevel, fleet: string, fleetSkin: string, sea: string) {
@@ -627,9 +626,9 @@ export const checkers = {
 
 /** Online rooms: the server checks every move; `get` waits up to 20 s for news. */
 export const rooms = {
-  /** `sonarMode` only for Sonar rooms (Classic or Tactics for the whole room). */
-  create(game: OnlineGame, bestOf: number, sonarMode?: SonarMode) {
-    return post<RoomView>("/api/rooms", { game, best_of: bestOf, ...(sonarMode ? { sonar_mode: sonarMode } : {}) });
+  /** Sonar rooms are always Tactics (ship powers). */
+  create(game: OnlineGame, bestOf: number) {
+    return post<RoomView>("/api/rooms", { game, best_of: bestOf });
   },
   join(code: string) {
     return post<RoomView>(`/api/rooms/${encodeURIComponent(code)}/join`);

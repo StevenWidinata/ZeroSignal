@@ -15,19 +15,17 @@ type Phase =
 
 /**
  * Two players, one device. Each hides a fleet in secret, then a cover
- * screen goes up between turns so nobody sees the other fleet. Tactics adds
+ * screen goes up between turns so nobody sees the other fleet. Every game has
  * ship powers, mines and crates (an extra shot or Overdrive keeps the turn,
  * so no cover then). Just for fun: nothing is sent to the server.
  */
 export default function LocalGame({
   names,
   look,
-  tactics = false,
   onExit,
 }: {
   names: [string, string];
   look: { fleet: string; sea: string };
-  tactics?: boolean;
   onExit: () => void;
 }) {
   const [phase, setPhase] = useState<Phase>({ kind: "place", who: 0 });
@@ -57,7 +55,7 @@ export default function LocalGame({
         key={phase.who}
         sea={look.sea}
         fleetSkin={look.fleet}
-        mines={tactics ? MINES : 0}
+        mines={MINES}
         title={`${names[phase.who]}: hide your fleet`}
         doneLabel={phase.who === 0 ? "✓ Done, hide it" : "✓ Done, start the battle"}
         onDone={(code) => {
@@ -68,7 +66,7 @@ export default function LocalGame({
           else {
             const a = parseFleet(next[0]!);
             const b = parseFleet(code);
-            const setup = tactics ? { levels: [MK1, MK1] as [number[], number[]], seed: Math.floor(Math.random() * 2 ** 32), crates: CRATES } : null;
+            const setup = { levels: [MK1, MK1] as [number[], number[]], seed: Math.floor(Math.random() * 2 ** 32), crates: CRATES };
             if ("ships" in a && "ships" in b) setDuel(new Duel([a, b], 0, setup));
             setPhase({ kind: "cover", who: 0, then: "turn" });
           }

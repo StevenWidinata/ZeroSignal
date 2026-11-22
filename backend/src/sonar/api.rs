@@ -21,6 +21,7 @@ use crate::auth::jwt::AuthUser;
 use crate::economy::{self, game_xp, GameResult, Granted, Reward};
 use crate::error::{AppError, AppResult};
 use crate::quests;
+use crate::sonar::CLASSIC_RETIRED;
 use crate::state::AppState;
 
 pub const GAME_ID: &str = "sonar";
@@ -247,7 +248,7 @@ pub async fn pick_look(pool: &sqlx::PgPool, user_id: Uuid, fleet_skin: Option<St
 #[serde(deny_unknown_fields)]
 pub struct CreateRequest {
     pub level: String,
-    /// "classic" (default), "tactics" or "campaign" (with `op`).
+    /// "tactics" (default) or "campaign" (with `op`); "classic" is refused.
     #[serde(default)]
     pub mode: Option<String>,
     /// Campaign: the mission to play.
@@ -264,9 +265,12 @@ pub struct CreateRequest {
 /// `POST /api/games/sonar/games`: a new game vs Zero-Bot (an unfinished one is resigned).
 pub async fn create(State(state): State<AppState>, user: AuthUser, Json(req): Json<CreateRequest>) -> AppResult<Json<GameView>> {
     let mut level = Level::parse(&req.level).ok_or_else(|| AppError::Validation("level must be easy, medium, hard or master".into()))?;
+    // Every new battle has ship powers; unfinished Classic games still play.
     let mode = match req.mode.as_deref() {
-        None => Mode::Classic,
-        Some(m) => Mode::parse(m).ok_or_else(|| AppError::Validation("mode must be classic, tactics or campaign".into()))?,
+        None | Some("tactics") => Mode::Tactics,
+        Some("campaign") => Mode::Campaign,
+        Some("classic") => return Err(AppError::Validation(CLASSIC_RETIRED.into())),
+        Some(_) => return Err(AppError::Validation("mode must be tactics or campaign".into())),
     };
     let mission = match (mode, req.op) {
         (Mode::Campaign, Some(id)) => {
@@ -282,20 +286,15 @@ pub async fn create(State(state): State<AppState>, user: AuthUser, Json(req): Js
         _ => None,
     };
     let fleet = Fleet::parse(&req.fleet).map_err(|e| AppError::Validation(e.text().into()))?;
-    if mode == Mode::Classic && !fleet.mines.is_empty() {
-        return Err(AppError::Validation("mines are only for Tactics games".into()));
-    }
     let (fleet_skin, sea) = pick_look(&state.pool, user.user_id, req.fleet_skin, req.sea).await?;
     let (ai_fleet, seed) = {
         let mut rng = rand::thread_rng();
         let mut f = random_fleet(&mut rng);
-        if mode != Mode::Classic {
-            f.mines = bot_mines(&f, mission.map_or(tactics_rules().mines, |o| o.bot_mines), level, &mut rng);
-        }
+        f.mines = bot_mines(&f, mission.map_or(tactics_rules().mines, |o| o.bot_mines), level, &mut rng);
         (f, rng.gen::<u32>())
     };
     let (seed, levels, crates) = match mode {
-        Mode::Classic => (0, None, 0),
+        Mode::Classic => unreachable!("new games are never Classic"),
         Mode::Tactics => {
             // Your Workshop upgrades against Zero-Bot's level (Hard Mk II, Master Mk III).
             let yours = levels_of(&state.pool, user.user_id).await?;
