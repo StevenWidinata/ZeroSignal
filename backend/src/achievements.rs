@@ -187,7 +187,7 @@ pub static ACHIEVEMENTS: [Achievement; 64] = [
     ach!("chess_lightning", "Lightning Mate", "Checkmate Zero-Bot in under 20 of your moves", 120, "title-lightning-mate", 1, |s| s.chess_fast_mates),
     ach!("sonar_first_win", "First Splash", "Sink Zero-Bot's whole fleet in Sonar", 30, "title-sea-legs", 1, |s| s.sonar_wins),
     ach!("sonar_master", "Fleet Admiral", "Beat Zero-Bot on Master in Sonar", 300, "title-fleet-admiral", 1, |s| s.sonar_master_wins),
-    ach!("sonar_eagle_eye", "Eagle Eye", "Finish a Sonar Daily Hunt in 30 shots or fewer", 120, "title-eagle-eye", 1,
+    ach!("sonar_eagle_eye", "Eagle Eye", "Finish a Sonar Daily Hunt in 30 moves or fewer", 120, "title-eagle-eye", 1,
         |s| i64::from(s.sonar_best_daily > 0 && s.sonar_best_daily <= 30)),
     ach!("sonar_untouchable", "Untouchable", "Beat Zero-Bot on Medium or harder in Sonar without losing a ship", 150, "title-untouchable", 1, |s| s.sonar_flawless),
     ach!("sonar_tactician", "Tactician", "Beat Zero-Bot in a Sonar Tactics game", 60, "title-tactician", 1, |s| s.sonar_tactics_wins),

@@ -556,6 +556,10 @@ export const sonar = {
   dailyFire(cell: number, ping = false) {
     return post<SonarDaily>(`${SONAR}/daily/fire`, { cell, ping });
   },
+  /** A Daily Hunt power move or Overdrive ("a12h", "o2", …). */
+  dailyMove(code: string) {
+    return post<SonarDaily>(`${SONAR}/daily/fire`, { move: code });
+  },
 };
 
 const CHESS = "/api/games/chess";

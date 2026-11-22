@@ -206,6 +206,12 @@ pub fn crate_seed(seed: u32, side: usize) -> u32 {
 /// Hide `n` supply crates in a sea: on open water, not next to a ship and
 /// not on a mine. Same picks as `hideCrates` in tactics.ts.
 pub fn hide_crates(fleet: &Fleet, seed: u32, n: u8) -> Vec<(usize, Item)> {
+    hide_crates_from(fleet, seed, n, &Item::ALL)
+}
+
+/// `hide_crates` with each crate holding one of `items` (the Daily Hunt has
+/// no fleet of its own, so its crates skip Shield and Repair).
+pub fn hide_crates_from(fleet: &Fleet, seed: u32, n: u8, items: &[Item]) -> Vec<(usize, Item)> {
     let occ = fleet.occupancy();
     let mut spots: Vec<usize> =
         (0..CELLS).filter(|&c| occ[c].is_none() && neighbours(c).all(|x| occ[x].is_none()) && !fleet.mines.contains(&c)).collect();
@@ -216,7 +222,7 @@ pub fn hide_crates(fleet: &Fleet, seed: u32, n: u8) -> Vec<(usize, Item)> {
             break;
         }
         let cell = spots.remove(rng.below(spots.len() as u32) as usize);
-        let item = Item::ALL[rng.below(Item::ALL.len() as u32) as usize];
+        let item = items[rng.below(items.len() as u32) as usize];
         out.push((cell, item));
     }
     out

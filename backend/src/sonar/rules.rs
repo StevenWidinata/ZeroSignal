@@ -401,7 +401,7 @@ impl ShotResult {
     }
 
     /// How much a result matters, for picking a move's headline result.
-    fn weight(self) -> u8 {
+    pub fn weight(self) -> u8 {
         match self {
             ShotResult::Sunk { .. } => 6,
             ShotResult::Hit => 5,

@@ -469,6 +469,17 @@ Commits go to `main` step by step (each step live once tested); owner is the onl
   4 achievements (Grid Filler, Number Sage, Quick Pencil, Week of Nines),
   Stats card, Today's Dailies entry, share card, rebindable keys.
 
+### Sonar powers everywhere (`feat/sonar-powers-everywhere`, `feat/sonar-daily-powers`; agreed and done 2026-11-22)
+- Owner found Sonar boring with only pings (the menu opened on Classic and the
+  Tactics switch was easy to miss): every game now has ship powers.
+- **Classic retired:** vs Zero-Bot, same device and online rooms are always
+  Tactics; unfinished Classic games and rooms still play and old scores stay.
+- **Daily Hunt with powers (owner picked):** all five powers at Mk I, never
+  lost (no fleet of your own); each shot, ping or power is one move and the
+  score counts moves; Overdrive and an Extra shot crate are free; 3 crates
+  (Extra ping / Extra shot only) in the same squares for everyone; no mines.
+  Reward thresholds (30 / 45 moves) and Eagle Eye (30 moves) kept as they were.
+
 ## Phase 3b (planned)
 
 - Weekly leaderboards (reset each week, all-time board stays) — done.

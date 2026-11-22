@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import type { SonarPowers, SonarSea } from "../../api/types";
 import { aimCode, aimHint, aimPreview, canTurn, startAim, tapAim, turnAim, type Aim } from "./aim";
 import { shipsOf, type Fx } from "./fleet";
@@ -9,9 +9,12 @@ import { POWERS } from "./tactics";
 
 export interface BattleProps {
   target: SonarSea;
-  yourSea: SonarSea;
-  /** Your fleet code (drawn on your grid, with your mines in Tactics). */
-  yourFleet: string;
+  /** Your own sea and fleet code (drawn on your grid, with your mines in
+   * Tactics). The Daily Hunt has none: `side` shows instead. */
+  yourSea?: SonarSea | null;
+  yourFleet?: string;
+  /** Shown in place of your fleet when there is none. */
+  side?: ReactNode;
   fleetSkin: string;
   sea: string;
   canFire: boolean;
@@ -19,7 +22,7 @@ export interface BattleProps {
   /** The other fleet, once the game is over (drawn faintly). */
   theirFleet?: string | null;
   targetLabel: string;
-  yourLabel: string;
+  yourLabel?: string;
   lastTarget?: number | null;
   lastYours?: number | null;
   /** Tactics: your powers and theirs (null in Classic). */
@@ -64,9 +67,9 @@ export default function Battle(p: BattleProps) {
   }, [p.canFire]);
 
   const sunkEnemy = p.target.sunk.map((s) => ({ ship: s.ship, cells: s.cells }));
-  const yourShips = shipsOf(p.yourFleet);
-  const parsed = parseFleet(p.yourFleet);
-  const yourMines = "mines" in parsed ? parsed.mines : [];
+  const yourShips = p.yourFleet ? shipsOf(p.yourFleet) : [];
+  const parsed = p.yourFleet ? parseFleet(p.yourFleet) : null;
+  const yourMines = parsed && "mines" in parsed ? parsed.mines : [];
   const ghosts = p.theirFleet ? shipsOf(p.theirFleet).filter((s) => !sunkEnemy.some((x) => x.ship === s.ship)) : [];
 
   const size = aim && p.powers ? p.powers.size[aim.power] : 0;
@@ -78,6 +81,20 @@ export default function Battle(p: BattleProps) {
     p.onMove?.(code);
     setAim(null);
   }
+
+  const powerBar = p.powers && (
+    <PowerBar
+      powers={p.powers}
+      aiming={aim?.power ?? null}
+      disabled={!p.canFire}
+      shields={p.yourSea?.shields ?? 0}
+      onAim={(power) => {
+        setPingMode(false);
+        setAim(power === null ? null : startAim(power));
+      }}
+      onOverdrive={(power) => p.onMove?.(`o${power}`)}
+    />
+  );
 
   function pick(cell: number) {
     if (aim) {
@@ -150,19 +167,20 @@ export default function Battle(p: BattleProps) {
                 📡 Sonar ping ({pingsLeft} left)
               </button>
               <small className="hint">
-                {pingMode ? "Tap a square: the ping counts ship squares in the 3×3 around it." : "Tap a square to fire. Shots: " + p.target.shots}
+                {pingMode ? "Tap a square: the ping counts ship squares in the 3×3 around it." : "Tap a square to fire. Moves: " + p.target.shots}
               </small>
             </div>
           )}
-          <FleetStatus sea={p.target} whose="Their" powers={p.theirPowers} />
+          {p.yourSea ? <FleetStatus sea={p.target} whose="Their" powers={p.theirPowers} /> : powerBar}
         </section>
+        {p.yourSea ? (
         <section>
           <h3>
             🛡️ {p.yourLabel}
             {p.yourSea.shields > 0 && <small> · 🛡️ ×{p.yourSea.shields}</small>}
           </h3>
           <Grid
-            label={p.yourLabel}
+            label={p.yourLabel ?? "Your fleet"}
             sea={p.sea}
             fleetSkin={p.fleetSkin}
             marks={p.yourSea.marks}
@@ -177,20 +195,11 @@ export default function Battle(p: BattleProps) {
           />
           <FleetStatus sea={p.yourSea} whose="Your" />
         </section>
+        ) : (
+          p.side
+        )}
       </div>
-      {p.powers && (
-        <PowerBar
-          powers={p.powers}
-          aiming={aim?.power ?? null}
-          disabled={!p.canFire}
-          shields={p.yourSea.shields}
-          onAim={(power) => {
-            setPingMode(false);
-            setAim(power === null ? null : startAim(power));
-          }}
-          onOverdrive={(power) => p.onMove?.(`o${power}`)}
-        />
-      )}
+      {p.yourSea && powerBar}
     </div>
   );
 }

@@ -115,6 +115,21 @@ impl PowersView {
     }
 }
 
+impl PowersView {
+    /// The Daily Hunt's hunter: side 0 of `t`, no ships to lose.
+    pub fn hunter(t: &super::tactics::Tactics) -> PowersView {
+        PowersView {
+            charge: t.charge[0],
+            cooldown: std::array::from_fn(|p| t.spec(0, p).cooldown),
+            size: std::array::from_fn(|p| t.spec(0, p).size),
+            levels: t.levels[0],
+            lost: [false; POWERS],
+            combo: t.combo[0],
+            overdrive: t.overdrive[0],
+        }
+    }
+}
+
 /// The duel's log as seen by `side`.
 pub fn log_for(d: &Duel, side: usize) -> Vec<LogEntry> {
     d.log

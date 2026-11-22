@@ -315,7 +315,7 @@ export default function Play() {
           {mode === "daily" && (
             <div className="sonar-mode-blurb">
               <h3>📅 Today's hunt</h3>
-              <p>Everyone hunts the same hidden fleet today (a new one at midnight WIB). Sink it in as few shots as you can; pings count as shots. One try a day.</p>
+              <p>Everyone hunts the same hidden fleet today (a new one at midnight WIB). Sink it in as few moves as you can with all five ship powers: every shot, ping and power is a move. One try a day.</p>
             </div>
           )}
           {mode === "local" && (

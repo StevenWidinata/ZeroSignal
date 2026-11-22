@@ -1045,10 +1045,17 @@ export interface SonarGame {
 
 export interface SonarDaily {
   day: string;
+  /** `target.shots` = moves that count. */
   target: SonarSea;
   status: "new" | "playing" | "done";
   fleet: string | null;
   last: SonarResult | null;
+  /** Every square the last move touched. */
+  last_hits: SonarCellResult[];
+  /** The last move didn't count (Overdrive, or an Extra shot crate). */
+  last_free: boolean;
+  /** Your five ship powers (Mk I; never lost: you have no fleet in the Hunt). */
+  powers: SonarPowers;
   points: number | null;
   rewards: Granted | null;
 }
