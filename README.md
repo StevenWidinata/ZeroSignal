@@ -20,7 +20,8 @@ A hub of fun browser games with a retro arcade UI and real, **server-verified le
 | Sonar        | Live        | Battleship-style with sonar pings: Classic or Tactics (ship powers, mines, crates) vs Zero-Bot (4 levels), a 12-mission Campaign, a Ship Workshop, online, same device and a Daily Hunt; 8 fleets and 8 seas |
 | Snake Signal | Live        | Neon snake: Classic, Wrap and a Daily on 3 board sizes; power-ups, glitch hazards, ×5 combos and a fading signal; 8 skins, 8 arenas, 6 trails; the server replays every turn |
 | Checkers     | Live        | Classic 8×8 draughts: vs Zero-Bot (4 levels), online vs a friend on another device, same device and a Daily "win in 2–4" puzzle; 8 boards and 8 piece sets |
-| 7 more       | Coming soon | Brick Breaker, Signal Flap, Memory Match, Pixel Picross, Block Drop, Sudoku, Pong Online (see `/roadmap`) |
+| Sudoku       | Live        | Classic 9×9 in 4 levels + a Daily; every puzzle has one solution and needs no guessing; notes, hints with reasons, Check when the grid is full; 8 board themes |
+| 6 more       | Coming soon | Brick Breaker, Signal Flap, Memory Match, Pixel Picross, Block Drop, Pong Online (see `/roadmap`) |
 
 ## Features
 
@@ -28,7 +29,7 @@ A hub of fun browser games with a retro arcade UI and real, **server-verified le
 - **Guest play:** opening a game without an account quietly starts a **guest account** in the background (kept in that browser; deleted after 30 days without a visit). Guests earn coins, XP, tokens, quest progress and items like anyone, but are hidden from leaderboards, weekly prizes and profiles. A slim banner and a "Register to save this score" button on every results screen remind them. **Registering** turns the guest into the real account, so everything is kept. **Logging in** to an existing account moves the guest's scores, games, items and earlier quest days into it, and pays the guest's coins, tokens and XP as a normal reward (coins count toward the 1,000-a-day cap); where both have something (today's quests, an unfinished game, today's Daily) the account's wins. At most 20 new guests per hour per IP; guests can't log in with a password, and usernames can't start with "guest".
 - **Hub:** logged out, a short intro with Create account / Log in / Quick play. Logged in, a welcome strip (your character, level and XP bar, coins, **Continue** your last game, Stats and Achievements shortcuts), **Recently played** (last 3 games, remembered in this browser) and **Today's quests** side by side, then every game with your best score and NEW badges on the newest games. **Filter chips** (All · 🌐 Online · 👤 Offline, with counts, remembered in the browser; Online = the games you can play with a friend, on another device or the same one; Offline = the games you play on your own) narrow the list, and every card shows **play badges** saying how it can be played (Online = a friend on another device with a room code).
 - Per-game leaderboards and personal history, with **All time / This week / Last week** views. Weeks run Monday 00:00 → Monday 00:00 WIB.
-- **Weekly prizes:** the top 3 last week on each board (Sling Squad, Connect Four, Tic-Tac-Toe, each Whack-a-Mole mode, each Minefield size; not the Daily boards) claim 150 coins + 1 token, 100 or 50 coins from a banner on the Hub or Leaderboards. Best-score games rank by the week's best score; Connect Four and Tic-Tac-Toe by points earned that week. Prize coins don't count toward the daily cap.
+- **Weekly prizes:** the top 3 last week on each board (Sling Squad, Connect Four, Tic-Tac-Toe, each Whack-a-Mole mode, each Minefield size, each Sudoku level; not the Daily boards) claim 150 coins + 1 token, 100 or 50 coins from a banner on the Hub or Leaderboards. Best-score games rank by the week's best score; Connect Four and Tic-Tac-Toe by points earned that week. Prize coins don't count toward the daily cap.
 - Anti-cheat by design: clients send only player *inputs*; the server computes every score.
 - **10 free mood themes** (Settings → Appearance): Neon Arcade, Daylight, Sunset Chill, Sakura, Ocean Calm, Midnight Focus, Forest, Game Boy Green, Cyberpunk and Candy Pop. They come in light/dark pairs of the same mood, so the 🌙/☀️ button flips to the partner; every theme keeps text at WCAG AA contrast (checked by a test), and the choice syncs to your account.
 - The Hub shows **4 games per row** (2 on tablets, 1 on phones), and every page has the same big, labelled **← Back** button at the top left.
@@ -40,7 +41,7 @@ A hub of fun browser games with a retro arcade UI and real, **server-verified le
   - **Gameplay:** turn timer, **ask before leaving a round** (warns before closing the tab or opening another page mid-round in Whack-a-Mole, Snake Signal, Sling Squad and Minefield), vibration on phones.
   - **Help:** reset tutorials so every "how to play" shows again.
   - **Account** (registered players): change username (free, once every 30 days), email and password (both need your current password), and **delete account**: you're signed out and hidden at once, and the account is deleted for good after 7 days unless you log in again before then.
-- **Stats page** (`/stats`): your level, coins earned and spent, tokens, login streak, quests and achievements, plus a card per game: AI series win rates per level, best and average scores per mode or size, Minefield best times, Whack-a-Mole best combo and FEVER rounds, 2048 biggest tile and games that reached 2048. Only server-verified results count.
+- **Stats page** (`/stats`): your level, coins earned and spent, tokens, login streak, quests and achievements, plus a card per game: AI series win rates per level, best and average scores per mode or size, Minefield and Sudoku best times, Whack-a-Mole best combo and FEVER rounds, 2048 biggest tile and games that reached 2048. Only server-verified results count.
 - **Colorblind-friendly** switch (Settings → Appearance): pieces switch to the Okabe-Ito palette, which people with common color vision deficiencies can tell apart, and get shapes so no game relies on color alone. In Connect Four, player 1's chips carry a circle and player 2's a cross. In Tic-Tac-Toe, X and O get safe colors and other faces get an X or O badge. Winning lines also get a dashed outline.
 - **Tutorials:** each live game shows a short 4-step "how to play" the first time you open it. The **?** button (bottom-left) shows it again. Seen tutorials are remembered in the browser.
 - Background music: 3 chiptune tracks made in code with Web Audio (no music files). "Insert Coin" plays on the hub and menus, "Quiet Board" in Connect Four and Tic-Tac-Toe, and "Slingshot Rush" in Sling Squad. Music has its own on/off switch and volume (default on at 40%). It starts after your first click or key press, because browsers block autoplay, and it pauses while the tab is hidden.
@@ -94,6 +95,19 @@ A hub of fun browser games with a retro arcade UI and real, **server-verified le
 - **Score (wins only):** Beginner 1,000 + 20 per second under 60 s; Intermediate and Daily 3,000 + 15 per second under 240 s; Expert 8,000 + 12 per second under 600 s. One leaderboard per size plus Today's Daily.
 - **Results:** time, 3BV (fewest clicks that clear the board), 3BV/s, click efficiency, hints. A loss shows every mine and crosses out wrong flags.
 - **Rewards:** win Beginner 5 / Intermediate 20 / Expert 60 / Daily 25 coins; XP 20 × (1 / 2 / 4 / 2); token 2% / 8% / 25% / 10%. A loss gives 5 XP.
+
+## Sudoku
+
+- **Levels:** Easy (~40 numbers given), Medium (~32), Hard (~27) and Expert (~26) on the classic 9×9, plus the **Daily** (a Medium puzzle, the same for everyone that WIB day, one try).
+- **Fair puzzles:** every puzzle has exactly one solution and is graded by the logic a person needs, never a guess: Easy needs only naked singles, Medium adds hidden singles, Hard adds locked candidates and naked / hidden pairs, Expert adds triples and X-Wings. They come from a bank made offline (`cargo test --release sudoku_make_bank -- --ignored` writes `backend/data/sudoku_puzzles.json`, which stays on the server).
+- **Server holds the solution:** the browser gets only the printed numbers; the solution is sent after the game ends. The clock is the server's. Your grid is saved as you play, so a game continues after a reload or on another device; notes stay in that browser.
+- **No checking until it's full:** fill the grid freely. When every square has a number, press **Check**: wrong squares turn red and the clock keeps running until you fix them.
+- **Helpers:** **Notes** (small pencil numbers; placing a number clears it from the notes in its row, column and box), **highlights** (the row, column and box of the selected square, the same number elsewhere, a number used 9 times greys out on the pad, and a number that repeats in a row, column or box shows red; they only compare what's on screen, never the solution) and up to 3 **hints** per game: each fills the next square you could work out and says why ("1 is the only number that fits"), +30 s. No undo.
+- **Controls:** tap a square, then a number; keys: arrows, 1–9, Backspace / Delete / 0 to erase, N for notes, H for a hint (rebindable in Settings → Controls).
+- **Score (wins only):** level base + 10 per second under par: Easy 1,000 / par 5 min, Medium and Daily 2,000 / 8 min, Hard 4,000 / 12 min, Expert 8,000 / 20 min. Points never count a solve as faster than 1.5 s per open square, so a program can't beat a fast person. One leaderboard per level (weekly prizes) plus Today's Daily.
+- **Rewards (wins only):** Easy 5 / Medium 15 / Hard 35 / Expert 70 / Daily 25 coins; XP 20 × (1 / 2 / 3 / 4 / 2); token 2% / 8% / 15% / 25% / 10%; a Hard or Expert win has a 20% **lucky drop** of a theme you don't own. Giving up shows the solution and pays nothing.
+- **Looks:** 8 board themes (free: Paper, Night, Mint, Ocean; paid: Sakura 400, Terminal 500, Neon Grid 750, Royal Gold 1,200).
+- **Extras:** a share card for the Daily, a Stats card (games, solves and best time per level), 3 quests and 4 achievements with titles.
 
 ## Sling Squad
 
@@ -168,6 +182,7 @@ Only the server pays rewards, and only for results it verified itself, inside th
 |------|-------|----|------------|
 | Sling Squad, Whack-a-Mole | 1 per 1,000 points | 10 + up to 90 for big scores | 3% → 15% (bigger score, better chance) |
 | Minefield win | Beginner 5 / Intermediate 20 / Expert 60 / Daily 25 | 20 × (1 / 2 / 4 / 2); loss 5 | 2% / 8% / 25% / 10% |
+| Sudoku win | Easy 5 / Medium 15 / Hard 35 / Expert 70 / Daily 25 | 20 × (1 / 2 / 3 / 4 / 2) | 2% / 8% / 15% / 25% / 10% |
 | 2048 (20+ moves) | 1 per 1,000 points; +30 for a 2048 tile, +80 more for 4096 | 10 + up to 90 for big scores | 3% → 15%; +50% for 4096 |
 | Connect Four, each AI game | none | win 20 / draw 10 / loss 5, × difficulty (1–4) | none |
 | Connect Four, series win | Easy 10 / Medium 25 / Hard 50 / Impossible 120 (×2 for best of 5) | bonus 25 × difficulty | 10% / 20% / 35% / 60% |
@@ -188,7 +203,7 @@ A pop-up offers the reward when you open the site. Claim once per day (days star
 
 ### Daily quests
 
-Every day (00:00 WIB) you get 3 different random quests, shown on the Hub and on the **Quests** page (`/quests`). The nav shows a badge when one is ready to claim. Only results the server verified count: AI games, Sling Squad, Whack-a-Mole, Minefield, 2048, chess and Sonar results (vs Zero-Bot, the Daily puzzle and the Daily Hunt), and mystery boxes. Local 2-player games don't count.
+Every day (00:00 WIB) you get 3 different random quests, shown on the Hub and on the **Quests** page (`/quests`). The nav shows a badge when one is ready to claim. Only results the server verified count: AI games, Sling Squad, Whack-a-Mole, Minefield, 2048, chess and Sonar results (vs Zero-Bot, the Daily puzzle and the Daily Hunt), Sudoku solves, and mystery boxes. Local 2-player games don't count.
 
 - Press **Claim** on a finished quest to get its coins + XP. Claiming all 3 pays a bonus **1 token**.
 - **Reroll:** once per day, swap one unfinished quest for a new random one.
@@ -226,10 +241,13 @@ Every day (00:00 WIB) you get 3 different random quests, shown on the Hub and on
 | Win a Sonar Tactics game vs Zero-Bot | 40 | 60 |
 | Use 6 ship powers in Sonar Tactics | 30 | 40 |
 | Open 2 supply crates in Sonar Tactics | 30 | 40 |
+| Solve 2 Sudoku puzzles | 20 | 30 |
+| Solve a Hard or Expert Sudoku | 40 | 60 |
+| Solve today's Sudoku Daily | 30 | 40 |
 
 ## Achievements
 
-The `/achievements` page lists 60 one-time achievements with progress bars; locked ones are visible too. The server works out progress from results it already verified (matches, scores, the coin ledger, owned items, login and quest history), so progress made before achievements existed counts as well. Press **Claim** to get the coins, the same amount of XP, and a **title** to wear. Achievement coins don't count toward the daily cap. Claimed achievements show on your public profile.
+The `/achievements` page lists 64 one-time achievements with progress bars; locked ones are visible too. The server works out progress from results it already verified (matches, scores, the coin ledger, owned items, login and quest history), so progress made before achievements existed counts as well. Press **Claim** to get the coins, the same amount of XP, and a **title** to wear. Achievement coins don't count toward the daily cap. Claimed achievements show on your public profile.
 
 | Achievement | Coins | Title |
 |-------------|-------|-------|
@@ -281,6 +299,10 @@ The `/achievements` page lists 60 one-time achievements with progress bars; lock
 | Upgrade a Sonar ship power to Mk III in the Workshop | 120 | Shipwright |
 | Win all 12 Sonar Campaign missions | 250 | Commodore |
 | Collect all 36 stars in the Sonar Campaign | 400 | Iron Admiral |
+| Solve a Sudoku puzzle | 30 | Grid Filler |
+| Solve an Expert Sudoku | 300 | Number Sage |
+| Solve a Medium or harder Sudoku in under 5 minutes without hints | 150 | Quick Pencil |
+| Solve the Daily Sudoku 7 days in a row | 150 | Week of Nines |
 
 ### Title looks
 
@@ -430,13 +452,14 @@ zero_signal/
 │       ├── daily.rs            # WIB (UTC+7) day boundary for everything daily
 │       ├── daily_login.rs      # 7-day login streak reward
 │       ├── quests/             # daily quest pool, progress hooks, claim/reroll API
-│       ├── achievements.rs     # 60 achievements, live progress, claim + titles
+│       ├── achievements.rs     # 64 achievements, live progress, claim + titles
 │       ├── chess/              # rules (cozy-chess), Zero-Bot AI, games API, items, daily puzzles
 │       ├── sonar/              # rules + Tactics, Zero-Bot (probability map, pings, powers), games API, Workshop, Campaign, Daily Hunt, items
 │       ├── character/          # item catalog, outfits, presets, shop, profiles
 │       ├── tic_tac_toe/        # rules, perfect AI, matches, boards/faces, photo
 │       ├── whack_a_mole/       # seeded mole schedule, tap replay scorer, runs API
 │       ├── minefield/          # no-guess board generator + solver, games API
+│       ├── sudoku/             # rules, logic solver (grading + hints with reasons), puzzle bank, games API, themes
 │       ├── game_2048/          # board, seeded tile drops, undo, move replay scorer, runs API
 │       ├── connect_four/       # rules (bitboard), AI, skins/spins, match API
 │       └── physics/            # rapier2d authoritative simulation
@@ -471,7 +494,7 @@ zero_signal/
 | GET  | `/api/me/quests` | today's 3 quests, progress, reroll and bonus status (auth) |
 | POST | `/api/me/quests/:slot/claim` | claim a finished quest; the 3rd claim adds the bonus token (auth) |
 | POST | `/api/me/quests/:slot/reroll` | swap one unfinished quest, once per day (auth) |
-| GET  | `/api/me/achievements` | all 60 achievements with live progress (auth) |
+| GET  | `/api/me/achievements` | all 64 achievements with live progress (auth) |
 | POST | `/api/me/achievements/:id/claim` | claim an unlocked achievement: coins + XP + title (auth) |
 | GET  | `/api/me/character` | outfit, owned items, presets, wallet (auth) |
 | PUT  | `/api/me/character/loadout` | wear an outfit (server checks ownership) (auth) |
@@ -488,7 +511,7 @@ zero_signal/
 | POST | `/api/games/tic-tac-toe/spins` | spend a reward spin (auth) |
 | GET/PUT/DELETE | `/api/me/photo` | your private photo face (raw image body) (auth) |
 | GET  | `/api/games` | catalog |
-| GET  | `/api/games/:id/leaderboard` | top 20 for that game; `?period=` `all`, `today`, `week` or `last_week`; `?level=` picks one board (Whack-a-Mole: 1 Classic, 2 Frenzy, 3 Survival, 4 Daily; Minefield: 1 Beginner, 2 Intermediate, 3 Expert, 4 Daily; 2048: 1 Classic, 2 Big, 3 Tiny, 4 Daily; chess: 5 Daily puzzle; Sonar: 5 Daily Hunt), `period=today` keeps today only; entries may carry a `detail` (2048: biggest tile) |
+| GET  | `/api/games/:id/leaderboard` | top 20 for that game; `?period=` `all`, `today`, `week` or `last_week`; `?level=` picks one board (Whack-a-Mole: 1 Classic, 2 Frenzy, 3 Survival, 4 Daily; Minefield: 1 Beginner, 2 Intermediate, 3 Expert, 4 Daily; Sudoku: 1 Easy, 2 Medium, 3 Hard, 4 Expert, 5 Daily; 2048: 1 Classic, 2 Big, 3 Tiny, 4 Daily; chess: 5 Daily puzzle; Sonar: 5 Daily Hunt), `period=today` keeps today only; entries may carry a `detail` (2048: biggest tile) |
 | GET  | `/api/games/:id/scores/me` | your history (auth) |
 | POST | `/api/games/sling-squad/scores` | shot inputs only; server computes score (auth) |
 | GET  | `/api/games/sling-squad/birds` | bird catalog + unlocks |
@@ -501,6 +524,14 @@ zero_signal/
 | POST | `/api/games/minefield/games/:id/reveal` | `{cell}`; the first one builds the board (auth) |
 | POST | `/api/games/minefield/games/:id/chord` | `{cell, flags}` open around a number (auth) |
 | POST | `/api/games/minefield/games/:id/{hint,forfeit}` | open a safe cell (+20 s) / give up (auth) |
+| POST | `/api/games/sudoku/games` | `{level}` new puzzle (easy, medium, hard, expert); `daily` starts or continues today's (one try) (auth) |
+| GET  | `/api/games/sudoku/games/active` | your unfinished puzzle, or null (auth) |
+| POST | `/api/games/sudoku/games/:id/save` | `{entries}` save your grid (81 characters, `.` = empty) (auth) |
+| POST | `/api/games/sudoku/games/:id/check` | `{entries}` on a full grid: wrong squares, or the win with score and rewards (auth) |
+| POST | `/api/games/sudoku/games/:id/hint` | `{entries}` fills the next square you could work out, with the reason (+30 s, 3 per game) (auth) |
+| POST | `/api/games/sudoku/games/:id/give-up` | end it and see the solution (auth) |
+| GET  | `/api/games/sudoku/collection` | board themes with prices and what you own (auth) |
+| POST | `/api/games/sudoku/buy` | `{id}` buy a theme with coins (auth) |
 | POST | `/api/games/2048/runs` | `{mode}` start a game; returns `run_id`, `seed`, `size`, `undos` (Daily: continues today's if open) (auth) |
 | GET  | `/api/games/2048/runs/active` | your unfinished game with its saved moves, or null (auth) |
 | POST | `/api/games/2048/runs/:id/save` | `{moves}` save progress; must extend the saved moves (auth) |

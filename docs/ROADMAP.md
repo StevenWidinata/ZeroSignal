@@ -297,8 +297,8 @@ Commits go to `main` step by step (each step live once tested); owner is the onl
   feels the same; shared ModeSelect / ResultsPanel / GameHeader used by all
   games; "Coming soon" cards and a /roadmap page.
 - **Planned games:** Brick Breaker, Signal Flap, Memory Match, Pixel
-  Picross, Block Drop, Sudoku, Pong Online, Reversi, Dots & Boxes (Sonar, Snake
-  Signal and Checkers are live). All follow the Game Kit.
+  Picross, Block Drop, Pong Online, Reversi, Dots & Boxes (Sonar, Snake
+  Signal, Checkers and Sudoku are live). All follow the Game Kit.
 - **Ideas (build when the owner picks):** Live Arcade Lobby, Community Boss
   Raid, Ghost races, Pet that grows, Glitch Hour, Free seasons, Crews, Share
   cards, Chiptune Jukebox, Weekend tournaments.
@@ -449,6 +449,25 @@ Commits go to `main` step by step (each step live once tested); owner is the onl
   self-contained (`backend/src/sonar/`, `frontend/src/games/sonar/`,
   `shared/sonar_*.json`), so it can still be split off later if it grows its
   own audience.
+
+### Sudoku (`feat/sudoku`; agreed and done 2026-11-22)
+- **Modes (owner picked):** Easy, Medium, Hard, Expert on the classic 9×9 +
+  a Daily (the same Medium puzzle for everyone each WIB day, one try). One
+  leaderboard per level (weekly prizes) + Today's Daily. Offline on the Hub.
+- **Fair play:** every puzzle has one solution and is graded by the logic a
+  person needs (Easy naked singles → Expert triples / X-Wing). A bank of
+  graded puzzles is made offline and stays on the server, which keeps the
+  solution and the clock; your grid is saved as you play.
+- **No checking until the grid is full (owner picked):** Check marks wrong
+  squares and the clock keeps running. Helpers: Notes, highlights (only what's
+  on screen), 3 hints per game (+30 s, with the reason). No undo.
+- **Score:** level base + 10 per second under par; points never count a solve
+  faster than 1.5 s per open square (anti-bot). Giving up pays nothing.
+- **Screens (owner picked):** board + side panel (the pad goes under the
+  board on phones, one row of 9), level cards + a Daily card, a Notes toggle.
+- **Extras:** 8 board themes (4 free, lucky drops on Hard+ wins), 3 quests,
+  4 achievements (Grid Filler, Number Sage, Quick Pencil, Week of Nines),
+  Stats card, Today's Dailies entry, share card, rebindable keys.
 
 ## Phase 3b (planned)
 

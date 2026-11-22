@@ -142,9 +142,10 @@ pub const GAMES: &[GameInfo] = &[
     GameInfo {
         id: "sudoku",
         title: "Sudoku",
-        status: GameStatus::ComingSoon,
+        status: GameStatus::Live,
         ranking: Ranking::Best,
-        prize_boards: &[],
+        // Easy, Medium, Hard, Expert (not the Daily board).
+        prize_boards: &[1, 2, 3, 4],
     },
     GameInfo {
         id: "pong-online",
@@ -208,6 +209,7 @@ mod tests {
         assert!(require("2048").is_ok());
         assert!(require("snake-signal").is_ok());
         assert!(require("checkers").is_ok());
+        assert!(require("sudoku").is_ok());
         assert!(require("../etc").is_err());
         assert!(require("").is_err());
     }
