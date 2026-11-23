@@ -11,7 +11,6 @@ const chess: GameModule = {
     accent: "blue",
     icon: "♟️",
     status: "live",
-    isNew: true,
     scoreLabel: "Points",
     boards: [
       { label: "♟️ All points" },

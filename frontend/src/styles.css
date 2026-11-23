@@ -4220,10 +4220,6 @@ html[data-text="xl"] { font-size: 20px; }
 .recent-text small {
   color: var(--muted);
 }
-.ribbon-new {
-  background: var(--green);
-  color: var(--on-green);
-}
 .game-card-best {
   margin: 10px 0 0;
   font-size: 0.85rem;

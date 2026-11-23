@@ -11,7 +11,6 @@ const whackAMole: GameModule = {
     accent: "yellow",
     icon: "🔨",
     status: "live",
-    isNew: true,
     scoreLabel: "Best score",
     boards: [
       { level: 5, label: "🙂 Normal" },

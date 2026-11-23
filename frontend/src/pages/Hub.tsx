@@ -39,7 +39,6 @@ function GameCard({ game, best }: { game: GameModule; best: number }) {
     <article className={`game-card accent-${meta.accent}${live ? "" : " is-soon"}`} aria-labelledby={`game-${meta.id}-title`}>
       <div className="game-card-art" aria-hidden="true">
         <span className="game-card-icon">{meta.icon}</span>
-        {meta.isNew && live && <span className="ribbon ribbon-new">New</span>}
         {!live && <span className="ribbon">Coming soon</span>}
       </div>
       <div className="game-card-body">

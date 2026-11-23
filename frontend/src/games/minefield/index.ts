@@ -11,7 +11,6 @@ const minefield: GameModule = {
     accent: "green",
     icon: "💣",
     status: "live",
-    isNew: true,
     scoreLabel: "Best score",
     boards: [
       { level: 1, label: "🌱 Beginner" },

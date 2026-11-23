@@ -11,7 +11,6 @@ const checkersGame: GameModule = {
     accent: "green",
     icon: "⚫",
     status: "live",
-    isNew: true,
     scoreLabel: "Points",
     boards: [
       { label: "All points" },

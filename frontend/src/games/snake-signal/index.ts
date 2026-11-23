@@ -11,7 +11,6 @@ const snakeSignal: GameModule = {
     accent: "green",
     icon: "🐍",
     status: "live",
-    isNew: true,
     scoreLabel: "Best score",
     detailLabel: "Longest",
     boards: [

@@ -11,7 +11,6 @@ const sonar: GameModule = {
     accent: "yellow",
     icon: "🚢",
     status: "live",
-    isNew: true,
     scoreLabel: "Points",
     boards: [
       { label: "🚢 All points" },

@@ -11,7 +11,6 @@ const game2048: GameModule = {
     accent: "blue",
     icon: "🔢",
     status: "live",
-    isNew: true,
     scoreLabel: "Best score",
     detailLabel: "Best tile",
     boards: [
