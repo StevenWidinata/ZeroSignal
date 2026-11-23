@@ -1,0 +1,15 @@
+{
+  "about": "Memory Match Chaos power-ups. price null = free for everyone. Each player brings 3 different ones into a Chaos game and can use each once. target: what you pick when using it (none, two = two face-down cards, block = the top-left card of a 2x2 block, row = a row). The rules live in backend/src/memory/rules.rs.",
+  "powers": [
+    { "id": "shuffle", "name": "Shuffle", "icon": "🌀", "rarity": "common", "price": null, "target": "none", "text": "6 random face-down cards trade places." },
+    { "id": "swap", "name": "Swap", "icon": "🔁", "rarity": "common", "price": null, "target": "two", "text": "Pick 2 face-down cards. They trade places." },
+    { "id": "peek", "name": "Peek", "icon": "👀", "rarity": "common", "price": null, "target": "two", "text": "Pick 2 face-down cards. Only you see them, for 2 seconds." },
+    { "id": "fog", "name": "Fog", "icon": "🌫️", "rarity": "common", "price": null, "target": "none", "text": "On your rival's next turn their cards show for only a split second and the board blurs." },
+    { "id": "second-chance", "name": "Second Chance", "icon": "🍀", "rarity": "common", "price": null, "target": "none", "text": "This turn, your first miss doesn't end your turn." },
+    { "id": "mirror", "name": "Mirror", "icon": "🪞", "rarity": "rare", "price": 300, "target": "none", "text": "On your rival's next turn their board is shown flipped left to right." },
+    { "id": "lock", "name": "Lock", "icon": "🔒", "rarity": "rare", "price": 300, "target": "two", "text": "Pick 2 face-down cards. Your rival can't flip them on their next turn." },
+    { "id": "rotate", "name": "Rotate", "icon": "🔄", "rarity": "rare", "price": 350, "target": "block", "text": "Pick a 2x2 block. Its cards turn one step clockwise." },
+    { "id": "x-ray", "name": "X-Ray", "icon": "🩻", "rarity": "epic", "price": 400, "target": "row", "text": "Pick a row. Only you see its face-down cards, for 1.5 seconds." },
+    { "id": "scatter", "name": "Scatter", "icon": "💥", "rarity": "epic", "price": 500, "target": "none", "text": "Your rival's last pair goes back on the board, face down, hidden in random spots." }
+  ]
+}

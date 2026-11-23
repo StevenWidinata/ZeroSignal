@@ -17,6 +17,7 @@ mod economy;
 mod error;
 mod game_2048;
 mod games;
+mod memory;
 mod minefield;
 mod online;
 mod physics;
