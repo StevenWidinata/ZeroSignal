@@ -121,7 +121,8 @@ pub const GAMES: &[GameInfo] = &[
     GameInfo {
         id: "memory-match",
         title: "Memory Match",
-        status: GameStatus::ComingSoon,
+        // Online only: no scores, its board is the online rooms leaderboard.
+        status: GameStatus::Live,
         ranking: Ranking::Best,
         prize_boards: &[],
     },
@@ -210,6 +211,7 @@ mod tests {
         assert!(require("snake-signal").is_ok());
         assert!(require("checkers").is_ok());
         assert!(require("sudoku").is_ok());
+        assert!(require("memory-match").is_ok());
         assert!(require("../etc").is_err());
         assert!(require("").is_err());
     }

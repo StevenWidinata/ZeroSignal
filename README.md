@@ -21,7 +21,8 @@ A hub of fun browser games with a retro arcade UI and real, **server-verified le
 | Snake Signal | Live        | Neon snake: Classic, Wrap and a Daily on 3 board sizes; power-ups, glitch hazards, ×5 combos and a fading signal; 8 skins, 8 arenas, 6 trails; the server replays every turn |
 | Checkers     | Live        | Classic 8×8 draughts: vs Zero-Bot (4 levels), online vs a friend on another device, same device and a Daily "win in 2–4" puzzle; 8 boards and 8 piece sets |
 | Sudoku       | Live        | Classic 9×9 in 4 levels + a Daily; every puzzle has one solution and needs no guessing; notes, hints with reasons, Check when the grid is full; 8 board themes |
-| 6 more       | Coming soon | Brick Breaker, Signal Flap, Memory Match, Pixel Picross, Block Drop, Pong Online (see `/roadmap`) |
+| Memory Match | Live        | Online only: take turns flipping pairs with a friend on 4×4, 4×6 or 6×6; Chaos mode adds 10 confusing power-ups (bring 3) |
+| 5 more       | Coming soon | Brick Breaker, Signal Flap, Pixel Picross, Block Drop, Pong Online (see `/roadmap`) |
 
 ## Features
 
@@ -109,6 +110,17 @@ A hub of fun browser games with a retro arcade UI and real, **server-verified le
 - **Looks:** 8 board themes (free: Paper, Night, Mint, Ocean; paid: Sakura 400, Terminal 500, Neon Grid 750, Royal Gold 1,200).
 - **Extras:** a share card for the Daily, a Stats card (games, solves and best time per level), 3 quests and 4 achievements with titles.
 
+## Memory Match
+
+Online only: two players on two devices in a room (no Zero-Bot, no solo). Pick a mode and a board, **Create room**, and send the code or link.
+
+- **Rules:** one shared board of face-down pairs. On your turn flip 2 cards: a pair is yours and you go again, a miss turns them back and passes the turn. Both players see every card that's turned over. Most pairs when the board is empty wins (equal = draw). Boards: 4×4 (8 pairs), 4×6 (12) or 6×6 (18); best of 1, 3 or 5.
+- **Classic** is just that. **Chaos** adds power-ups: before each game both players pick 3 different ones they own; each works once, one per turn, while none of your cards is half-flipped. Everyone sees that a power was used and which spots it touched, never the hidden faces.
+- **The 10 powers:** free: Shuffle (6 random face-down cards trade places), Swap (pick 2, they trade places), Peek (see 2 cards for 2 s, only you), Fog (on the rival's next turn their cards show for only a split second and the board blurs), Second Chance (your first miss this turn doesn't end it); bought once with coins: Mirror 300 (the rival's next turn shows the board flipped left to right), Lock 300 (2 cards the rival can't flip next turn), Rotate 350 (a 2×2 block turns clockwise), X-Ray 400 (see a whole row for 1.5 s, only you), Scatter 500 (the rival's last pair goes back on the board, hidden). The Power locker on the menu shows them all; a power can also be bought from the picker.
+- **Fair play:** the server holds the layout (a secret seed per game) and runs every rule; Shuffle and Scatter use the same seed, so a game always replays the same way. Peek and X-Ray cards are sent only once, to the player who used them. Fog and Mirror are screen effects on the rival's side.
+- **Rewards:** online series XP (win 30, draw 15, loss 10) like every online game, an Online champions board (most series won), 3 quests, 4 achievements with titles and a Stats card (games, wins, draws, best run and powers used per mode and board).
+- **Keys:** arrows move between cards, Enter flips, 1–3 pick a power, Esc cancels (rebindable in Settings → Controls).
+
 ## Sling Squad
 
 A slingshot physics game with its own cast: **Pip** (balanced), **Zip** (dash), **Boomer** (explode), **Eggbert** (egg drop), **Tank** (heavy) and **Trio** (splits in three), against purple one-eyed **gobbos** hiding in wood, stone and ice forts. (It was called "Angry Bird" before; migration 0019 renamed its id and birds in saved scores, and old links redirect.)
@@ -161,7 +173,7 @@ A slingshot physics game with its own cast: **Pip** (balanced), **Zip** (dash), 
 
 ## Online play (two devices)
 
-Connect Four, Tic-Tac-Toe, chess and Sonar can be played against a friend on another phone or laptop: pick **🌐 Online** in the game's menu, **Create room** (best of 1, 3 or 5) and send the 6-character code or the invite link (`/play/<game>?room=CODE`). Guests can play too.
+Connect Four, Tic-Tac-Toe, chess, Sonar, checkers and Memory Match (online only) can be played against a friend on another phone or laptop: pick **🌐 Online** in the game's menu, **Create room** (best of 1, 3 or 5) and send the 6-character code or the invite link (`/play/<game>?room=CODE`). Guests can play too.
 
 - **The server checks every move** with the same rules as the AI games and only accepts a move from the player whose turn it is. Players move first in turn, game by game.
 - **No sockets needed:** each screen asks the server for news and the server holds the request up to 20 seconds, so the other player's move shows up within about a second (this works on Vercel).
@@ -173,7 +185,7 @@ Chess rooms: whoever moves first in a game plays White (so colours swap game by 
 
 Sonar rooms: both players hide a fleet first (the server never sends one player's fleet to the other until the game ends), then take turns firing or pinging; whoever moves first that game fires first. Sonar rooms default to one game too.
 
-API: `POST /api/rooms` `{game, best_of, sonar_mode?}` (Sonar rooms are always `tactics`; `classic` is refused), `POST /api/rooms/:code/{join,move,next,emote,leave,rematch}` (chess moves: `{uci}`; Sonar: `{cell, ping}`, or a Tactics move code in `uci`), `POST /api/rooms/:code/draw` `{action: offer|accept|decline}`, `POST /api/rooms/:code/fleet` `{fleet}` (Sonar), `GET /api/rooms/:code?since=<version>` (waits up to 20 s for a newer version), `GET /api/rooms/leaderboard?game=`.
+API: `POST /api/rooms` `{game, best_of, sonar_mode?, memory_mode?, memory_size?}` (Sonar rooms are always `tactics`; `classic` is refused; Memory Match: `classic` | `chaos` and `small` | `medium` | `large`), `POST /api/rooms/:code/{join,move,next,emote,leave,rematch}` (chess moves: `{uci}`; Sonar: `{cell, ping}`, or a Tactics move code in `uci`; Memory Match: `{cell}` flips a card, a power is `{uci: "swap:3,7"}`), `POST /api/rooms/:code/draw` `{action: offer|accept|decline}`, `POST /api/rooms/:code/fleet` `{fleet}` (Sonar), `POST /api/rooms/:code/kit` `{kit: "shuffle,swap,peek"}` (Memory Match Chaos), `GET /api/rooms/:code?since=<version>` (waits up to 20 s for a newer version), `GET /api/rooms/leaderboard?game=`.
 
 ## Coins, tokens and levels
 
@@ -204,7 +216,7 @@ A pop-up offers the reward when you open the site. Claim once per day (days star
 
 ### Daily quests
 
-Every day (00:00 WIB) you get 3 different random quests, shown on the Hub and on the **Quests** page (`/quests`). The nav shows a badge when one is ready to claim. Only results the server verified count: AI games, Sling Squad, Whack-a-Mole, Minefield, 2048, chess and Sonar results (vs Zero-Bot, the Daily puzzle and the Daily Hunt), Sudoku solves, and mystery boxes. Local 2-player games don't count.
+Every day (00:00 WIB) you get 3 different random quests, shown on the Hub and on the **Quests** page (`/quests`). The nav shows a badge when one is ready to claim. Only results the server verified count: AI games, Sling Squad, Whack-a-Mole, Minefield, 2048, chess and Sonar results (vs Zero-Bot, the Daily puzzle and the Daily Hunt), Sudoku solves, online Memory Match games, and mystery boxes. Local 2-player games don't count.
 
 - Press **Claim** on a finished quest to get its coins + XP. Claiming all 3 pays a bonus **1 token**.
 - **Reroll:** once per day, swap one unfinished quest for a new random one.
@@ -245,10 +257,13 @@ Every day (00:00 WIB) you get 3 different random quests, shown on the Hub and on
 | Solve 2 Sudoku puzzles | 20 | 30 |
 | Solve a Hard or Expert Sudoku | 40 | 60 |
 | Solve today's Sudoku Daily | 30 | 40 |
+| Finish 2 Memory Match games online | 20 | 30 |
+| Win a Memory Match game online | 40 | 60 |
+| Use 3 power-ups in Memory Match Chaos | 30 | 40 |
 
 ## Achievements
 
-The `/achievements` page lists 64 one-time achievements with progress bars; locked ones are visible too. The server works out progress from results it already verified (matches, scores, the coin ledger, owned items, login and quest history), so progress made before achievements existed counts as well. Press **Claim** to get the coins, the same amount of XP, and a **title** to wear. Achievement coins don't count toward the daily cap. Claimed achievements show on your public profile.
+The `/achievements` page lists 68 one-time achievements with progress bars; locked ones are visible too. The server works out progress from results it already verified (matches, scores, the coin ledger, owned items, login and quest history), so progress made before achievements existed counts as well. Press **Claim** to get the coins, the same amount of XP, and a **title** to wear. Achievement coins don't count toward the daily cap. Claimed achievements show on your public profile.
 
 | Achievement | Coins | Title |
 |-------------|-------|-------|
@@ -304,6 +319,10 @@ The `/achievements` page lists 64 one-time achievements with progress bars; lock
 | Solve an Expert Sudoku | 300 | Number Sage |
 | Solve a Medium or harder Sudoku in under 5 minutes without hints | 150 | Quick Pencil |
 | Solve the Daily Sudoku 7 days in a row | 150 | Week of Nines |
+| Win a Memory Match game online | 30 | Sharp Eye |
+| Find 5 pairs in one turn in Memory Match | 150 | Total Recall |
+| Win 10 Memory Match Chaos games | 300 | Chaos Master |
+| Own all 10 Memory Match power-ups | 150 | Full Locker |
 
 ### Title looks
 
@@ -453,7 +472,7 @@ zero_signal/
 │       ├── daily.rs            # WIB (UTC+7) day boundary for everything daily
 │       ├── daily_login.rs      # 7-day login streak reward
 │       ├── quests/             # daily quest pool, progress hooks, claim/reroll API
-│       ├── achievements.rs     # 64 achievements, live progress, claim + titles
+│       ├── achievements.rs     # 68 achievements, live progress, claim + titles
 │       ├── chess/              # rules (cozy-chess), Zero-Bot AI, games API, items, daily puzzles
 │       ├── sonar/              # rules + Tactics, Zero-Bot (probability map, pings, powers), games API, Workshop, Campaign, Daily Hunt, items
 │       ├── character/          # item catalog, outfits, presets, shop, profiles
@@ -461,6 +480,7 @@ zero_signal/
 │       ├── whack_a_mole/       # seeded mole schedule, tap replay scorer, runs API
 │       ├── minefield/          # no-guess board generator + solver, games API
 │       ├── sudoku/             # rules, logic solver (grading + hints with reasons), puzzle bank, games API, themes
+│       ├── memory/             # Memory Match rules (turns, 10 Chaos powers, per-player view), power locker, game records
 │       ├── game_2048/          # board, seeded tile drops, undo, move replay scorer, runs API
 │       ├── connect_four/       # rules (bitboard), AI, skins/spins, match API
 │       └── physics/            # rapier2d authoritative simulation
@@ -495,7 +515,7 @@ zero_signal/
 | GET  | `/api/me/quests` | today's 3 quests, progress, reroll and bonus status (auth) |
 | POST | `/api/me/quests/:slot/claim` | claim a finished quest; the 3rd claim adds the bonus token (auth) |
 | POST | `/api/me/quests/:slot/reroll` | swap one unfinished quest, once per day (auth) |
-| GET  | `/api/me/achievements` | all 64 achievements with live progress (auth) |
+| GET  | `/api/me/achievements` | all 68 achievements with live progress (auth) |
 | POST | `/api/me/achievements/:id/claim` | claim an unlocked achievement: coins + XP + title (auth) |
 | GET  | `/api/me/character` | outfit, owned items, presets, wallet (auth) |
 | PUT  | `/api/me/character/loadout` | wear an outfit (server checks ownership) (auth) |
@@ -533,6 +553,8 @@ zero_signal/
 | POST | `/api/games/sudoku/games/:id/give-up` | end it and see the solution (auth) |
 | GET  | `/api/games/sudoku/collection` | board themes with prices and what you own (auth) |
 | POST | `/api/games/sudoku/buy` | `{id}` buy a theme with coins (auth) |
+| GET  | `/api/games/memory-match/collection` | the 10 Memory Match power-ups with prices and what you own (auth) |
+| POST | `/api/games/memory-match/buy` | `{id}` buy a power-up with coins (auth) |
 | POST | `/api/games/2048/runs` | `{mode}` start a game; returns `run_id`, `seed`, `size`, `undos` (Daily: continues today's if open) (auth) |
 | GET  | `/api/games/2048/runs/active` | your unfinished game with its saved moves, or null (auth) |
 | POST | `/api/games/2048/runs/:id/save` | `{moves}` save progress; must extend the saved moves (auth) |

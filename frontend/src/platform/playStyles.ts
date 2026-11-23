@@ -36,7 +36,10 @@ export interface FilterInfo {
   hint: string;
 }
 
-/** The Hub chips after "All games". Every game with Online also has Same device, so they are one group. */
+/**
+ * The Hub chips after "All games". Games with Online also have Same device
+ * (except online-only Memory Match), so they are one group.
+ */
 export const FILTERS: FilterInfo[] = [
   { id: "online", label: "Online", icon: "🌐", hint: "Play a friend, on another device or the same one." },
   { id: "offline", label: "Offline", icon: "👤", hint: "Play on your own." },
@@ -53,6 +56,9 @@ export function filterGames(games: GameModule[], f: PlayFilter): GameModule[] {
   const online = (g: GameModule) => g.meta.play.includes("online");
   return games.filter((g) => (f === "online" ? online(g) : !online(g)));
 }
+
+/** Played only in online rooms (no scores: its board is the online champions). */
+export const isOnlineOnly = (g: GameModule): boolean => g.meta.play.length === 1 && g.meta.play[0] === "online";
 
 export function countBy(games: GameModule[], f: PlayFilter): number {
   return filterGames(games, f).length;

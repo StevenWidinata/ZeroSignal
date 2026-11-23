@@ -19,7 +19,6 @@ const soon = (
 export const UPCOMING: GameModule[] = [
   soon("brick-breaker", "Brick Breaker", "🧱", "blue", "Bounce the ball, smash every brick, catch the drops.", ["Arcade", "Levels"], ["solo"]),
   soon("signal-flap", "Signal Flap", "🪽", "yellow", "One button. Fly through the gaps as far as you can.", ["Reflex", "One button"], ["solo", "daily"]),
-  soon("memory-match", "Memory Match", "🃏", "green", "Flip cards and find every pair before time runs out.", ["Memory", "Timed"], ["solo"]),
   soon("pixel-picross", "Pixel Picross", "🖼️", "blue", "Solve the number clues to paint a hidden pixel picture.", ["Logic", "Pictures"], ["solo", "daily"]),
   soon("block-drop", "Block Drop", "🟪", "yellow", "Stack falling blocks and clear lines. The server replays it.", ["Puzzle", "Replay"], ["solo"]),
   soon("pong-online", "Pong Online", "🏓", "blue", "Paddles, a ball and a friend on another device.", ["Arcade", "Real-time"], ["online", "local"]),

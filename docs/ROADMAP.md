@@ -296,9 +296,9 @@ Commits go to `main` step by step (each step live once tested); owner is the onl
 - **F. Game Kit** (`feat/game-kit`, done): `docs/GAME_KIT.md` rules so every game
   feels the same; shared ModeSelect / ResultsPanel / GameHeader used by all
   games; "Coming soon" cards and a /roadmap page.
-- **Planned games:** Brick Breaker, Signal Flap, Memory Match, Pixel
-  Picross, Block Drop, Pong Online, Reversi, Dots & Boxes (Sonar, Snake
-  Signal, Checkers and Sudoku are live). All follow the Game Kit.
+- **Planned games:** Brick Breaker, Signal Flap, Pixel Picross, Block Drop,
+  Pong Online, Reversi, Dots & Boxes (Sonar, Snake Signal, Checkers, Sudoku
+  and Memory Match are live). All follow the Game Kit.
 - **Ideas (build when the owner picks):** Live Arcade Lobby, Community Boss
   Raid, Ghost races, Pet that grows, Glitch Hour, Free seasons, Crews, Share
   cards, Chiptune Jukebox, Weekend tournaments.
@@ -468,6 +468,25 @@ Commits go to `main` step by step (each step live once tested); owner is the onl
 - **Extras:** 8 board themes (4 free, lucky drops on Hard+ wins), 3 quests,
   4 achievements (Grid Filler, Number Sage, Quick Pencil, Week of Nines),
   Stats card, Today's Dailies entry, share card, rebindable keys.
+
+### Memory Match (`feat/memory-match`; agreed and done 2026-11-24)
+- **Online only (owner picked):** no Zero-Bot, no solo, no Daily. Two players
+  take turns on one shared board (a pair = go again, a miss passes the turn),
+  most pairs wins. The host picks 4×4 / 4×6 / 6×6 and best of 1 / 3 / 5.
+- **Two modes (owner picked):** Classic (plain pairs) and Chaos: 10
+  confusing power-ups, 5 free (Shuffle, Swap, Peek, Fog, Second Chance) and 5
+  bought once with coins (Mirror 300, Lock 300, Rotate 350, X-Ray 400, Scatter
+  500). Each player brings 3 different ones per game; each works once, one per
+  turn, while no card of theirs is half-flipped. No bomb / joker / timer.
+- **Fair play:** the server keeps the layout (a secret seed per game) and runs
+  the rules; Peek / X-Ray faces go only to their user, once. A Lock that would
+  leave fewer than 2 cards to flip is dropped.
+- **Screens (owner picked):** mode cards + a room box on the menu with a Power
+  locker, a card-grid power picker before each Chaos game, the power bar under
+  the board. The Leaderboard page shows online champions for online-only games.
+- **Extras:** 3 quests (40 → 43), 4 achievements (64 → 68: Sharp Eye, Total
+  Recall, Chaos Master, Full Locker), Stats card, rebindable keys. The "New"
+  ribbon was removed from every hub card the same day.
 
 ### Sonar powers everywhere (`feat/sonar-powers-everywhere`, `feat/sonar-daily-powers`; agreed and done 2026-11-22)
 - Owner found Sonar boring with only pings (the menu opened on Classic and the

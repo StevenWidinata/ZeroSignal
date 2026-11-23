@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, Navigate, useParams, useSearchParams } from "react-router-dom";
-import { api } from "../api/client";
+import { api, rooms } from "../api/client";
 import WeeklyPrizes from "../components/WeeklyPrizes";
 import { formatCountdown, nextWeekReset } from "../platform/week";
-import type { LeaderboardEntry, LeaderboardPeriod, MyScoresResponse } from "../api/types";
+import type { LeaderboardEntry, LeaderboardPeriod, MyScoresResponse, OnlineEntry, OnlineGame } from "../api/types";
 import Avatar from "../character/Avatar";
 import { normalizeLoadout } from "../character/catalog";
 import TitleBadge from "../components/TitleBadge";
+import { isOnlineOnly } from "../platform/playStyles";
 import { GAMES, LIVE_GAMES, findGame } from "../platform/registry";
 import { useAuth } from "../store/auth";
 import BackButton from "../components/BackButton";
@@ -19,6 +20,9 @@ export default function Leaderboard() {
   const user = useAuth((s) => s.user);
   const [entries, setEntries] = useState<LeaderboardEntry[] | null>(null);
   const [mine, setMine] = useState<MyScoresResponse | null>(null);
+  /** Online-only games: most online series won. */
+  const [champions, setChampions] = useState<OnlineEntry[] | null>(null);
+  const onlineOnly = !!game && isOnlineOnly(game);
   const [error, setError] = useState<string | null>(null);
   const [boardIdx, setBoardIdx] = useState(0);
   const boards = game?.meta.boards;
@@ -41,6 +45,20 @@ export default function Leaderboard() {
     let cancelled = false; // ignore stale responses when switching tabs
     setEntries(null);
     setError(null);
+    if (onlineOnly) {
+      setChampions(null);
+      rooms
+        .leaderboard(game.meta.id as OnlineGame)
+        .then((c) => !cancelled && setChampions(c))
+        .catch((e) => {
+          if (cancelled) return;
+          setChampions([]);
+          setError(e instanceof Error ? e.message : "failed to load leaderboard");
+        });
+      return () => {
+        cancelled = true;
+      };
+    }
     api
       .leaderboard(game.meta.id, { level: board?.level, period: effectivePeriod })
       .then((e) => !cancelled && setEntries(e))
@@ -55,7 +73,7 @@ export default function Leaderboard() {
   }, [game, board, effectivePeriod]);
 
   useEffect(() => {
-    if (!game || !user) {
+    if (!game || !user || onlineOnly) {
       setMine(null);
       return;
     }
@@ -123,7 +141,69 @@ export default function Leaderboard() {
         </div>
       )}
 
-      {!board?.period && (
+      {onlineOnly && (
+        <>
+          <p className="wam-hint">{meta.title} is played online with friends: the board counts online series won (all time).</p>
+          {error && (
+            <div className="error" role="alert">
+              {error}
+            </div>
+          )}
+          <div className="board-table-wrap">
+            <table className="board-table">
+              <caption className="sr-only">{meta.title} online champions</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Rank</th>
+                  <th scope="col">Player</th>
+                  <th scope="col">Series won</th>
+                  <th scope="col">Played</th>
+                </tr>
+              </thead>
+              <tbody>
+                {champions === null && (
+                  <tr>
+                    <td colSpan={4} className="empty">
+                      Loading…
+                    </td>
+                  </tr>
+                )}
+                {champions?.map((e) => (
+                  <tr key={e.rank} className={user?.username === e.username ? "me" : ""}>
+                    <td>
+                      <span className={`rank rank-${e.rank}`}>{e.rank}</span>
+                    </td>
+                    <td>
+                      <Link to={`/u/${encodeURIComponent(e.username)}`} className="board-player">
+                        <Avatar loadout={e.avatar} size={32} crop="head" animated={e.rank <= 3} />
+                        <strong>{e.username}</strong>
+                        <TitleBadge id={normalizeLoadout(e.avatar).title} small />
+                      </Link>
+                      {user?.username === e.username && (
+                        <>
+                          {" "}
+                          <span className="tag">You</span>
+                        </>
+                      )}
+                    </td>
+                    <td className="num">{fmt(e.wins)}</td>
+                    <td className="num">{fmt(e.played)}</td>
+                  </tr>
+                ))}
+                {champions?.length === 0 && !error && (
+                  <tr>
+                    <td colSpan={4} className="empty">
+                      Nobody has won an online series yet. Be the first!
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+
+      {!onlineOnly && !board?.period && (
         <div className="board-period">
           <div className="segmented" role="radiogroup" aria-label="Time period">
             {(
@@ -154,67 +234,69 @@ export default function Leaderboard() {
         </div>
       )}
 
-      {error && (
+      {!onlineOnly && error && (
         <div className="error" role="alert">
           {error}
         </div>
       )}
 
-      <div className="board-table-wrap">
-        <table className="board-table">
-          <caption className="sr-only">{meta.title} leaderboard</caption>
-          <thead>
-            <tr>
-              <th scope="col">Rank</th>
-              <th scope="col">Player</th>
-              <th scope="col">{meta.scoreLabel}</th>
-              {detail && <th scope="col">{detail}</th>}
-            </tr>
-          </thead>
-          <tbody>
-            {entries === null && (
+      {!onlineOnly && (
+        <div className="board-table-wrap">
+          <table className="board-table">
+            <caption className="sr-only">{meta.title} leaderboard</caption>
+            <thead>
               <tr>
-                <td colSpan={cols} className="empty">
-                  Loading…
-                </td>
+                <th scope="col">Rank</th>
+                <th scope="col">Player</th>
+                <th scope="col">{meta.scoreLabel}</th>
+                {detail && <th scope="col">{detail}</th>}
               </tr>
-            )}
-            {entries?.map((e) => (
-              <tr key={e.rank} className={user?.username === e.username ? "me" : ""}>
-                <td>
-                  <span className={`rank rank-${e.rank}`}>{e.rank}</span>
-                </td>
-                <td>
-                  <Link to={`/u/${encodeURIComponent(e.username)}`} className="board-player">
-                    <Avatar loadout={e.avatar} size={32} crop="head" animated={e.rank <= 3} />
-                    <strong>{e.username}</strong>
-                    <TitleBadge id={normalizeLoadout(e.avatar).title} small />
-                  </Link>
-                  {user?.username === e.username && (
-                    <>
-                      {" "}
-                      <span className="tag">You</span>
-                    </>
-                  )}
-                </td>
-                <td className="num">{fmt(e.best_score)}</td>
-                {detail && <td className="num">{e.detail ? fmt(Number(e.detail)) : "–"}</td>}
-              </tr>
-            ))}
-            {entries?.length === 0 && !error && (
-              <tr>
-                <td colSpan={cols} className="empty">
-                  {live
-                    ? "No scores yet. Be the first legend."
-                    : `${meta.title} is coming soon. Its board opens on launch day.`}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {entries === null && (
+                <tr>
+                  <td colSpan={cols} className="empty">
+                    Loading…
+                  </td>
+                </tr>
+              )}
+              {entries?.map((e) => (
+                <tr key={e.rank} className={user?.username === e.username ? "me" : ""}>
+                  <td>
+                    <span className={`rank rank-${e.rank}`}>{e.rank}</span>
+                  </td>
+                  <td>
+                    <Link to={`/u/${encodeURIComponent(e.username)}`} className="board-player">
+                      <Avatar loadout={e.avatar} size={32} crop="head" animated={e.rank <= 3} />
+                      <strong>{e.username}</strong>
+                      <TitleBadge id={normalizeLoadout(e.avatar).title} small />
+                    </Link>
+                    {user?.username === e.username && (
+                      <>
+                        {" "}
+                        <span className="tag">You</span>
+                      </>
+                    )}
+                  </td>
+                  <td className="num">{fmt(e.best_score)}</td>
+                  {detail && <td className="num">{e.detail ? fmt(Number(e.detail)) : "–"}</td>}
+                </tr>
+              ))}
+              {entries?.length === 0 && !error && (
+                <tr>
+                  <td colSpan={cols} className="empty">
+                    {live
+                      ? "No scores yet. Be the first legend."
+                      : `${meta.title} is coming soon. Its board opens on launch day.`}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
 
-      {live && mine && (
+      {live && mine && !onlineOnly && (
         <section>
           <h2>Your runs · best {fmt(mine.best_score)}</h2>
           <div className="board-table-wrap">

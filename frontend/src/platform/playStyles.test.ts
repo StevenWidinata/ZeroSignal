@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { countBy, filterGames, loadFilter, sortedStyles, type PlayFilter } from "./playStyles";
+import { countBy, filterGames, isOnlineOnly, loadFilter, sortedStyles, type PlayFilter } from "./playStyles";
 import { GAMES, LIVE_GAMES } from "./registry";
 
 /** Words that describe how you play belong in `play`, not in `tags`. */
@@ -25,8 +25,9 @@ describe("play styles", () => {
     expect(ids("online").filter((id) => ids("offline").includes(id))).toEqual([]);
   });
 
-  it("every online game can also be played on one device", () => {
-    for (const g of filterGames(GAMES, "online")) expect(g.meta.play, g.meta.id).toContain("local");
+  it("every online game can also be played on one device, unless it's online only", () => {
+    for (const g of filterGames(GAMES, "online")) if (!isOnlineOnly(g)) expect(g.meta.play, g.meta.id).toContain("local");
+    expect(GAMES.filter(isOnlineOnly).map((g) => g.meta.id)).toEqual(["memory-match"]);
   });
 
   it("orders a game's styles like the chips", () => {
