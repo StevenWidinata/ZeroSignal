@@ -20,6 +20,7 @@ use crate::auth::jwt::AuthUser;
 use crate::connect_four::board::Outcome;
 use crate::economy::{self, Reward};
 use crate::error::{AppError, AppResult};
+use crate::memory::rules::{self as mm, Game as MemoryGame};
 use crate::sonar::CLASSIC_RETIRED;
 use crate::state::AppState;
 
@@ -68,7 +69,14 @@ struct Room {
     /// Sonar: "classic" or "tactics" for the whole room.
     sonar_mode: String,
     /// Sonar Tactics: this game's seed (hides the crates; new every game).
+    /// Memory Match: this game's secret layout seed.
     sonar_seed: i64,
+    /// Memory Match: "classic" or "chaos", and "small" | "medium" | "large".
+    memory_mode: String,
+    memory_size: String,
+    /// Memory Match Chaos: each seat's 3 powers this game.
+    host_kit: Option<String>,
+    guest_kit: Option<String>,
 }
 
 impl Room {
@@ -82,7 +90,72 @@ impl Room {
             Game::Sonar => {
                 sonar_state(&self.moves, [self.host_fleet.as_deref(), self.guest_fleet.as_deref()], self.first_seat as u8, viewer, self.sonar_setup())
             }
+            Game::Memory => self.memory_state(viewer),
             g => replay(g, &self.moves),
+        }
+    }
+
+    fn memory_size(&self) -> mm::Size {
+        mm::Size::parse(&self.memory_size).unwrap_or(mm::Size::Medium)
+    }
+
+    fn memory_mode(&self) -> mm::Mode {
+        mm::Mode::parse(&self.memory_mode).unwrap_or(mm::Mode::Classic)
+    }
+
+    /// Memory Match: this game's setup (kits ordered so player 0 = the seat
+    /// moving first); None until both Chaos kits are in.
+    fn memory_setup(&self) -> Option<mm::Setup> {
+        let mode = self.memory_mode();
+        let kits = match mode {
+            mm::Mode::Classic => [vec![], vec![]],
+            mm::Mode::Chaos => {
+                let host = mm::parse_kit(self.host_kit.as_deref()?).ok()?;
+                let guest = mm::parse_kit(self.guest_kit.as_deref()?).ok()?;
+                if self.first_seat == 1 {
+                    [host, guest]
+                } else {
+                    [guest, host]
+                }
+            }
+        };
+        Some(mm::Setup { size: self.memory_size(), mode, seed: self.sonar_seed as u32, kits })
+    }
+
+    /// Memory Match: the game so far (None while kits are being picked).
+    fn memory_game(&self) -> Result<Option<MemoryGame>, &'static str> {
+        self.memory_setup().map(|s| MemoryGame::replay(s, &self.moves)).transpose()
+    }
+
+    /// Memory Match: the rules' player index for a seat (0 = moved first).
+    fn memory_player(&self, seat: Seat) -> Option<usize> {
+        match seat {
+            0 => None,
+            s if i16::from(s) == self.first_seat => Some(0),
+            _ => Some(1),
+        }
+    }
+
+    /// Memory Match board for `viewer`. Arrays in `highlight` (pairs,
+    /// powers, effects, stats) are by player: index 0 = `first_seat`.
+    fn memory_state(&self, viewer: Seat) -> Result<GameState, &'static str> {
+        let kits_in = serde_json::json!([self.host_kit.is_some(), self.guest_kit.is_some()]);
+        match self.memory_game()? {
+            Some(g) => {
+                let mut v = g.view(self.memory_player(viewer));
+                v["ready"] = true.into();
+                v["kits_in"] = kits_in;
+                Ok(GameState { cells: v["cells"].clone(), outcome: g.outcome(), highlight: v, next: g.next() })
+            }
+            None => {
+                let size = self.memory_size();
+                let cells = serde_json::json!(vec![0; size.cards()]);
+                let v = serde_json::json!({
+                    "size": size, "cols": size.cols(), "rows": size.rows(), "mode": self.memory_mode(),
+                    "cells": cells, "ready": false, "kits_in": kits_in,
+                });
+                Ok(GameState { cells, outcome: Outcome::Ongoing, highlight: v, next: crate::connect_four::board::Player::P1 })
+            }
         }
     }
 
@@ -96,9 +169,24 @@ impl Room {
         self.sonar_seed = i64::from(rand::Rng::gen::<u32>(&mut rand::thread_rng()));
     }
 
-    /// Sonar: both fleets hidden, so firing can start.
-    fn fleets_ready(&self) -> bool {
-        self.game() != Game::Sonar || (self.host_fleet.is_some() && self.guest_fleet.is_some())
+    /// Sonar: both fleets hidden; Memory Match Chaos: both kits in. Then play can start.
+    fn ready(&self) -> bool {
+        match self.game() {
+            Game::Sonar => self.host_fleet.is_some() && self.guest_fleet.is_some(),
+            Game::Memory => self.memory_setup().is_some(),
+            _ => true,
+        }
+    }
+
+    /// Clear everything that belongs to one game (fleets, kits, seed).
+    fn reset_game(&mut self) {
+        self.moves.clear();
+        self.host_fleet = None;
+        self.guest_fleet = None;
+        self.host_kit = None;
+        self.guest_kit = None;
+        self.new_sonar_seed();
+        self.game_over = false;
     }
 
     fn seat_of(&self, user: Uuid) -> Option<Seat> {
@@ -178,8 +266,17 @@ fn here(seen: Option<DateTime<Utc>>, now: DateTime<Utc>) -> bool {
 }
 
 async fn view(pool: &sqlx::PgPool, r: &Room, you: Seat) -> AppResult<RoomView> {
+    view_with(pool, r, you, false).await
+}
+
+/// `reveal`: keep a Memory Match Peek/X-Ray look in the view. Only the
+/// answer to the power move itself carries it, so it can't be fetched again.
+async fn view_with(pool: &sqlx::PgPool, r: &Room, you: Seat, reveal: bool) -> AppResult<RoomView> {
     let now = Utc::now();
-    let board = r.state(you).map_err(|e| AppError::Internal(anyhow::anyhow!("room {}: {e}", r.code)))?;
+    let mut board = r.state(you).map_err(|e| AppError::Internal(anyhow::anyhow!("room {}: {e}", r.code)))?;
+    if !reveal && r.game() == Game::Memory && board.highlight.get("reveal").is_some() {
+        board.highlight["reveal"] = serde_json::Value::Null;
+    }
     let host = user_bits(pool, r.host_id).await?;
     let guest = match r.guest_id {
         Some(g) => Some(user_bits(pool, g).await?),
@@ -215,7 +312,7 @@ async fn view(pool: &sqlx::PgPool, r: &Room, you: Seat) -> AppResult<RoomView> {
         players,
         game_no: r.game_no,
         first_seat: r.first_seat,
-        your_turn: r.status == "playing" && !r.game_over && r.fleets_ready() && to_move == you,
+        your_turn: r.status == "playing" && !r.game_over && r.ready() && to_move == you,
         board,
         moves: r.moves.clone(),
         game_over: r.game_over,
@@ -243,7 +340,8 @@ async fn save(tx: &mut Transaction<'_, Postgres>, r: &Room) -> AppResult<()> {
                host_wins = $7, guest_wins = $8, draws = $9, game_over = $10, winner = $11, rewarded = $12,
                host_rematch = $13, guest_rematch = $14, host_emote = $15, host_emote_at = $16,
                guest_emote = $17, guest_emote_at = $18, host_seen = $19, guest_seen = $20,
-               draw_offer = $21, host_fleet = $22, guest_fleet = $23, sonar_seed = $24, version = version + 1, updated_at = now()
+               draw_offer = $21, host_fleet = $22, guest_fleet = $23, sonar_seed = $24, host_kit = $25, guest_kit = $26,
+               version = version + 1, updated_at = now()
            WHERE id = $1"#,
     )
     .bind(r.id)
@@ -270,6 +368,8 @@ async fn save(tx: &mut Transaction<'_, Postgres>, r: &Room) -> AppResult<()> {
     .bind(&r.host_fleet)
     .bind(&r.guest_fleet)
     .bind(r.sonar_seed)
+    .bind(&r.host_kit)
+    .bind(&r.guest_kit)
     .execute(&mut **tx)
     .await?;
     Ok(())
@@ -347,15 +447,35 @@ pub struct CreateRequest {
     /// rooms still play).
     #[serde(default)]
     pub sonar_mode: Option<String>,
+    /// Memory Match only: "classic" (default) or "chaos".
+    #[serde(default)]
+    pub memory_mode: Option<String>,
+    /// Memory Match only: "small", "medium" (default) or "large".
+    #[serde(default)]
+    pub memory_size: Option<String>,
 }
 
 fn default_best_of() -> i16 {
     3
 }
 
+/// A room's Memory Match mode and size (other games may not set them).
+fn memory_options(game: Game, mode: Option<&str>, size: Option<&str>) -> Result<(mm::Mode, mm::Size), &'static str> {
+    if game != Game::Memory {
+        return match (mode, size) {
+            (None, None) => Ok((mm::Mode::Classic, mm::Size::Medium)),
+            _ => Err("memory_mode and memory_size are only for Memory Match rooms"),
+        };
+    }
+    let mode = mode.map_or(Some(mm::Mode::Classic), mm::Mode::parse).ok_or("memory_mode must be classic or chaos")?;
+    let size = size.map_or(Some(mm::Size::Medium), mm::Size::parse).ok_or("memory_size must be small, medium or large")?;
+    Ok((mode, size))
+}
+
 /// `POST /api/rooms`: open a room and wait for a friend.
 pub async fn create(State(state): State<AppState>, user: AuthUser, Json(req): Json<CreateRequest>) -> AppResult<Json<RoomView>> {
-    let game = Game::parse(&req.game).ok_or_else(|| AppError::Validation("game must be connect-four, tic-tac-toe, chess, sonar or checkers".into()))?;
+    let game = Game::parse(&req.game)
+        .ok_or_else(|| AppError::Validation("game must be connect-four, tic-tac-toe, chess, sonar, checkers or memory-match".into()))?;
     if ![1, 3, 5].contains(&req.best_of) {
         return Err(AppError::Validation("best_of must be 1, 3 or 5".into()));
     }
@@ -368,12 +488,15 @@ pub async fn create(State(state): State<AppState>, user: AuthUser, Json(req): Js
         (Game::Sonar, Some(_)) => return Err(AppError::Validation("sonar_mode must be tactics".into())),
         (_, Some(_)) => return Err(AppError::Validation("sonar_mode is only for Sonar rooms".into())),
     };
+    let (memory_mode, memory_size) = memory_options(game, req.memory_mode.as_deref(), req.memory_size.as_deref())
+        .map_err(|e| AppError::Validation(e.into()))?;
     let seed = i64::from(rand::Rng::gen::<u32>(&mut rand::thread_rng()));
     // A fresh code; retry on the rare clash.
     for _ in 0..5 {
         let code = new_code(&mut rand::thread_rng());
         let r: Option<Room> = sqlx::query_as(
-            r#"INSERT INTO online_rooms (code, game, best_of, host_id, sonar_mode, sonar_seed) VALUES ($1, $2, $3, $4, $5, $6)
+            r#"INSERT INTO online_rooms (code, game, best_of, host_id, sonar_mode, sonar_seed, memory_mode, memory_size)
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
                ON CONFLICT (code) DO NOTHING RETURNING *"#,
         )
         .bind(&code)
@@ -382,6 +505,8 @@ pub async fn create(State(state): State<AppState>, user: AuthUser, Json(req): Js
         .bind(user.user_id)
         .bind(sonar_mode)
         .bind(seed)
+        .bind(memory_mode.as_str())
+        .bind(memory_size.as_str())
         .fetch_optional(&state.pool)
         .await?;
         if let Some(r) = r {
@@ -506,8 +631,9 @@ pub async fn make_move(
     if r.status != "playing" || r.game_over {
         return Err(AppError::Conflict("there's no game in progress".into()));
     }
-    if !r.fleets_ready() {
-        return Err(AppError::Conflict("wait until both fleets are hidden".into()));
+    if !r.ready() {
+        let wait = if r.game() == Game::Memory { "wait until both players pick their powers" } else { "wait until both fleets are hidden" };
+        return Err(AppError::Conflict(wait.into()));
     }
     let board = r.state(0).map_err(|e| AppError::Internal(anyhow::anyhow!(e)))?;
     if seat_of(board.next, r.first_seat as u8) != seat {
@@ -527,6 +653,7 @@ pub async fn make_move(
         (Game::Chess, _, None) => Err("send a chess move as uci"),
         (Game::Checkers, _, Some(mv)) => play_checkers(&r.moves, mv),
         (Game::Checkers, _, None) => Err("send a checkers move as uci, e.g. 11-15"),
+        (Game::Memory, cell, code) => play_memory(&r, cell, code),
         (g, Some(cell), _) => play(g, &r.moves, cell),
         (_, None, _) => Err("send the cell to play"),
     }
@@ -534,8 +661,70 @@ pub async fn make_move(
     r.draw_offer = None;
     let after = r.state(0).map_err(|e| AppError::Internal(anyhow::anyhow!(e)))?;
     if after.outcome != Outcome::Ongoing {
+        if r.game() == Game::Memory {
+            record_memory(&mut tx, &r).await?;
+        }
         end_game(&mut tx, &mut r, after.outcome).await?;
     }
+    save(&mut tx, &r).await?;
+    tx.commit().await?;
+    let r = reload(&state.pool, r.id).await?;
+    Ok(Json(view_with(&state.pool, &r, seat, true).await?))
+}
+
+/// A Memory Match move: flip `cell`, or a code in `uci` ("12", "swap:3,7").
+fn play_memory(r: &Room, cell: Option<u8>, code: Option<&str>) -> Result<String, &'static str> {
+    let mut g = r.memory_game()?.ok_or("wait until both players pick their powers")?;
+    let action = match (cell, code) {
+        (Some(c), _) => mm::Action::Flip(usize::from(c)),
+        (None, Some(code)) => mm::Action::parse(code)?,
+        (None, None) => return Err("send the card to flip"),
+    };
+    g.play(action)?;
+    Ok(g.move_string())
+}
+
+/// Save a finished Memory Match game for both players (stats, quests).
+async fn record_memory(tx: &mut Transaction<'_, Postgres>, r: &Room) -> AppResult<()> {
+    let g = r
+        .memory_game()
+        .map_err(|e| AppError::Internal(anyhow::anyhow!(e)))?
+        .ok_or_else(|| AppError::Internal(anyhow::anyhow!("no Memory Match game")))?;
+    for (seat, user) in [(1u8, Some(r.host_id)), (2u8, r.guest_id)] {
+        let (Some(user), Some(player)) = (user, r.memory_player(seat)) else { continue };
+        crate::memory::api::record_game(tx, r.id, user, &g, player).await?;
+    }
+    Ok(())
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct KitRequest {
+    /// Three different power ids, e.g. "shuffle,swap,peek".
+    pub kit: String,
+}
+
+/// `POST /api/rooms/:code/kit`: bring 3 powers into this Memory Match Chaos game.
+pub async fn kit(
+    State(state): State<AppState>,
+    user: AuthUser,
+    Path(code): Path<String>,
+    Json(req): Json<KitRequest>,
+) -> AppResult<Json<RoomView>> {
+    let kit = mm::parse_kit(&req.kit).map_err(|e| AppError::Validation(e.into()))?;
+    crate::memory::api::check_owned(&state.pool, user.user_id, &kit).await?;
+    let mut tx = state.pool.begin().await?;
+    let mut r = lock(&mut tx, &code).await?;
+    let seat = r.seat_of(user.user_id).ok_or(AppError::NotFound)?;
+    if r.game() != Game::Memory || r.memory_mode() != mm::Mode::Chaos || r.status != "playing" || r.game_over {
+        return Err(AppError::Conflict("there's no Chaos game to bring powers to".into()));
+    }
+    let slot = if seat == 1 { &mut r.host_kit } else { &mut r.guest_kit };
+    if slot.is_some() {
+        return Err(AppError::Conflict("you already picked your powers".into()));
+    }
+    *slot = Some(mm::kit_code(&kit));
+    mark_seen(&mut r, seat, Utc::now());
     save(&mut tx, &r).await?;
     tx.commit().await?;
     let r = reload(&state.pool, r.id).await?;
@@ -636,11 +825,7 @@ pub async fn next_game(State(state): State<AppState>, user: AuthUser, Path(code)
     let mut r = lock(&mut tx, &code).await?;
     let seat = r.seat_of(user.user_id).ok_or(AppError::NotFound)?;
     if r.status == "playing" && r.game_over {
-        r.moves.clear();
-        r.host_fleet = None;
-        r.guest_fleet = None;
-        r.new_sonar_seed();
-        r.game_over = false;
+        r.reset_game();
         r.game_no += 1;
         r.first_seat = 3 - r.first_seat;
         save(&mut tx, &r).await?;
@@ -726,11 +911,7 @@ pub async fn rematch(State(state): State<AppState>, user: AuthUser, Path(code): 
     }
     if r.host_rematch && r.guest_rematch {
         r.status = "playing".into();
-        r.moves.clear();
-        r.host_fleet = None;
-        r.guest_fleet = None;
-        r.new_sonar_seed();
-        r.game_over = false;
+        r.reset_game();
         r.game_no = 1;
         r.first_seat = 3 - r.first_seat;
         r.host_wins = 0;
@@ -826,7 +1007,51 @@ mod tests {
             guest_fleet: None,
             sonar_mode: "classic".into(),
             sonar_seed: 0,
+            memory_mode: "classic".into(),
+            memory_size: "medium".into(),
+            host_kit: None,
+            guest_kit: None,
         }
+    }
+
+    #[test]
+    fn memory_rooms_hide_the_layout_and_order_kits_by_who_moves_first() {
+        let mut r = room();
+        r.game = "memory-match".into();
+        r.memory_mode = "chaos".into();
+        r.memory_size = "small".into();
+        r.sonar_seed = 42;
+        r.first_seat = 2;
+        assert!(!r.ready());
+        let s = r.state(1).unwrap();
+        assert_eq!(s.highlight["ready"], serde_json::json!(false));
+        assert_eq!(s.cells.as_array().unwrap().len(), 16);
+        r.host_kit = Some("shuffle,swap,peek".into());
+        r.guest_kit = Some("fog,lock,x-ray".into());
+        assert!(r.ready());
+        // The guest moves first, so their kit is player 0's.
+        let setup = r.memory_setup().unwrap();
+        assert_eq!(mm::kit_code(&setup.kits[0]), "fog,lock,x-ray");
+        assert_eq!((r.memory_player(2), r.memory_player(1), r.memory_player(0)), (Some(0), Some(1), None));
+        let s = r.state(1).unwrap();
+        assert!(s.cells.as_array().unwrap().iter().all(|c| c == 0));
+        assert_eq!(s.next, crate::connect_four::board::Player::P1);
+        // Seat 2 (player 0) flips, peeks are private to the seat that used them.
+        assert_eq!(play_memory(&r, None, Some("peek:0,1")), Err("that power isn't in your kit"));
+        r.moves = play_memory(&r, None, Some("x-ray:0")).unwrap();
+        assert!(r.state(2).unwrap().highlight["reveal"].is_array());
+        assert!(r.state(1).unwrap().highlight["reveal"].is_null());
+        r.reset_game();
+        assert!(!r.ready() && r.moves.is_empty());
+    }
+
+    #[test]
+    fn memory_options_only_for_memory_rooms() {
+        assert!(memory_options(Game::Chess, Some("chaos"), None).is_err());
+        assert_eq!(memory_options(Game::Chess, None, None), Ok((mm::Mode::Classic, mm::Size::Medium)));
+        assert_eq!(memory_options(Game::Memory, Some("chaos"), Some("large")), Ok((mm::Mode::Chaos, mm::Size::Large)));
+        assert!(memory_options(Game::Memory, Some("wild"), None).is_err());
+        assert!(memory_options(Game::Memory, None, Some("huge")).is_err());
     }
 
     #[test]

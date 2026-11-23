@@ -51,6 +51,8 @@ pub enum Event {
     SnakeRun { score: i64, best_combo: i64 },
     /// A solved Sudoku (`level` 1 Easy … 4 Expert; the Daily counts as 2).
     SudokuWin { level: i64, daily: bool, hints: i64 },
+    /// A finished online Memory Match game and the power-ups you used in it.
+    MemoryGame { result: GameResult, powers: i64 },
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -88,6 +90,9 @@ enum Goal {
     SnakeCombo(i64),
     SudokuWins { min_level: i64 },
     SudokuDaily,
+    MemoryGames,
+    MemoryWins,
+    MemoryPowers,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -157,6 +162,9 @@ impl QuestDef {
             (Goal::SnakeCombo(min), SnakeRun { best_combo, .. }) => hit(best_combo >= min),
             (Goal::SudokuWins { min_level }, SudokuWin { level, .. }) => hit(level >= min_level),
             (Goal::SudokuDaily, SudokuWin { daily, .. }) => hit(daily),
+            (Goal::MemoryGames, MemoryGame { .. }) => 1,
+            (Goal::MemoryWins, MemoryGame { result, .. }) => hit(result == GameResult::Win),
+            (Goal::MemoryPowers, MemoryGame { powers, .. }) => powers.clamp(0, i32::MAX as i64) as i32,
             _ => 0,
         }
     }
@@ -168,7 +176,7 @@ const fn q(id: &'static str, title: &'static str, goal: Goal, target: i32, coins
 
 use Game::{ConnectFour as CF, TicTacToe as TTT};
 
-pub const POOL: [QuestDef; 40] = [
+pub const POOL: [QuestDef; 43] = [
     q("cf_play_3", "Play 3 Connect Four games vs the AI", Goal::PlayAi(CF), 3, 20, 30),
     q("cf_win_2_medium", "Win 2 Connect Four games vs Medium or harder",
         Goal::WinAi { game: Some(CF), min_level: 2 }, 2, 40, 60),
@@ -216,6 +224,9 @@ pub const POOL: [QuestDef; 40] = [
     q("sudoku_solve_2", "Solve 2 Sudoku puzzles", Goal::SudokuWins { min_level: 1 }, 2, 20, 30),
     q("sudoku_solve_hard", "Solve a Hard or Expert Sudoku", Goal::SudokuWins { min_level: 3 }, 1, 40, 60),
     q("sudoku_daily", "Solve today's Sudoku Daily", Goal::SudokuDaily, 1, 30, 40),
+    q("memory_play_2", "Finish 2 Memory Match games online", Goal::MemoryGames, 2, 20, 30),
+    q("memory_win", "Win a Memory Match game online", Goal::MemoryWins, 1, 40, 60),
+    q("memory_powers_3", "Use 3 power-ups in Memory Match Chaos", Goal::MemoryPowers, 3, 30, 40),
 ];
 
 pub fn find(id: &str) -> Option<&'static QuestDef> {
@@ -262,6 +273,16 @@ mod tests {
             let swap = pick(1, &ex, &mut r);
             assert!(!ex.contains(&swap[0].id));
         }
+    }
+
+    #[test]
+    fn memory_quests_count_online_games_wins_and_powers() {
+        let ev = |result, powers| Event::MemoryGame { result, powers };
+        assert_eq!(quest("memory_play_2").progress(&ev(GameResult::Loss, 0)), 1);
+        assert_eq!(quest("memory_win").progress(&ev(GameResult::Draw, 2)), 0);
+        assert_eq!(quest("memory_win").progress(&ev(GameResult::Win, 0)), 1);
+        assert_eq!(quest("memory_powers_3").progress(&ev(GameResult::Loss, 2)), 2);
+        assert_eq!(quest("memory_play_2").progress(&Event::MysteryBox), 0);
     }
 
     #[test]

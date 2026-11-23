@@ -1,4 +1,5 @@
-//! Online play: two people on two devices play Connect Four, Tic-Tac-Toe, chess, Sonar or checkers
+//! Online play: two people on two devices play Connect Four, Tic-Tac-Toe, chess, Sonar, checkers
+//! or Memory Match
 //! in a room joined by a 6-character code. The server keeps the moves and
 //! checks every one with the same rules as the AI games; clients only send
 //! the cell they want and poll for news (Vercel can't hold sockets open).
@@ -40,6 +41,8 @@ pub enum Game {
     Sonar,
     #[serde(rename = "checkers")]
     Checkers,
+    #[serde(rename = "memory-match")]
+    Memory,
 }
 
 impl Game {
@@ -50,6 +53,7 @@ impl Game {
             "chess" => Some(Game::Chess),
             "sonar" => Some(Game::Sonar),
             "checkers" => Some(Game::Checkers),
+            "memory-match" => Some(Game::Memory),
             _ => None,
         }
     }
@@ -61,6 +65,7 @@ impl Game {
             Game::Chess => "chess",
             Game::Sonar => "sonar",
             Game::Checkers => "checkers",
+            Game::Memory => "memory-match",
         }
     }
 }
@@ -84,6 +89,8 @@ pub fn replay(game: Game, moves: &str) -> Result<GameState, &'static str> {
     match game {
         // Sonar needs the secret fleets: see `sonar_state`.
         Game::Sonar => sonar_state(moves, [None, None], 1, 0, None),
+        // Memory Match needs the room's secret seed and kits: see `online::api`.
+        Game::Memory => Err("a Memory Match board needs its room"),
         Game::Chess => {
             use crate::chess::{Outcome as C, Side};
             let g = crate::chess::Game::replay(crate::chess::START_FEN, moves).map_err(|_| "bad moves")?;
@@ -262,6 +269,7 @@ pub fn play(game: Game, moves: &str, cell: u8) -> Result<String, &'static str> {
         Game::Chess => Err("send a chess move as uci"),
         Game::Checkers => Err("send a checkers move as uci, e.g. 11-15"),
         Game::Sonar => Err("hide your fleet first"),
+        Game::Memory => Err("send a Memory Match move as uci"),
         Game::ConnectFour => {
             let mut b = CfBoard::from_move_string(moves).map_err(|_| "bad moves")?;
             b.play(cell).map_err(|e| match e {

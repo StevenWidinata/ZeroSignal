@@ -174,6 +174,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/rooms/:code/rematch", post(online::api::rematch))
         .route("/api/rooms/:code/draw", post(online::api::draw))
         .route("/api/rooms/:code/fleet", post(online::api::fleet))
+        .route("/api/rooms/:code/kit", post(online::api::kit))
         // Chess vs Zero-Bot: the server checks every move and replies.
         .route("/api/games/chess/games", post(chess::api::create))
         .route("/api/games/chess/games/active", get(chess::api::active))
@@ -205,6 +206,8 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/games/sudoku/games/:id/give-up", post(sudoku::api::give_up))
         .route("/api/games/sudoku/collection", get(sudoku::api::collection))
         .route("/api/games/sudoku/buy", post(sudoku::api::buy))
+        .route("/api/games/memory-match/collection", get(memory::api::collection))
+        .route("/api/games/memory-match/buy", post(memory::api::buy))
         .route("/api/games/sonar/games", post(sonar::api::create))
         .route("/api/games/sonar/games/active", get(sonar::api::active))
         .route("/api/games/sonar/games/:id/fire", post(sonar::api::fire))

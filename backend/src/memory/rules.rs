@@ -361,11 +361,6 @@ impl Game {
         }
     }
 
-    /// Powers `player` has used this game.
-    pub fn used(&self, player: usize) -> &[Power] {
-        &self.used[player]
-    }
-
     /// Can the player to move use a power right now?
     pub fn can_power(&self) -> bool {
         self.setup.mode == Mode::Chaos && !self.is_over() && !self.power_this_turn && self.up.is_none()

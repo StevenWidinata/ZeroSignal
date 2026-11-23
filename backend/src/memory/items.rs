@@ -73,6 +73,11 @@ impl Items {
     pub fn find(&self, id: &str) -> Option<&PowerItem> {
         self.powers.iter().find(|p| p.id == id)
     }
+
+    /// Free, or bought (`owned` holds stored keys).
+    pub fn owns(&self, id: &str, owned: &[String]) -> bool {
+        self.find(id).is_some_and(|p| p.free() || owned.contains(&key(id)))
+    }
 }
 
 pub fn items() -> &'static Items {
