@@ -5,7 +5,7 @@ import type { StatsLevelRow, StatsSeries, StatsView } from "../api/types";
 import { formatTime } from "../games/minefield/logic";
 import { formatTime as formatClock } from "../games/sudoku/logic";
 import { findGame } from "../platform/registry";
-import { DIFFICULTY_NAME, MF_LEVEL, SD_LEVEL, boardLabel, sumBoards, winRate } from "./statsLogic";
+import { DIFFICULTY_NAME, MF_LEVEL, MM_SIZE, SD_LEVEL, boardLabel, sumBoards, winRate } from "./statsLogic";
 import BackButton from "../components/BackButton";
 
 const fmt = (n: number) => n.toLocaleString();
@@ -167,6 +167,7 @@ export default function Stats() {
     s.whack.rounds +
     s.minefield.reduce((n, r) => n + r.played, 0) +
     s.sudoku.reduce((n, r) => n + r.played, 0) +
+    s.memory.reduce((n, r) => n + r.played, 0) +
     s.g2048.games +
     s.snake.runs +
     s.chess.levels.reduce((n, r) => n + r.played, 0) +
@@ -509,6 +510,42 @@ export default function Stats() {
                       <td className="num">{best ? fmt(best) : "–"}</td>
                       <td>
                         <RateBar won={r.won} played={r.played} label={`Sudoku ${DIFFICULTY_NAME[r.level] ?? r.level}`} />
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </GameCard>
+
+        <GameCard id="memory-match" played={s.memory.length > 0}>
+          <div className="board-table-wrap">
+            <table className="board-table stats-table">
+              <thead>
+                <tr>
+                  <th scope="col">Room</th>
+                  <th scope="col">Games</th>
+                  <th scope="col">Won</th>
+                  <th scope="col">Draws</th>
+                  <th scope="col">Best run</th>
+                  <th scope="col">Powers used</th>
+                  <th scope="col">Win rate</th>
+                </tr>
+              </thead>
+              <tbody>
+                {s.memory.map((r) => {
+                  const name = `${r.mode === "chaos" ? "⚡ Chaos" : "🃏 Classic"} · ${MM_SIZE[r.size] ?? r.size}`;
+                  return (
+                    <tr key={`${r.mode}-${r.size}`}>
+                      <th scope="row">{name}</th>
+                      <td className="num">{r.played}</td>
+                      <td className="num">{r.won}</td>
+                      <td className="num">{r.drawn}</td>
+                      <td className="num">{r.best_run ? `${r.best_run} pairs` : "–"}</td>
+                      <td className="num">{r.mode === "chaos" ? r.powers : "–"}</td>
+                      <td>
+                        <RateBar won={r.won} played={r.played} label={`Memory Match ${name}`} />
                       </td>
                     </tr>
                   );

@@ -288,6 +288,10 @@
     { "id": "title-grid-filler", "slot": "title", "name": "Grid Filler", "rarity": "common", "unlock": { "kind": "achievement" }, "art": { "text": "Grid Filler", "tier": "bronze", "color": "#3fa34d", "icon": "🔢" } },
     { "id": "title-number-sage", "slot": "title", "name": "Number Sage", "rarity": "legendary", "unlock": { "kind": "achievement" }, "art": { "text": "Number Sage", "tier": "mythic", "color": "#9b5de5", "icon": "🧠", "effect": "shimmer" } },
     { "id": "title-quick-pencil", "slot": "title", "name": "Quick Pencil", "rarity": "epic", "unlock": { "kind": "achievement" }, "art": { "text": "Quick Pencil", "tier": "gold", "color": "#ff8c42", "icon": "✏️", "effect": "glow" } },
-    { "id": "title-week-of-nines", "slot": "title", "name": "Week of Nines", "rarity": "epic", "unlock": { "kind": "achievement" }, "art": { "text": "Week of Nines", "tier": "gold", "color": "#2f9ee8", "icon": "📅", "effect": "glow" } }
+    { "id": "title-week-of-nines", "slot": "title", "name": "Week of Nines", "rarity": "epic", "unlock": { "kind": "achievement" }, "art": { "text": "Week of Nines", "tier": "gold", "color": "#2f9ee8", "icon": "📅", "effect": "glow" } },
+    { "id": "title-sharp-eye", "slot": "title", "name": "Sharp Eye", "rarity": "common", "unlock": { "kind": "achievement" }, "art": { "text": "Sharp Eye", "tier": "bronze", "color": "#3fa34d", "icon": "🃏" } },
+    { "id": "title-total-recall", "slot": "title", "name": "Total Recall", "rarity": "epic", "unlock": { "kind": "achievement" }, "art": { "text": "Total Recall", "tier": "gold", "color": "#2f9ee8", "icon": "🧠", "effect": "glow" } },
+    { "id": "title-chaos-master", "slot": "title", "name": "Chaos Master", "rarity": "legendary", "unlock": { "kind": "achievement" }, "art": { "text": "Chaos Master", "tier": "mythic", "color": "#9b5de5", "icon": "🌀", "effect": "shimmer" } },
+    { "id": "title-full-locker", "slot": "title", "name": "Full Locker", "rarity": "epic", "unlock": { "kind": "achievement" }, "art": { "text": "Full Locker", "tier": "gold", "color": "#e8b923", "icon": "🧰", "effect": "glow" } }
   ]
 }

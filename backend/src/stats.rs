@@ -49,6 +49,19 @@ pub struct SudokuRow {
     pub best_time_ms: Option<i32>,
 }
 
+/// Online Memory Match games, per mode and board size.
+#[derive(Serialize, sqlx::FromRow)]
+pub struct MemoryRow {
+    pub mode: String,
+    pub size: String,
+    pub played: i64,
+    pub won: i64,
+    pub drawn: i64,
+    /// Most pairs found in one turn.
+    pub best_run: Option<i32>,
+    pub powers: i64,
+}
+
 #[derive(Serialize, sqlx::FromRow, Default)]
 pub struct WhackRow {
     pub rounds: i64,
@@ -119,6 +132,7 @@ pub struct StatsView {
     pub boards: Vec<BoardRow>,
     pub minefield: Vec<MinefieldRow>,
     pub sudoku: Vec<SudokuRow>,
+    pub memory: Vec<MemoryRow>,
     pub whack: WhackRow,
     pub snake: SnakeRow,
     pub chess: ChessStats,
@@ -190,6 +204,20 @@ pub async fn my_stats(State(state): State<AppState>, user: AuthUser) -> AppResul
            FROM sudoku_games WHERE user_id = $1 AND status <> 'playing'
            GROUP BY level
            ORDER BY CASE level WHEN 'easy' THEN 1 WHEN 'medium' THEN 2 WHEN 'hard' THEN 3 WHEN 'expert' THEN 4 ELSE 5 END"#,
+    )
+    .bind(id)
+    .fetch_all(pool)
+    .await?;
+
+    let memory: Vec<MemoryRow> = sqlx::query_as(
+        r#"SELECT mode, size, COUNT(*) AS played,
+                  COUNT(*) FILTER (WHERE result = 'win') AS won,
+                  COUNT(*) FILTER (WHERE result = 'draw') AS drawn,
+                  MAX(best_run)::INT AS best_run,
+                  COALESCE(SUM(powers), 0)::BIGINT AS powers
+           FROM memory_games WHERE user_id = $1
+           GROUP BY mode, size
+           ORDER BY mode, CASE size WHEN 'small' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END"#,
     )
     .bind(id)
     .fetch_all(pool)
@@ -307,6 +335,7 @@ pub async fn my_stats(State(state): State<AppState>, user: AuthUser) -> AppResul
         boards,
         minefield,
         sudoku,
+        memory,
         whack,
         snake,
         chess: ChessStats { levels: chess_levels, puzzles_played, puzzles_solved },

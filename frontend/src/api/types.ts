@@ -770,6 +770,8 @@ export interface StatsView {
   minefield: { difficulty: string; played: number; won: number; best_time_ms: number | null }[];
   /** Finished Sudoku games per level (easy … expert, daily). */
   sudoku: { level: string; played: number; won: number; best_time_ms: number | null }[];
+  /** Online Memory Match games per mode and board size. */
+  memory: { mode: string; size: string; played: number; won: number; drawn: number; best_run: number | null; powers: number }[];
   whack: {
     rounds: number;
     best_streak: number | null;

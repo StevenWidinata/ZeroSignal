@@ -1,4 +1,4 @@
-//! Achievements: 64 one-time goals. Progress is computed live from data the
+//! Achievements: 68 one-time goals. Progress is computed live from data the
 //! server already verified (matches, scores, ledger, inventory), so older
 //! progress counts too. Claiming pays coins + the same XP once, plus a title.
 
@@ -102,6 +102,12 @@ pub struct Stats {
     pub sudoku_expert_solves: i64,
     pub sudoku_quick_solves: i64,
     pub sudoku_daily_streak: i64,
+    /// Memory Match (online): games won, the most pairs in one turn, Chaos
+    /// games won, and power-ups owned (free ones count).
+    pub memory_wins: i64,
+    pub memory_best_run: i64,
+    pub memory_chaos_wins: i64,
+    pub memory_powers_owned: i64,
 }
 
 pub struct Achievement {
@@ -135,7 +141,7 @@ macro_rules! ach {
     };
 }
 
-pub static ACHIEVEMENTS: [Achievement; 64] = [
+pub static ACHIEVEMENTS: [Achievement; 68] = [
     ach!("cf_first_win", "First Drop", "Win your first Connect Four series", 30, "title-chip-dropper", 1, |s| s.cf_wins),
     ach!("cf_medium", "Thinking Ahead", "Win a Connect Four series vs Medium or harder", 40, "title-four-thinker", 1, |s| s.cf_wins_medium),
     ach!("cf_hard", "Hard Hitter", "Win a Connect Four series vs Hard or harder", 80, "title-grid-breaker", 1, |s| s.cf_wins_hard),
@@ -208,6 +214,10 @@ pub static ACHIEVEMENTS: [Achievement; 64] = [
     ach!("sudoku_quick", "Quick Pencil", "Solve a Medium or harder Sudoku in under 5 minutes without hints", 150, "title-quick-pencil", 1,
         |s| s.sudoku_quick_solves),
     ach!("sudoku_daily_streak", "Week of Nines", "Solve the Daily Sudoku 7 days in a row", 150, "title-week-of-nines", 7, |s| s.sudoku_daily_streak),
+    ach!("memory_first_win", "Sharp Eye", "Win a Memory Match game online", 30, "title-sharp-eye", 1, |s| s.memory_wins),
+    ach!("memory_total_recall", "Total Recall", "Find 5 pairs in one turn in Memory Match", 150, "title-total-recall", 5, |s| s.memory_best_run),
+    ach!("memory_chaos_master", "Chaos Master", "Win 10 Memory Match Chaos games", 300, "title-chaos-master", 10, |s| s.memory_chaos_wins),
+    ach!("memory_full_locker", "Full Locker", "Own all 10 Memory Match power-ups", 150, "title-full-locker", 10, |s| s.memory_powers_owned),
     ach!("quest_days_7","Quest Master", "Finish all 3 daily quests in one day, 7 times", 200, "title-quest-master", 7, |s| s.quest_full_days),
 ];
 
@@ -370,6 +380,17 @@ pub async fn load_stats(pool: &sqlx::PgPool, user_id: Uuid) -> AppResult<Stats> 
         user_id,
     )
     .await?;
+    let memory: (i64, i64, i64) = sqlx::query_as(
+        r#"SELECT COUNT(*) FILTER (WHERE result = 'win'),
+                  COALESCE(MAX(best_run), 0)::BIGINT,
+                  COUNT(*) FILTER (WHERE result = 'win' AND mode = 'chaos')
+           FROM memory_games WHERE user_id = $1"#,
+    )
+    .bind(user_id)
+    .fetch_one(pool)
+    .await?;
+    let memory_free = crate::memory::items::items().powers.iter().filter(|p| p.free()).count() as i64;
+    let memory_bought = count(pool, "SELECT COUNT(*) FROM memory_items WHERE user_id = $1", user_id).await?;
     let chess_puzzle_streak = count(
         pool,
         r#"SELECT MAX(n) FROM (
@@ -468,6 +489,10 @@ pub async fn load_stats(pool: &sqlx::PgPool, user_id: Uuid) -> AppResult<Stats> 
         sudoku_expert_solves: sudoku.1,
         sudoku_quick_solves: sudoku.2,
         sudoku_daily_streak,
+        memory_wins: memory.0,
+        memory_best_run: memory.1,
+        memory_chaos_wins: memory.2,
+        memory_powers_owned: memory_free + memory_bought,
         sonar_wins: sonar.0,
         sonar_master_wins: sonar.1,
         sonar_flawless: sonar.2,
@@ -633,11 +658,18 @@ mod tests {
     use super::*;
 
     #[test]
-    fn there_are_64_unique_achievements() {
+    fn memory_match_achievements_follow_their_stats() {
+        let s = Stats { memory_wins: 1, memory_best_run: 7, memory_chaos_wins: 3, memory_powers_owned: 5, ..Stats::default() };
+        let p = |id: &str| find(id).unwrap().progress(&s);
+        assert_eq!((p("memory_first_win"), p("memory_total_recall"), p("memory_chaos_master"), p("memory_full_locker")), (1, 5, 3, 5));
+    }
+
+    #[test]
+    fn there_are_68_unique_achievements() {
         let mut ids: Vec<_> = ACHIEVEMENTS.iter().map(|a| a.id).collect();
         ids.sort();
         ids.dedup();
-        assert_eq!(ids.len(), 64);
+        assert_eq!(ids.len(), 68);
         assert!(ACHIEVEMENTS.iter().all(|a| a.coins > 0 && a.target > 0 && a.id.len() <= 32));
     }
 
@@ -652,9 +684,9 @@ mod tests {
         let mut titles: Vec<_> = ACHIEVEMENTS.iter().map(|a| a.title).collect();
         titles.sort();
         titles.dedup();
-        assert_eq!(titles.len(), 64);
+        assert_eq!(titles.len(), 68);
         let achievement_items = c.items.iter().filter(|i| i.unlock == Unlock::Achievement).count();
-        assert_eq!(achievement_items, 64, "orphan achievement-only items in catalog");
+        assert_eq!(achievement_items, 68, "orphan achievement-only items in catalog");
     }
 
     #[test]

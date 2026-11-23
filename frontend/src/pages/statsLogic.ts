@@ -24,6 +24,9 @@ export function sumBoards(boards: StatsBoard[], gameId: string): { rounds: numbe
 export const MF_LEVEL: Record<string, number> = { beginner: 1, intermediate: 2, expert: 3, daily: 4 };
 
 /** Sudoku level -> its leaderboard board (scores.level). */
+/** Memory Match board sizes by name. */
+export const MM_SIZE: Record<string, string> = { small: "4×4", medium: "4×6", large: "6×6" };
+
 export const SD_LEVEL: Record<string, number> = { easy: 1, medium: 2, hard: 3, expert: 4, daily: 5 };
 
 export const DIFFICULTY_NAME: Record<string, string> = {
