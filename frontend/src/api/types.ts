@@ -632,6 +632,61 @@ export interface SudokuCollection {
   themes: WamItemView[];
 }
 
+export type MemoryMode = "classic" | "chaos";
+export type MemorySize = "small" | "medium" | "large";
+
+/** The power-up locker: all 10 Chaos powers and which you own. */
+export interface MemoryCollection {
+  powers: WamItemView[];
+}
+
+/** Memory Match: the last thing that happened on the board. */
+export interface MemoryLast {
+  /** Player index (0 = whoever moved first this game). */
+  player: 0 | 1;
+  kind: "flip" | "match" | "miss" | "power";
+  /** Cards turned face up by it: [position, symbol]. */
+  cards: [number, number][];
+  power: string | null;
+  /** Spots a power touched (they glow). */
+  spots: number[];
+  /** A miss that didn't end the turn (Second Chance). */
+  kept_turn: boolean;
+}
+
+export interface MemoryEffects {
+  fog: boolean;
+  mirror: boolean;
+  locked: number[];
+  second_chance: boolean;
+}
+
+/**
+ * Memory Match rooms: the board as you may see it. Arrays (pairs, powers,
+ * effects, stats) are by player: index 0 = `first_seat`. `kits_in` is by
+ * seat (host, friend). Before both Chaos kits are in, only the first few
+ * fields are there.
+ */
+export interface MemoryRoomInfo {
+  size: MemorySize;
+  cols: number;
+  rows: number;
+  mode: MemoryMode;
+  /** -1 taken, 0 face down, n = symbol n-1 face up. */
+  cells: number[];
+  ready: boolean;
+  kits_in: [boolean, boolean];
+  pairs?: [number, number];
+  turn?: 0 | 1;
+  last?: MemoryLast | null;
+  /** Your private Peek / X-Ray look (only in the answer to that move). */
+  reveal?: [number, number][] | null;
+  powers?: { id: string; used: boolean }[][];
+  effects?: MemoryEffects[];
+  can_power?: boolean;
+  stats?: { misses: number; best_run: number; powers: number }[];
+}
+
 export type MfDifficulty = "beginner" | "intermediate" | "expert" | "daily";
 
 export interface MfResult {
@@ -802,7 +857,7 @@ export interface WeeklyClaim {
 // Online rooms (two devices)
 // ---------------------------------------------------------------------------
 
-export type OnlineGame = "connect-four" | "tic-tac-toe" | "chess" | "sonar" | "checkers";
+export type OnlineGame = "connect-four" | "tic-tac-toe" | "chess" | "sonar" | "checkers" | "memory-match";
 
 export interface RoomPlayer {
   username: string;
@@ -828,7 +883,7 @@ export interface RoomView {
     /** Connect Four: columns bottom-up; Tic-Tac-Toe: 9 cells; chess: the FEN. 1 = whoever moved first. */
     cells: number[][] | number[] | string | SonarRoomCells;
     outcome: CfOutcome;
-    highlight: [number, number][] | [number, number, number] | ChessRoomInfo | null;
+    highlight: [number, number][] | [number, number, number] | ChessRoomInfo | MemoryRoomInfo | null;
     next: "p1" | "p2";
   };
   moves: string;

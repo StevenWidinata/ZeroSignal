@@ -1,11 +1,24 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { rooms } from "../api/client";
-import type { OnlineEntry, OnlineGame } from "../api/types";
+import type { MemoryMode, MemorySize, OnlineEntry, OnlineGame } from "../api/types";
 import Avatar from "../character/Avatar";
 import { playSfx } from "../platform/sound";
 
-/** Online menu: start a room for a friend, or join theirs with a code. */
-export default function OnlineLobby({ game, onEnter }: { game: OnlineGame; onEnter: (code: string) => void }) {
+/**
+ * Online menu: start a room for a friend, or join theirs with a code.
+ * `extra` adds rows to the Start card; `options` go with the new room.
+ */
+export default function OnlineLobby({
+  game,
+  onEnter,
+  extra,
+  options,
+}: {
+  game: OnlineGame;
+  onEnter: (code: string) => void;
+  extra?: ReactNode;
+  options?: { memory_mode?: MemoryMode; memory_size?: MemorySize };
+}) {
   // Chess and Sonar games are long, so one game is the default there.
   const [bestOf, setBestOf] = useState(game === "chess" || game === "sonar" || game === "checkers" ? 1 : 3);
   const [code, setCode] = useState("");
@@ -24,7 +37,7 @@ export default function OnlineLobby({ game, onEnter }: { game: OnlineGame; onEnt
     setBusy(true);
     setError(null);
     try {
-      const r = await rooms.create(game, bestOf);
+      const r = await rooms.create(game, bestOf, options);
       playSfx("click");
       onEnter(r.code);
     } catch (e) {
@@ -60,6 +73,7 @@ export default function OnlineLobby({ game, onEnter }: { game: OnlineGame; onEnt
             ))}
           </div>
         </div>
+        {extra}
         {game === "sonar" && <p className="wam-hint">⚡ Every ship has a power: you both get Mk I powers, 2 mines and supply crates.</p>}
         <button className="btn-green" onClick={() => void create()} disabled={busy}>
           {busy ? "Opening…" : "▶ Create room"}

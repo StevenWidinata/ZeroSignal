@@ -65,6 +65,9 @@ import type {
   MfDifficulty,
   MfGame,
   SudokuCollection,
+  MemoryCollection,
+  MemoryMode,
+  MemorySize,
   SudokuGame,
   SudokuMode,
   WamCollection,
@@ -510,6 +513,18 @@ export const sudoku = {
   },
 };
 
+const MEMORY = "/api/games/memory-match";
+
+/** Memory Match is played in online rooms (`rooms`); this is the power-up locker. */
+export const memoryMatch = {
+  collection() {
+    return request<MemoryCollection>(`${MEMORY}/collection`);
+  },
+  buy(id: string) {
+    return post<MemoryCollection>(`${MEMORY}/buy`, { id });
+  },
+};
+
 const SONAR = "/api/games/sonar";
 
 /** Sonar vs Zero-Bot, the Daily Hunt and the fleet / sea shop. */
@@ -630,9 +645,9 @@ export const checkers = {
 
 /** Online rooms: the server checks every move; `get` waits up to 20 s for news. */
 export const rooms = {
-  /** Sonar rooms are always Tactics (ship powers). */
-  create(game: OnlineGame, bestOf: number) {
-    return post<RoomView>("/api/rooms", { game, best_of: bestOf });
+  /** Sonar rooms are always Tactics (ship powers). Memory Match rooms take a mode and size. */
+  create(game: OnlineGame, bestOf: number, options?: { memory_mode?: MemoryMode; memory_size?: MemorySize }) {
+    return post<RoomView>("/api/rooms", { game, best_of: bestOf, ...options });
   },
   join(code: string) {
     return post<RoomView>(`/api/rooms/${encodeURIComponent(code)}/join`);
@@ -649,6 +664,10 @@ export const rooms = {
     return post<RoomView>(`/api/rooms/${encodeURIComponent(code)}/move`, { uci });
   },
   /** Chess: offer a draw, or accept / decline the other player's offer. */
+  /** Memory Match Chaos: bring 3 powers into this game ("shuffle,swap,peek"). */
+  kit(code: string, kit: string) {
+    return post<RoomView>(`/api/rooms/${encodeURIComponent(code)}/kit`, { kit });
+  },
   /** Sonar: hide your fleet for this game. */
   fleet(code: string, fleet: string) {
     return post<RoomView>(`/api/rooms/${encodeURIComponent(code)}/fleet`, { fleet });

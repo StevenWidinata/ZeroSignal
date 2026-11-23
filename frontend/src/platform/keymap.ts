@@ -123,6 +123,24 @@ export const KEYMAPS: GameKeymap[] = [
     note: "Tap a square, then a number. Notes mode writes small pencil numbers instead.",
   },
   {
+    gameId: "memory-match",
+    groups: [
+      {
+        actions: [
+          { id: "up", label: "Card above", keys: ["ArrowUp"] },
+          { id: "down", label: "Card below", keys: ["ArrowDown"] },
+          { id: "left", label: "Card to the left", keys: ["ArrowLeft"] },
+          { id: "right", label: "Card to the right", keys: ["ArrowRight"] },
+          { id: "power1", label: "Power 1", keys: ["Digit1", "Numpad1"] },
+          { id: "power2", label: "Power 2", keys: ["Digit2", "Numpad2"] },
+          { id: "power3", label: "Power 3", keys: ["Digit3", "Numpad3"] },
+          { id: "cancel", label: "Cancel a power", keys: ["Escape"] },
+        ],
+      },
+    ],
+    note: "Tap a card (or Enter on the focused one) to flip it. Powers only in Chaos games.",
+  },
+  {
     gameId: "2048",
     groups: [
       {
