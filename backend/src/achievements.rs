@@ -1,4 +1,4 @@
-//! Achievements: 68 one-time goals. Progress is computed live from data the
+//! Achievements: 72 one-time goals. Progress is computed live from data the
 //! server already verified (matches, scores, ledger, inventory), so older
 //! progress counts too. Claiming pays coins + the same XP once, plus a title.
 
@@ -108,6 +108,12 @@ pub struct Stats {
     pub memory_best_run: i64,
     pub memory_chaos_wins: i64,
     pub memory_powers_owned: i64,
+    /// Brick Breaker: World 1 levels cleared, levels with 3 stars, the best
+    /// Endless wave and the most bricks broken by one explosion chain.
+    pub brick_world1_cleared: i64,
+    pub brick_three_stars: i64,
+    pub brick_best_wave: i64,
+    pub brick_best_chain: i64,
 }
 
 pub struct Achievement {
@@ -141,7 +147,7 @@ macro_rules! ach {
     };
 }
 
-pub static ACHIEVEMENTS: [Achievement; 68] = [
+pub static ACHIEVEMENTS: [Achievement; 72] = [
     ach!("cf_first_win", "First Drop", "Win your first Connect Four series", 30, "title-chip-dropper", 1, |s| s.cf_wins),
     ach!("cf_medium", "Thinking Ahead", "Win a Connect Four series vs Medium or harder", 40, "title-four-thinker", 1, |s| s.cf_wins_medium),
     ach!("cf_hard", "Hard Hitter", "Win a Connect Four series vs Hard or harder", 80, "title-grid-breaker", 1, |s| s.cf_wins_hard),
@@ -218,6 +224,11 @@ pub static ACHIEVEMENTS: [Achievement; 68] = [
     ach!("memory_total_recall", "Total Recall", "Find 5 pairs in one turn in Memory Match", 150, "title-total-recall", 5, |s| s.memory_best_run),
     ach!("memory_chaos_master", "Chaos Master", "Win 10 Memory Match Chaos games", 300, "title-chaos-master", 10, |s| s.memory_chaos_wins),
     ach!("memory_full_locker", "Full Locker", "Own all 10 Memory Match power-ups", 150, "title-full-locker", 10, |s| s.memory_powers_owned),
+    ach!("brick_wall_breaker", "Wall Breaker", "Clear all 12 World 1 levels in Brick Breaker", 120, "title-wall-breaker", 12, |s| s.brick_world1_cleared),
+    ach!("brick_master", "Brick Master", "Get 3 stars on all 24 Brick Breaker levels", 400, "title-brick-master", 24, |s| s.brick_three_stars),
+    ach!("brick_wave_survivor", "Wave Survivor", "Reach wave 10 in Brick Breaker Endless", 150, "title-wave-survivor", 10, |s| s.brick_best_wave),
+    ach!("brick_chain_reaction", "Chain Reaction", "Break 8 or more bricks with one explosion chain in Brick Breaker", 150, "title-demolisher", 8,
+        |s| s.brick_best_chain),
     ach!("quest_days_7","Quest Master", "Finish all 3 daily quests in one day, 7 times", 200, "title-quest-master", 7, |s| s.quest_full_days),
 ];
 
@@ -332,6 +343,20 @@ pub async fn load_stats(pool: &sqlx::PgPool, user_id: Uuid) -> AppResult<Stats> 
     let sonar_best_mk = count(pool, "SELECT MAX(level)::BIGINT FROM sonar_upgrades WHERE user_id = $1", user_id).await?;
     let sonar_campaign: (i64, Option<i64>) =
         sqlx::query_as("SELECT COUNT(*), SUM(stars)::BIGINT FROM sonar_campaign WHERE user_id = $1").bind(user_id).fetch_one(pool).await?;
+    let brick_levels: (i64, i64) = sqlx::query_as(
+        r#"SELECT COUNT(*) FILTER (WHERE level <= 12), COUNT(*) FILTER (WHERE stars = 3)
+           FROM brick_levels WHERE user_id = $1"#,
+    )
+    .bind(user_id)
+    .fetch_one(pool)
+    .await?;
+    let brick_runs: (Option<i32>, Option<i32>) = sqlx::query_as(
+        r#"SELECT MAX(wave) FILTER (WHERE mode = 'endless'), MAX(best_chain)
+           FROM brick_runs WHERE user_id = $1 AND finished_at IS NOT NULL"#,
+    )
+    .bind(user_id)
+    .fetch_one(pool)
+    .await?;
     let snake: (i64, Option<i32>, Option<i64>, Option<i32>) = sqlx::query_as(
         r#"SELECT COUNT(*), MAX(max_length), SUM(bugs_eaten)::BIGINT, MAX(score)
            FROM snake_runs WHERE user_id = $1 AND finished_at IS NOT NULL"#,
@@ -505,6 +530,10 @@ pub async fn load_stats(pool: &sqlx::PgPool, user_id: Uuid) -> AppResult<Stats> 
         snake_longest: snake.1.unwrap_or(0).into(),
         snake_bugs: snake.2.unwrap_or(0),
         snake_best: snake.3.unwrap_or(0).into(),
+        brick_world1_cleared: brick_levels.0,
+        brick_three_stars: brick_levels.1,
+        brick_best_wave: brick_runs.0.unwrap_or(0).into(),
+        brick_best_chain: brick_runs.1.unwrap_or(0).into(),
     })
 }
 
@@ -665,11 +694,24 @@ mod tests {
     }
 
     #[test]
-    fn there_are_68_unique_achievements() {
+    fn brick_breaker_achievements_follow_their_stats() {
+        let s = Stats { brick_world1_cleared: 12, brick_three_stars: 9, brick_best_wave: 7, brick_best_chain: 11, ..Stats::default() };
+        let p = |id: &str| find(id).unwrap().progress(&s);
+        assert_eq!(
+            (p("brick_wall_breaker"), p("brick_master"), p("brick_wave_survivor"), p("brick_chain_reaction")),
+            (12, 9, 7, 8)
+        );
+        let v = build_view(&s, &[]);
+        let ready: Vec<_> = v.achievements.iter().filter(|a| a.unlocked).map(|a| a.id).collect();
+        assert_eq!(ready, vec!["brick_wall_breaker", "brick_chain_reaction"]);
+    }
+
+    #[test]
+    fn there_are_72_unique_achievements() {
         let mut ids: Vec<_> = ACHIEVEMENTS.iter().map(|a| a.id).collect();
         ids.sort();
         ids.dedup();
-        assert_eq!(ids.len(), 68);
+        assert_eq!(ids.len(), 72);
         assert!(ACHIEVEMENTS.iter().all(|a| a.coins > 0 && a.target > 0 && a.id.len() <= 32));
     }
 
@@ -684,9 +726,9 @@ mod tests {
         let mut titles: Vec<_> = ACHIEVEMENTS.iter().map(|a| a.title).collect();
         titles.sort();
         titles.dedup();
-        assert_eq!(titles.len(), 68);
+        assert_eq!(titles.len(), 72);
         let achievement_items = c.items.iter().filter(|i| i.unlock == Unlock::Achievement).count();
-        assert_eq!(achievement_items, 68, "orphan achievement-only items in catalog");
+        assert_eq!(achievement_items, 72, "orphan achievement-only items in catalog");
     }
 
     #[test]

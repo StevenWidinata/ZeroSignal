@@ -117,6 +117,19 @@ pub struct SnakeRow {
     pub bugs_eaten: Option<i64>,
 }
 
+#[derive(Serialize, sqlx::FromRow, Default)]
+pub struct BrickRow {
+    /// Finished runs in every mode.
+    pub runs: i64,
+    pub bricks: Option<i64>,
+    /// Best Endless wave and the most bricks broken by one explosion chain.
+    pub best_wave: Option<i32>,
+    pub best_chain: Option<i32>,
+    /// Campaign: levels cleared and stars collected (best per level).
+    pub levels_cleared: i64,
+    pub stars: Option<i64>,
+}
+
 #[derive(Serialize)]
 pub struct StatsView {
     pub joined: DateTime<Utc>,
@@ -135,6 +148,7 @@ pub struct StatsView {
     pub memory: Vec<MemoryRow>,
     pub whack: WhackRow,
     pub snake: SnakeRow,
+    pub brick: BrickRow,
     pub chess: ChessStats,
     pub checkers: ChessStats,
     pub sonar: SonarStats,
@@ -267,6 +281,17 @@ pub async fn my_stats(State(state): State<AppState>, user: AuthUser) -> AppResul
     .fetch_one(pool)
     .await?;
 
+    let brick: BrickRow = sqlx::query_as(
+        r#"SELECT COUNT(*) AS runs, SUM(bricks)::BIGINT AS bricks,
+                  MAX(wave) FILTER (WHERE mode = 'endless') AS best_wave, MAX(best_chain) AS best_chain,
+                  (SELECT COUNT(*) FROM brick_levels WHERE user_id = $1) AS levels_cleared,
+                  (SELECT SUM(stars)::BIGINT FROM brick_levels WHERE user_id = $1) AS stars
+           FROM brick_runs WHERE user_id = $1 AND finished_at IS NOT NULL"#,
+    )
+    .bind(id)
+    .fetch_one(pool)
+    .await?;
+
     const LEVEL_ORDER: &str = "CASE level WHEN 'easy' THEN 1 WHEN 'medium' THEN 2 WHEN 'hard' THEN 3 ELSE 4 END";
     let chess_levels: Vec<LevelRow> = sqlx::query_as(&format!(
         r#"SELECT level::TEXT AS level, COUNT(*) AS played,
@@ -338,6 +363,7 @@ pub async fn my_stats(State(state): State<AppState>, user: AuthUser) -> AppResul
         memory,
         whack,
         snake,
+        brick,
         chess: ChessStats { levels: chess_levels, puzzles_played, puzzles_solved },
         checkers: ChessStats { levels: checkers_levels, puzzles_played: ck_played, puzzles_solved: ck_solved },
         sonar: SonarStats { levels: sonar_levels, hunts, best_hunt, flawless },

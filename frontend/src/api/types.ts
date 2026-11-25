@@ -871,6 +871,14 @@ export interface StatsView {
     combo5_runs: number;
     bugs_eaten: number | null;
   };
+  brick: {
+    runs: number;
+    bricks: number | null;
+    best_wave: number | null;
+    best_chain: number | null;
+    levels_cleared: number;
+    stars: number | null;
+  };
 }
 
 // ---------------------------------------------------------------------------

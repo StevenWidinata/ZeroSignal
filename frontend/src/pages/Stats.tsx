@@ -161,6 +161,8 @@ export default function Stats() {
   const sdBoards = s.boards.filter((b) => b.game_id === "sudoku");
   const boards2048 = s.boards.filter((b) => b.game_id === "2048");
   const snakeBoards = s.boards.filter((b) => b.game_id === "snake-signal");
+  // The Campaign board (2) packs stars and score into one number: shown above instead.
+  const brickBoards = s.boards.filter((b) => b.game_id === "brick-breaker" && b.level !== 2);
   const totalGames =
     s.series.reduce((n, r) => n + r.played, 0) +
     ab.rounds +
@@ -170,6 +172,7 @@ export default function Stats() {
     s.memory.reduce((n, r) => n + r.played, 0) +
     s.g2048.games +
     s.snake.runs +
+    s.brick.runs +
     s.chess.levels.reduce((n, r) => n + r.played, 0) +
     s.chess.puzzles_played +
     s.checkers.levels.reduce((n, r) => n + r.played, 0) +
@@ -449,6 +452,59 @@ export default function Stats() {
               </tbody>
             </table>
           </div>
+        </GameCard>
+
+        <GameCard id="brick-breaker" played={s.brick.runs > 0}>
+          <dl className="wam-stats">
+            <div>
+              <dt>Runs</dt>
+              <dd>{fmt(s.brick.runs)}</dd>
+            </div>
+            <div>
+              <dt>Bricks broken</dt>
+              <dd>{fmt(s.brick.bricks ?? 0)}</dd>
+            </div>
+            <div>
+              <dt>Levels cleared</dt>
+              <dd>{s.brick.levels_cleared} of 24</dd>
+            </div>
+            <div>
+              <dt>Stars</dt>
+              <dd>{s.brick.stars ?? 0} of 72</dd>
+            </div>
+            <div>
+              <dt>Best Endless wave</dt>
+              <dd>{s.brick.best_wave ?? "–"}</dd>
+            </div>
+            <div>
+              <dt>Biggest chain</dt>
+              <dd>{s.brick.best_chain || "–"}</dd>
+            </div>
+          </dl>
+          {brickBoards.length > 0 && (
+            <div className="board-table-wrap">
+              <table className="board-table stats-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Mode</th>
+                    <th scope="col">Runs</th>
+                    <th scope="col">Best</th>
+                    <th scope="col">Average</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {brickBoards.map((b) => (
+                    <tr key={b.level}>
+                      <th scope="row">{boardLabel("brick-breaker", b.level)}</th>
+                      <td className="num">{b.rounds}</td>
+                      <td className="num">{fmt(b.best)}</td>
+                      <td className="num">{fmt(b.average)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </GameCard>
 
         <GameCard id="minefield" played={s.minefield.length > 0}>
