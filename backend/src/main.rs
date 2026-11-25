@@ -1,4 +1,5 @@
 mod achievements;
+mod brick_breaker;
 mod sling_squad;
 mod snake_signal;
 mod auth;
