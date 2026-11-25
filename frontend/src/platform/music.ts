@@ -112,7 +112,7 @@ export function noteFreq(note: string): number | null {
 
 /** Which track fits a page. */
 export function trackForPath(pathname: string): TrackId {
-  if (pathname.startsWith("/play/sling-squad") || pathname.startsWith("/play/whack-a-mole") || pathname.startsWith("/play/snake-signal"))
+  if (pathname.startsWith("/play/sling-squad") || pathname.startsWith("/play/whack-a-mole") || pathname.startsWith("/play/snake-signal") || pathname.startsWith("/play/brick-breaker"))
     return "upbeat";
   if (pathname.startsWith("/play/")) return "calm";
   return "hub";

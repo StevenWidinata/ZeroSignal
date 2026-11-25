@@ -583,6 +583,86 @@ export interface SnakeCollection {
 }
 
 // ---------------------------------------------------------------------------
+// Brick Breaker
+// ---------------------------------------------------------------------------
+
+export type BrickMode = "campaign" | "endless" | "daily";
+export type BrickItemKind = "paddle" | "ball" | "theme" | "backdrop";
+
+export interface BrickStart {
+  run_id: string;
+  seed: number;
+  mode: BrickMode;
+  /** Campaign level (1-24); null in Endless and the Daily. */
+  level: number | null;
+}
+
+/** The server's replay of a run (same shape as the engine's Summary). */
+export interface BrickSummary {
+  score: number;
+  bricks: number;
+  cleared: boolean;
+  stars: number;
+  lives: number;
+  wave: number;
+  best_combo: number;
+  best_chain: number;
+  drops: number;
+  lost: number;
+  ticks: number;
+  ended_by: "clear" | "out" | "time" | "quit" | null;
+  game_ms: number;
+}
+
+export interface BrickCampaignResult {
+  /** Best stars on this level now (0 = never cleared). */
+  stars: number;
+  /** Stars earned for the first time by this run. */
+  new_stars: number;
+  star_coins: number;
+  total_stars: number;
+  total_score: number;
+  unlocked_up_to: number;
+  unlocked_next: boolean;
+}
+
+export interface BrickFinish {
+  mode: BrickMode;
+  level: number | null;
+  summary: BrickSummary;
+  previous_best: number;
+  new_best: boolean;
+  rewards: Granted;
+  campaign: BrickCampaignResult | null;
+  /** Lucky drop ("ball:comet"), if any. */
+  drop: string | null;
+}
+
+export interface BrickLevelView {
+  id: number;
+  world: number;
+  name: string;
+  stars: number;
+  best: number;
+  unlocked: boolean;
+}
+
+export interface BrickProgress {
+  total_stars: number;
+  total_score: number;
+  levels_cleared: number;
+  unlocked_up_to: number;
+  levels: BrickLevelView[];
+}
+
+export interface BrickCollection {
+  paddles: WamItemView[];
+  balls: WamItemView[];
+  themes: WamItemView[];
+  backdrops: WamItemView[];
+}
+
+// ---------------------------------------------------------------------------
 // Minefield
 // ---------------------------------------------------------------------------
 

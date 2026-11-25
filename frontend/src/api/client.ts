@@ -1,4 +1,10 @@
 import type {
+  BrickCollection,
+  BrickFinish,
+  BrickItemKind,
+  BrickMode,
+  BrickProgress,
+  BrickStart,
   CheckersCollection,
   CheckersGame,
   CheckersLevel,
@@ -428,6 +434,28 @@ export const snakeSignal = {
   },
   buy(kind: SnakeItemKind, id: string) {
     return post<SnakeCollection>(`${SNAKE}/buy`, { kind, id });
+  },
+};
+
+const BRICK = "/api/games/brick-breaker";
+
+/** Brick Breaker: the server gives a seed and replays your paddle inputs itself. */
+export const brickBreaker = {
+  start(mode: BrickMode, level: number | null, look: { paddle: string; ball: string; theme: string; backdrop: string }) {
+    return post<BrickStart>(`${BRICK}/runs`, { mode, ...(level !== null ? { level } : {}), ...look });
+  },
+  /** `inputs`: [tick, x] pairs (x = paddle target, -1 launch, -2 fire); `quitAt`: the tick you stopped at, if you quit. */
+  finish(runId: string, inputs: [number, number][], quitAt: number | null) {
+    return post<BrickFinish>(`${BRICK}/runs/${encodeURIComponent(runId)}/finish`, { inputs, quit_at: quitAt });
+  },
+  levels() {
+    return request<BrickProgress>(`${BRICK}/levels`);
+  },
+  collection() {
+    return request<BrickCollection>(`${BRICK}/collection`);
+  },
+  buy(kind: BrickItemKind, id: string) {
+    return post<BrickCollection>(`${BRICK}/buy`, { kind, id });
   },
 };
 

@@ -8,6 +8,7 @@ import Avatar from "../character/Avatar";
 import { normalizeLoadout } from "../character/catalog";
 import TitleBadge from "../components/TitleBadge";
 import { isOnlineOnly } from "../platform/playStyles";
+import { boardCells } from "../platform/boardScore";
 import { GAMES, LIVE_GAMES, findGame } from "../platform/registry";
 import { useAuth } from "../store/auth";
 import BackButton from "../components/BackButton";
@@ -92,7 +93,7 @@ export default function Leaderboard() {
   const { meta } = game;
   const live = meta.status === "live";
   const showBird = mine?.scores.some((s) => s.bird_variant) ?? false;
-  const detail = meta.detailLabel;
+  const detail = board?.detailLabel ?? meta.detailLabel;
   const cols = detail ? 4 : 3;
 
   return (
@@ -248,7 +249,7 @@ export default function Leaderboard() {
               <tr>
                 <th scope="col">Rank</th>
                 <th scope="col">Player</th>
-                <th scope="col">{meta.scoreLabel}</th>
+                <th scope="col">{board?.scoreLabel ?? meta.scoreLabel}</th>
                 {detail && <th scope="col">{detail}</th>}
               </tr>
             </thead>
@@ -278,8 +279,15 @@ export default function Leaderboard() {
                       </>
                     )}
                   </td>
-                  <td className="num">{fmt(e.best_score)}</td>
-                  {detail && <td className="num">{e.detail ? fmt(Number(e.detail)) : "–"}</td>}
+                  {(() => {
+                    const c = boardCells(board, e.best_score, e.detail);
+                    return (
+                      <>
+                        <td className="num">{c.main}</td>
+                        {detail && <td className="num">{c.extra}</td>}
+                      </>
+                    );
+                  })()}
                 </tr>
               ))}
               {entries?.length === 0 && !error && (
@@ -304,7 +312,7 @@ export default function Leaderboard() {
               <thead>
                 <tr>
                   <th scope="col">Score</th>
-                  {detail && <th scope="col">{detail}</th>}
+                  {meta.detailLabel && <th scope="col">{meta.detailLabel}</th>}
                   {showBird && <th scope="col">Bird</th>}
                   <th scope="col">{boards ? "Mode" : "Level"}</th>
                   <th scope="col">When</th>
@@ -313,8 +321,15 @@ export default function Leaderboard() {
               <tbody>
                 {mine.scores.map((s, i) => (
                   <tr key={i}>
-                    <td className="num">{fmt(s.score)}</td>
-                    {detail && <td className="num">{s.detail ? fmt(Number(s.detail)) : "–"}</td>}
+                    {(() => {
+                      const c = boardCells(boards?.find((b) => b.level === s.level), s.score, s.detail, true);
+                      return (
+                        <>
+                          <td className="num">{c.main}</td>
+                          {meta.detailLabel && <td className="num">{c.extra}</td>}
+                        </>
+                      );
+                    })()}
                     {showBird && (
                       <td style={{ textTransform: "capitalize" }}>{s.bird_variant ?? "-"}</td>
                     )}

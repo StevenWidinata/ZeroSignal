@@ -48,6 +48,14 @@ export interface GameBoard {
   label: string;
   /** "today" = only scores from the current WIB day. */
   period?: "today";
+  /** Column names for this board, when they differ from the game's. */
+  scoreLabel?: string;
+  detailLabel?: string;
+  /**
+   * The score packs two numbers as `main × packed + extra` (Brick Breaker's
+   * Campaign: stars, then total score). The board shows them apart.
+   */
+  packed?: number;
 }
 
 /**

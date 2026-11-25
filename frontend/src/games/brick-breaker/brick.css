@@ -1,0 +1,294 @@
+/* ---------- Brick Breaker ---------- */
+
+/* Menu */
+.brick-mode-wall {
+  display: block;
+  width: 48px;
+  height: 18px;
+}
+.brick-mode-wall rect {
+  fill: var(--brick-a, var(--blue));
+}
+.brick-mode-wall rect.r1 {
+  fill: var(--brick-b, var(--yellow));
+}
+.brick-mode-wall rect.r2 {
+  fill: var(--brick-c, var(--green));
+}
+.brick-menu > .game-controls {
+  justify-content: flex-start;
+}
+
+/* Level select: plain tiles with a small map of the level. */
+.brick-level-grid {
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+}
+.brick-level {
+  align-items: stretch;
+  gap: 8px;
+  padding: 12px;
+  text-align: left;
+  background: var(--surface);
+}
+.brick-level-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.brick-level .ab-level-num {
+  font-size: 0.9rem;
+}
+.brick-level .ab-stars {
+  font-size: 0.95rem;
+}
+.brick-map {
+  display: block;
+  width: 100%;
+  height: 44px;
+  padding: 4px;
+  border-radius: 4px;
+  background: #0b1020;
+}
+.brick-level.locked .brick-map {
+  opacity: 0.35;
+}
+
+/* Shop swatches */
+.brick-swatch {
+  display: block;
+  border: 2px solid transparent;
+}
+.brick-swatch.paddle {
+  width: 38px;
+  height: 10px;
+  border-radius: 6px;
+}
+.brick-swatch.paddle.pixel {
+  border-radius: 0;
+}
+.brick-swatch.ball {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+}
+.brick-swatch.ball.pixel {
+  border-radius: 3px;
+}
+.brick-swatch.theme {
+  display: grid;
+  grid-template-columns: repeat(3, 11px);
+  gap: 2px;
+  border: 0;
+}
+.brick-swatch.theme > span {
+  height: 6px;
+  border-radius: 2px;
+}
+.brick-swatch.theme.pixel > span {
+  border-radius: 0;
+}
+.brick-swatch.backdrop {
+  position: relative;
+  width: 30px;
+  height: 36px;
+  border-radius: 4px;
+  border-bottom-color: transparent;
+}
+.brick-swatch.backdrop > span {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  top: 50%;
+  height: 2px;
+}
+
+/* Legend */
+.brick-legend {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+.brick-legend > div {
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  align-items: center;
+  justify-items: start;
+  gap: 10px;
+  text-align: left;
+}
+.brick-legend-brick {
+  width: 32px;
+  height: 12px;
+  border-radius: 3px;
+}
+.brick-legend-brick.k-t {
+  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.3);
+}
+.brick-legend-brick.k-e {
+  display: grid;
+  place-items: center;
+}
+.brick-legend-brick.k-e::after {
+  content: "";
+  width: 5px;
+  height: 5px;
+  background: #fff;
+  transform: rotate(45deg);
+}
+.brick-capsule {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  border-radius: 7px;
+  font: 600 0.62rem/1 var(--font-body);
+  color: #fff;
+}
+
+/* The round */
+.brick-round {
+  display: grid;
+  gap: 12px;
+  /* Keep the whole 3:4 board on screen on short windows too. */
+  max-width: min(480px, 100%, calc((100vh - 230px) * 0.75));
+  min-width: min(280px, 100%);
+  margin: 0 auto;
+}
+.brick-hud {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  padding: 10px 12px;
+}
+.brick-hud .wam-stat {
+  min-width: 48px;
+}
+.brick-hud strong {
+  font-variant-numeric: tabular-nums;
+}
+.brick-combo.hot strong {
+  color: var(--yellow-deep);
+}
+.brick-drops {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.brick-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border: 1px solid color-mix(in srgb, var(--ink) 18%, transparent);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.brick-chip-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.brick-hud .wam-hud-btns {
+  margin-left: auto;
+}
+
+.brick-board {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  width: 100%;
+  overflow: hidden;
+  border: var(--bw) solid var(--line);
+  border-radius: var(--radius);
+  background: #0b1020;
+  box-shadow: var(--shadow-off) var(--shadow-off) 0 var(--line);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.brick-board canvas {
+  display: block;
+}
+.brick-pop {
+  position: absolute;
+  z-index: 4;
+  transform: translate(-50%, -50%);
+  font-family: var(--font-pixel);
+  font-size: clamp(0.5rem, 2.2vw, 0.7rem);
+  white-space: nowrap;
+  color: #fff;
+  text-shadow: 2px 2px 0 #000;
+  pointer-events: none;
+  animation: brick-pop 0.9s var(--ease) forwards;
+}
+.brick-pop.gold { color: #ffd23f; }
+.brick-pop.good { color: #9ad8ff; }
+.brick-pop.bad { color: #ff8a8d; }
+.brick-pop.combo { color: #ffd0a8; }
+@keyframes brick-pop {
+  to { transform: translate(-50%, -160%); opacity: 0; }
+}
+[data-motion="reduced"] .brick-pop {
+  animation: none;
+}
+.brick-serve {
+  position: absolute;
+  left: 50%;
+  top: 72%;
+  z-index: 3;
+  transform: translateX(-50%);
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.brick-ko strong {
+  font-family: var(--font-pixel);
+  font-size: clamp(0.8rem, 3.5vw, 1.1rem);
+  color: #ff8a8d;
+  text-shadow: 3px 3px 0 #000;
+  text-align: center;
+  padding: 0 12px;
+}
+.brick-ko.clear strong {
+  color: #ffd23f;
+}
+
+/* Phone buttons: two hold-down arrows with Launch between them. */
+.brick-pads {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr 1fr;
+  gap: 8px;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.brick-pad {
+  justify-content: center;
+  min-height: 56px;
+  padding: 0;
+  font-size: 1.3rem;
+}
+.brick-pad.launch {
+  font-size: 0.9rem;
+}
+.brick-help {
+  text-align: center;
+}
+
+/* Results */
+.brick-result-stars {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 12px;
+}
+.brick-result-stars .ab-stars {
+  font-size: 1.6rem;
+}

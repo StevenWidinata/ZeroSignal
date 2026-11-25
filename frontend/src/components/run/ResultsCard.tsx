@@ -23,6 +23,8 @@ interface Props {
   onAgain: (() => void) | null;
   onMenu: () => void;
   menuLabel?: string;
+  /** A main action shown before "Play again" (e.g. "Next level"). */
+  next?: { label: string; onClick: () => void } | null;
 }
 
 /** The results card every score game ends on (see docs/GAME_KIT.md). */
@@ -39,6 +41,7 @@ export default function ResultsCard({
   onAgain,
   onMenu,
   menuLabel = "Change mode",
+  next = null,
 }: Props) {
   return (
     <div className="panel wam-results">
@@ -65,12 +68,17 @@ export default function ResultsCard({
       <SaveScorePrompt />
 
       <div className="game-controls">
+        {next && (
+          <button className="btn-green" onClick={next.onClick} autoFocus>
+            {next.label}
+          </button>
+        )}
         {onAgain && (
-          <button className="btn-green" onClick={onAgain} autoFocus>
+          <button className={next ? "btn-ghost" : "btn-green"} onClick={onAgain} autoFocus={!next}>
             ↻ Play again
           </button>
         )}
-        <button className={onAgain ? "btn-ghost" : "btn-green"} onClick={onMenu} autoFocus={!onAgain}>
+        <button className={onAgain || next ? "btn-ghost" : "btn-green"} onClick={onMenu} autoFocus={!onAgain && !next}>
           {menuLabel}
         </button>
       </div>
