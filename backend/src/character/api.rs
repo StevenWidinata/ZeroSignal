@@ -327,9 +327,14 @@ pub async fn public_profile(
     let loadout = catalog().sanitize(&stored_loadout(&state.pool, user_id).await?, level, &inv);
     let stats: Vec<GameStat> = sqlx::query_as(
         r#"SELECT game_id, MAX(score) AS best_score, COUNT(*) AS plays
-           FROM scores WHERE user_id = $1 GROUP BY game_id ORDER BY game_id"#,
+           FROM scores WHERE user_id = $1 AND NOT (game_id = $2 AND level = $3)
+           GROUP BY game_id ORDER BY game_id"#,
     )
     .bind(user_id)
+    // The Brick Breaker Campaign board stores stars and score as one number,
+    // not a score.
+    .bind(crate::brick_breaker::api::GAME_ID)
+    .bind(crate::brick_breaker::api::BOARD_CAMPAIGN)
     .fetch_all(&state.pool)
     .await?;
     Ok(Json(PublicProfile {

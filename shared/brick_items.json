@@ -1,0 +1,43 @@
+{
+  "_doc": "Brick Breaker cosmetics, read by backend/src/brick_breaker/items.rs and the frontend (which draws them from `art`). price null = free for everyone; the rest are bought with coins or found as lucky drops.",
+  "paddles": [
+    { "id": "classic", "name": "Classic", "rarity": "common", "price": null, "art": { "style": "solid", "color": "#5B8DEF", "edge": "#B9D0FF" } },
+    { "id": "neon", "name": "Neon Bar", "rarity": "common", "price": null, "art": { "style": "neon", "color": "#2EE8C4", "edge": "#A8FFF0" } },
+    { "id": "wood", "name": "Wooden Plank", "rarity": "common", "price": null, "art": { "style": "wood", "color": "#A8703C", "edge": "#D9A36A" } },
+    { "id": "pixel", "name": "Pixel Block", "rarity": "common", "price": null, "art": { "style": "pixel", "color": "#F4A62A", "edge": "#FFE066" } },
+    { "id": "chrome", "name": "Chrome", "rarity": "rare", "price": 400, "art": { "style": "metal", "color": "#AEB7C4", "edge": "#F2F5F9" } },
+    { "id": "plasma", "name": "Plasma", "rarity": "rare", "price": 450, "art": { "style": "neon", "color": "#FF4FA3", "edge": "#FFC2E0" } },
+    { "id": "crystal", "name": "Crystal", "rarity": "epic", "price": 700, "art": { "style": "glass", "color": "#8FD8FF", "edge": "#E8F8FF" } },
+    { "id": "gold", "name": "Golden Bar", "rarity": "legendary", "price": 1200, "art": { "style": "metal", "color": "#E5B522", "edge": "#FFF0A8" } }
+  ],
+  "balls": [
+    { "id": "white", "name": "White Dot", "rarity": "common", "price": null, "art": { "style": "solid", "color": "#FFFFFF", "edge": "#C9CED8" } },
+    { "id": "neon", "name": "Neon Orb", "rarity": "common", "price": null, "art": { "style": "ring", "color": "#7CFFB2", "edge": "#2EE88A" } },
+    { "id": "pixel", "name": "Pixel Ball", "rarity": "common", "price": null, "art": { "style": "pixel", "color": "#FFE066", "edge": "#F4A62A" } },
+    { "id": "ember", "name": "Ember", "rarity": "common", "price": null, "art": { "style": "solid", "color": "#FF8A3D", "edge": "#FFD0A8" } },
+    { "id": "marble", "name": "Marble", "rarity": "rare", "price": 350, "art": { "style": "swirl", "color": "#DCE6F5", "edge": "#5B7BB0" } },
+    { "id": "disco", "name": "Disco", "rarity": "rare", "price": 400, "art": { "style": "facets", "color": "#C9CED8", "edge": "#FFFFFF" } },
+    { "id": "comet", "name": "Comet", "rarity": "epic", "price": 600, "art": { "style": "tail", "color": "#9BE3FF", "edge": "#FFFFFF" } },
+    { "id": "sun", "name": "Little Sun", "rarity": "legendary", "price": 1000, "art": { "style": "rays", "color": "#FFC93C", "edge": "#FF8A1F" } }
+  ],
+  "themes": [
+    { "id": "spectrum", "name": "Spectrum", "rarity": "common", "price": null, "art": { "style": "flat", "rows": ["#E5484D", "#F2994A", "#F2C94C", "#46A758", "#3E8BD9", "#8E6CD9"], "tough": "#7A8394", "steel": "#4B5563", "explosive": "#FF5A1F" } },
+    { "id": "pastel", "name": "Pastel", "rarity": "common", "price": null, "art": { "style": "flat", "rows": ["#F7B2BD", "#F9CFA5", "#F6E7A1", "#B8E2C8", "#A9CBEF", "#CDB9EE"], "tough": "#9AA3B5", "steel": "#5F6878", "explosive": "#F2785C" } },
+    { "id": "mono", "name": "Mono", "rarity": "common", "price": null, "art": { "style": "flat", "rows": ["#F2F2F2", "#DADADA", "#C2C2C2", "#AAAAAA", "#929292", "#7A7A7A"], "tough": "#5A5A5A", "steel": "#333333", "explosive": "#E5484D" } },
+    { "id": "pixel", "name": "Retro Pixel", "rarity": "common", "price": null, "art": { "style": "pixel", "rows": ["#D83A3A", "#E88A2E", "#E8C62E", "#4FB043", "#2E7FD8", "#7A4FD8"], "tough": "#8C8C8C", "steel": "#4A4A4A", "explosive": "#FF6A00" } },
+    { "id": "candy", "name": "Candy", "rarity": "rare", "price": 400, "art": { "style": "stripes", "rows": ["#FF6F91", "#FF9671", "#FFC75F", "#9BDE7E", "#6FC8FF", "#C493FF"], "tough": "#B07AA1", "steel": "#6B5B73", "explosive": "#FF3D3D" } },
+    { "id": "glass", "name": "Glass", "rarity": "rare", "price": 450, "art": { "style": "glass", "rows": ["#7FD3FF", "#8FE3E0", "#A8F0C6", "#C9F2A0", "#F0E58C", "#F7C3A0"], "tough": "#9DB4C8", "steel": "#56687A", "explosive": "#FF7A59" } },
+    { "id": "lava", "name": "Lava Rock", "rarity": "epic", "price": 700, "art": { "style": "rock", "rows": ["#3A2420", "#4A2A22", "#5A3024", "#6A3626", "#7A3C28", "#8A422A"], "tough": "#2A1A18", "steel": "#1A1412", "explosive": "#FF5A1F", "glow": "#FF7A2E" } },
+    { "id": "gold", "name": "Gold Bars", "rarity": "legendary", "price": 1200, "art": { "style": "metal", "rows": ["#F5D76E", "#F0C850", "#E9B938", "#E0A828", "#D6981E", "#C98A16"], "tough": "#B07A12", "steel": "#6E5A2E", "explosive": "#FF6A3D" } }
+  ],
+  "backdrops": [
+    { "id": "night", "name": "Night Sky", "rarity": "common", "price": null, "art": { "style": "plain", "bg": "#0B1020", "line": "#1C2846", "wall": "#3A4F86" } },
+    { "id": "blueprint", "name": "Blueprint", "rarity": "common", "price": null, "art": { "style": "grid", "bg": "#0E3A6B", "line": "#2A5A8E", "wall": "#9CC3EE" } },
+    { "id": "chalk", "name": "Chalkboard", "rarity": "common", "price": null, "art": { "style": "plain", "bg": "#1F3A2E", "line": "#2E5242", "wall": "#D8E2DA" } },
+    { "id": "terminal", "name": "Terminal", "rarity": "common", "price": null, "art": { "style": "dots", "bg": "#050A05", "line": "#123015", "wall": "#2B6B31" } },
+    { "id": "sunset", "name": "Sunset Strip", "rarity": "rare", "price": 400, "art": { "style": "horizon", "bg": "#2A1033", "line": "#5A2250", "wall": "#FF8A5C" } },
+    { "id": "stars", "name": "Starfield", "rarity": "rare", "price": 450, "art": { "style": "stars", "bg": "#03030A", "line": "#11112A", "wall": "#6A7BFF" } },
+    { "id": "aurora", "name": "Northern Lights", "rarity": "epic", "price": 700, "art": { "style": "aurora", "bg": "#061820", "line": "#0F2E36", "wall": "#4FF0B0" } },
+    { "id": "mainframe", "name": "Mainframe", "rarity": "legendary", "price": 1200, "art": { "style": "circuit", "bg": "#0A0F14", "line": "#16323F", "wall": "#00E5C7" } }
+  ]
+}

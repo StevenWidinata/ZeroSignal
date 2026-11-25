@@ -53,6 +53,10 @@ pub enum Event {
     SudokuWin { level: i64, daily: bool, hints: i64 },
     /// A finished online Memory Match game and the power-ups you used in it.
     MemoryGame { result: GameResult, powers: i64 },
+    /// A finished Brick Breaker run (10+ seconds, or a Campaign clear):
+    /// bricks broken, whether it cleared a Campaign level, and the wave
+    /// reached in Endless (0 in other modes).
+    BrickRun { bricks: i64, level_cleared: bool, endless_wave: i64 },
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -93,6 +97,9 @@ enum Goal {
     MemoryGames,
     MemoryWins,
     MemoryPowers,
+    BrickBricks,
+    BrickClears,
+    BrickWave(i64),
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -165,6 +172,9 @@ impl QuestDef {
             (Goal::MemoryGames, MemoryGame { .. }) => 1,
             (Goal::MemoryWins, MemoryGame { result, .. }) => hit(result == GameResult::Win),
             (Goal::MemoryPowers, MemoryGame { powers, .. }) => powers.clamp(0, i32::MAX as i64) as i32,
+            (Goal::BrickBricks, BrickRun { bricks, .. }) => bricks.clamp(0, i32::MAX as i64) as i32,
+            (Goal::BrickClears, BrickRun { level_cleared, .. }) => hit(level_cleared),
+            (Goal::BrickWave(min), BrickRun { endless_wave, .. }) => hit(endless_wave >= min),
             _ => 0,
         }
     }
@@ -176,7 +186,7 @@ const fn q(id: &'static str, title: &'static str, goal: Goal, target: i32, coins
 
 use Game::{ConnectFour as CF, TicTacToe as TTT};
 
-pub const POOL: [QuestDef; 43] = [
+pub const POOL: [QuestDef; 46] = [
     q("cf_play_3", "Play 3 Connect Four games vs the AI", Goal::PlayAi(CF), 3, 20, 30),
     q("cf_win_2_medium", "Win 2 Connect Four games vs Medium or harder",
         Goal::WinAi { game: Some(CF), min_level: 2 }, 2, 40, 60),
@@ -227,6 +237,9 @@ pub const POOL: [QuestDef; 43] = [
     q("memory_play_2", "Finish 2 Memory Match games online", Goal::MemoryGames, 2, 20, 30),
     q("memory_win", "Win a Memory Match game online", Goal::MemoryWins, 1, 40, 60),
     q("memory_powers_3", "Use 3 power-ups in Memory Match Chaos", Goal::MemoryPowers, 3, 30, 40),
+    q("brick_bricks_150", "Brick by Brick: break 150 bricks in Brick Breaker", Goal::BrickBricks, 150, 30, 40),
+    q("brick_clear_3", "Level Up: clear 3 Brick Breaker Campaign levels", Goal::BrickClears, 3, 40, 60),
+    q("brick_wave_5", "Wave Rider: reach wave 5 in Brick Breaker Endless", Goal::BrickWave(5), 1, 40, 60),
 ];
 
 pub fn find(id: &str) -> Option<&'static QuestDef> {
@@ -431,5 +444,17 @@ mod tests {
         assert_eq!(quest("checkers_win_medium").progress(&game(3, GameResult::Draw)), 0);
         assert_eq!(quest("checkers_puzzle").progress(&Event::CheckersPuzzleSolved), 1);
         assert_eq!(quest("checkers_puzzle").progress(&Event::ChessPuzzleSolved), 0);
+    }
+
+    #[test]
+    fn brick_quests() {
+        let run = |bricks, level_cleared, endless_wave| Event::BrickRun { bricks, level_cleared, endless_wave };
+        assert_eq!(quest("brick_bricks_150").progress(&run(37, false, 0)), 37);
+        assert_eq!(quest("brick_bricks_150").progress(&run(-4, false, 0)), 0);
+        assert_eq!(quest("brick_clear_3").progress(&run(30, true, 0)), 1);
+        assert_eq!(quest("brick_clear_3").progress(&run(30, false, 0)), 0);
+        assert_eq!(quest("brick_wave_5").progress(&run(90, false, 4)), 0);
+        assert_eq!(quest("brick_wave_5").progress(&run(90, false, 5)), 1);
+        assert_eq!(quest("brick_wave_5").progress(&Event::SnakeRun { score: 9_000, best_combo: 5 }), 0);
     }
 }

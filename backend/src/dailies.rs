@@ -25,11 +25,17 @@ struct DailyDef {
     resumable: bool,
 }
 
-const DAILIES: [DailyDef; 8] = [
+const DAILIES: [DailyDef; 9] = [
     DailyDef {
         game_id: "snake-signal",
         board: 4,
         status_sql: "SELECT finished_at IS NOT NULL FROM snake_runs WHERE user_id = $1 AND mode = 'daily' AND day = $2",
+        resumable: false,
+    },
+    DailyDef {
+        game_id: "brick-breaker",
+        board: crate::brick_breaker::api::BOARD_DAILY,
+        status_sql: "SELECT finished_at IS NOT NULL FROM brick_runs WHERE user_id = $1 AND mode = 'daily' AND day = $2",
         resumable: false,
     },
     DailyDef {

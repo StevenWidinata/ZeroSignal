@@ -328,10 +328,14 @@ pub async fn legacy_my_scores(
 
 pub async fn fetch_best_score(state: &AppState, game_id: &str, user_id: Uuid) -> AppResult<i32> {
     let best: i32 = sqlx::query_scalar(
-        r#"SELECT COALESCE(MAX(score), 0) FROM scores WHERE user_id = $1 AND game_id = $2"#,
+        r#"SELECT COALESCE(MAX(score), 0) FROM scores
+           WHERE user_id = $1 AND game_id = $2 AND NOT (game_id = $3 AND level = $4)"#,
     )
     .bind(user_id)
     .bind(game_id)
+    // The Brick Breaker Campaign board stores stars and score as one number.
+    .bind(crate::brick_breaker::api::GAME_ID)
+    .bind(crate::brick_breaker::api::BOARD_CAMPAIGN)
     .fetch_one(&state.pool)
     .await?;
     Ok(best)
