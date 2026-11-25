@@ -2,16 +2,19 @@ import { describe, expect, it } from "vitest";
 import vectors from "../../../../shared/brick_vectors.json";
 import { Rng } from "../../platform/seeded";
 import { FIRE, Game, LAUNCH, replay, rules, waveLayout, type Input, type Level } from "./engine";
+import { levelById } from "./levels";
 
-type Run = { seed: number; level: Level | null; stop_at: number | null; inputs: number[][]; summary: unknown };
+type Run = { seed: number; level: Level | null; level_id?: number; stop_at: number | null; inputs: number[][]; summary: unknown };
+const levelOf = (run: Run): Level | null => (run.level_id ? levelById(run.level_id) : run.level);
 const runs = (vectors as { runs: Run[] }).runs;
 
 describe("brick breaker engine", () => {
   it("replays the shared vectors exactly like the server", () => {
-    expect(runs.length).toBeGreaterThanOrEqual(6);
+    expect(runs.length).toBeGreaterThanOrEqual(8);
+    expect(runs.some((r) => r.level_id)).toBe(true);
     for (const run of runs) {
       const inputs = run.inputs.map(([t, v]) => [t, v] as Input);
-      expect(replay(run.seed, run.level, inputs, run.stop_at)).toEqual(run.summary);
+      expect(replay(run.seed, levelOf(run), inputs, run.stop_at)).toEqual(run.summary);
     }
   });
 

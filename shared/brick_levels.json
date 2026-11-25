@@ -1,0 +1,325 @@
+{
+  "_doc": "Brick Breaker Campaign levels, read by backend/src/brick_breaker/levels.rs and frontend/src/games/brick-breaker/levels.ts. Map rows are 12 columns, top row first: . empty, n normal, t tough (2 hits), T tough (3 hits), s steel, e explosive. drops = [col, row, drop] on a map brick. moving = [col, row, kind n|t|T, min_col, max_col, speed] in an otherwise empty lane. Check every level still clears: cargo test --release brick_breaker.",
+  "levels": [
+    {
+      "id": 1, "world": 1, "name": "First Light", "speed": 640,
+      "map": [
+        "............",
+        "nnnnnnnnnnnn",
+        "nnnnnnnnnnnn",
+        "nnnnnnnnnnnn"
+      ],
+      "drops": [[5, 3, "wide"]],
+      "moving": []
+    },
+    {
+      "id": 2, "world": 1, "name": "Stairs", "speed": 660,
+      "map": [
+        "nn........nn",
+        "nnn......nnn",
+        "nnnn....nnnn",
+        "nnnnn..nnnnn",
+        "nnnnnnnnnnnn"
+      ],
+      "drops": [[0, 0, "wide"], [5, 4, "multi"]],
+      "moving": []
+    },
+    {
+      "id": 3, "world": 1, "name": "Tough Crowd", "speed": 670,
+      "map": [
+        "............",
+        "tttttttttttt",
+        "nnnnnnnnnnnn",
+        "nnnnnnnnnnnn",
+        "..tttttttt.."
+      ],
+      "drops": [[3, 2, "slow"], [8, 3, "multi"]],
+      "moving": []
+    },
+    {
+      "id": 4, "world": 1, "name": "Checkerboard", "speed": 680,
+      "map": [
+        "............",
+        "n.t.n.t.n.t.",
+        ".t.n.t.n.t.n",
+        "n.t.n.t.n.t.",
+        ".t.n.t.n.t.n",
+        "n.t.n.t.n.t."
+      ],
+      "drops": [[4, 3, "laser"], [7, 4, "wide"]],
+      "moving": []
+    },
+    {
+      "id": 5, "world": 1, "name": "Steel Frame", "speed": 690,
+      "map": [
+        "............",
+        "nnnnnnnnnnnn",
+        "nnnnnnnnnnnn",
+        "ssss....ssss",
+        "............",
+        "nnnnnnnnnnnn"
+      ],
+      "drops": [[2, 1, "multi"], [5, 5, "sticky"]],
+      "moving": []
+    },
+    {
+      "id": 6, "world": 1, "name": "Pyramid", "speed": 700,
+      "map": [
+        "............",
+        ".....TT.....",
+        "....tttt....",
+        "...nnnnnn...",
+        "..nnnnnnnn..",
+        ".nnnnnnnnnn.",
+        "nnnnnnnnnnnn"
+      ],
+      "drops": [[5, 1, "life"], [2, 4, "wide"]],
+      "moving": []
+    },
+    {
+      "id": 7, "world": 1, "name": "Boom", "speed": 700,
+      "map": [
+        "............",
+        "nnnnnnnnnnnn",
+        "nnnennnnennn",
+        "nnnnnnnnnnnn",
+        "............",
+        "tttttttttttt"
+      ],
+      "drops": [[6, 3, "laser"], [1, 5, "multi"]],
+      "moving": []
+    },
+    {
+      "id": 8, "world": 1, "name": "Fuse Line", "speed": 710,
+      "map": [
+        "............",
+        "nnnnnnnnnnnn",
+        "enenenenenen",
+        "nenenenenene",
+        "tttttttttttt",
+        "tttttttttttt"
+      ],
+      "drops": [[0, 1, "wide"], [6, 5, "multi"]],
+      "moving": []
+    },
+    {
+      "id": 9, "world": 1, "name": "On the Move", "speed": 710,
+      "map": [
+        "............",
+        "nnnnnnnnnnnn",
+        "nnnnnnnnnnnn",
+        "............",
+        "............",
+        "nnnnnnnnnnnn"
+      ],
+      "drops": [[4, 5, "sticky"], [9, 1, "multi"]],
+      "moving": [[0, 3, "n", 0, 5, 40], [6, 3, "n", 6, 11, 40]]
+    },
+    {
+      "id": 10, "world": 1, "name": "Fortress", "speed": 720,
+      "map": [
+        "............",
+        "nnnnnnnnnnnn",
+        ".sss....sss.",
+        ".s.tttttt.s.",
+        ".s.tnnnnt.s.",
+        ".s.tttttt.s.",
+        ".sss....sss."
+      ],
+      "drops": [[1, 1, "laser"], [6, 4, "life"]],
+      "moving": []
+    },
+    {
+      "id": 11, "world": 1, "name": "Crossfire", "speed": 730,
+      "map": [
+        "............",
+        "tttttttttttt",
+        "............",
+        "nnnnnnnnnnnn",
+        "............",
+        "nnnnnnnnnnnn"
+      ],
+      "drops": [[3, 3, "multi"], [8, 5, "slow"]],
+      "moving": [[0, 2, "t", 0, 5, 50], [6, 2, "t", 6, 11, 50], [0, 4, "n", 0, 5, 70], [6, 4, "n", 6, 11, 70]]
+    },
+    {
+      "id": 12, "world": 1, "name": "Gatekeeper", "speed": 750,
+      "map": [
+        "............",
+        "ssTTTTTTTTss",
+        "s.nnnnnnnn.s",
+        "s.nennnnen.s",
+        "s.nnnnnnnn.s",
+        "ss........ss",
+        "............"
+      ],
+      "drops": [[5, 1, "laser"], [4, 2, "wide"], [7, 4, "multi"]],
+      "moving": [[0, 6, "t", 0, 5, 60], [6, 6, "t", 6, 11, 60]]
+    },
+    {
+      "id": 13, "world": 2, "name": "Hardened", "speed": 780,
+      "map": [
+        "............",
+        "TTTTTTTTTTTT",
+        "tttttttttttt",
+        "TtTtTtTtTtTt",
+        "nnnnnnnnnnnn"
+      ],
+      "drops": [[2, 4, "laser"], [9, 4, "multi"]],
+      "moving": []
+    },
+    {
+      "id": 14, "world": 2, "name": "Steel Maze", "speed": 790,
+      "map": [
+        "............",
+        "nnnnnnnnnnnn",
+        "sss...sss...",
+        "nnnnnnnnnnnn",
+        "...sss...sss",
+        "tttttttttttt"
+      ],
+      "drops": [[11, 1, "multi"], [6, 3, "wide"], [0, 5, "sticky"]],
+      "moving": []
+    },
+    {
+      "id": 15, "world": 2, "name": "Chain Reaction", "speed": 800,
+      "map": [
+        "............",
+        "nenenenenene",
+        "enenenenenen",
+        "tttttttttttt",
+        "eTeTeTeTeTeT",
+        "ssnnnnnnnnss"
+      ],
+      "drops": [[3, 3, "laser"], [5, 5, "life"]],
+      "moving": []
+    },
+    {
+      "id": 16, "world": 2, "name": "Traffic", "speed": 810,
+      "map": [
+        "............",
+        "nnnnnnnnnnnn",
+        "............",
+        "tttttttttttt",
+        "............",
+        "............",
+        "............"
+      ],
+      "drops": [[0, 1, "multi"], [5, 3, "slow"]],
+      "moving": [[0, 2, "n", 0, 5, 80], [6, 2, "n", 6, 11, 80], [0, 4, "t", 0, 5, 60], [6, 4, "t", 6, 11, 60], [0, 6, "n", 0, 5, 100], [6, 6, "n", 6, 11, 100]]
+    },
+    {
+      "id": 17, "world": 2, "name": "Diamond", "speed": 820,
+      "map": [
+        "............",
+        ".....TT.....",
+        "....tnnt....",
+        "...tneent...",
+        "..tnneennt..",
+        "...tneent...",
+        "....tnnt....",
+        ".....tt....."
+      ],
+      "drops": [[5, 1, "multi"], [5, 6, "wide"]],
+      "moving": []
+    },
+    {
+      "id": 18, "world": 2, "name": "Bunker", "speed": 830,
+      "map": [
+        "............",
+        "tttttttttttt",
+        "s.sss..sss.s",
+        "s.nnnnnnnn.s",
+        "s.nTTeeTTn.s",
+        "s.nnnnnnnn.s",
+        "ssss....ssss"
+      ],
+      "drops": [[0, 1, "life"], [6, 4, "laser"]],
+      "moving": []
+    },
+    {
+      "id": 19, "world": 2, "name": "Zigzag", "speed": 840,
+      "map": [
+        "............",
+        "tttttttttttt",
+        "sssss.......",
+        "nnnnnnnnnnnn",
+        ".......sssss",
+        "nnnnnnnnnnnn"
+      ],
+      "drops": [[8, 1, "multi"], [3, 3, "sticky"], [9, 5, "wide"]],
+      "moving": []
+    },
+    {
+      "id": 20, "world": 2, "name": "Twin Towers", "speed": 850,
+      "map": [
+        "............",
+        ".tt......tt.",
+        ".tt......tt.",
+        ".nn..ee..nn.",
+        ".nn.snns.nn.",
+        ".nn.snns.nn.",
+        ".TT.ssss.TT.",
+        "............"
+      ],
+      "drops": [[2, 3, "wide"], [9, 4, "laser"]],
+      "moving": [[0, 7, "t", 0, 5, 70], [6, 7, "t", 6, 11, 70]]
+    },
+    {
+      "id": 21, "world": 2, "name": "Powder Keg", "speed": 860,
+      "map": [
+        "............",
+        "TTTTTTTTTTTT",
+        "nennennennen",
+        "tttttttttttt",
+        "ennennennenn",
+        "ss.ss.ss.ss."
+      ],
+      "drops": [[6, 1, "life"], [2, 3, "multi"]],
+      "moving": []
+    },
+    {
+      "id": 22, "world": 2, "name": "Conveyor", "speed": 870,
+      "map": [
+        "............",
+        "nnnnnnnnnnnn",
+        "............",
+        "............",
+        "............",
+        "ssss....ssss",
+        "tttttttttttt"
+      ],
+      "drops": [[8, 1, "laser"], [3, 6, "slow"]],
+      "moving": [[0, 2, "t", 0, 5, 90], [6, 2, "t", 6, 11, 90], [0, 3, "n", 0, 5, 110], [6, 3, "n", 6, 11, 110], [0, 4, "T", 0, 5, 70], [6, 4, "T", 6, 11, 70]]
+    },
+    {
+      "id": 23, "world": 2, "name": "Iron Curtain", "speed": 885,
+      "map": [
+        "............",
+        "tttttttttttt",
+        "TTTeTTTTeTTT",
+        "sss......sss",
+        "nnnnnnnnnnnn",
+        "ss..ssss..ss",
+        "tttttttttttt"
+      ],
+      "drops": [[6, 4, "multi"], [11, 4, "sticky"], [0, 6, "laser"]],
+      "moving": []
+    },
+    {
+      "id": 24, "world": 2, "name": "Final Signal", "speed": 900,
+      "map": [
+        "............",
+        "s..TTTTTT..s",
+        "s.eTnnnnTe.s",
+        "s.TTnnnnTT.s",
+        "s...ssss...s",
+        "............",
+        "tttttttttttt",
+        "ss..s..s..ss"
+      ],
+      "drops": [[4, 2, "multi"], [7, 3, "laser"], [5, 6, "life"]],
+      "moving": [[0, 5, "t", 0, 5, 80], [6, 5, "t", 6, 11, 80]]
+    }
+  ]
+}

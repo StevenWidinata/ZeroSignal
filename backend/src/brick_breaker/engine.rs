@@ -369,6 +369,7 @@ pub struct Summary {
     pub game_ms: u64,
 }
 
+#[derive(Clone)]
 pub struct Game {
     pub rng: Rng,
     /// Endless / Daily (waves) rather than a Campaign level.
@@ -1019,12 +1020,13 @@ pub mod tests {
     use super::*;
 
     /// A simple test bot: keeps the paddle under the lowest falling ball
-    /// (aiming a little off-centre to vary the bounce), chases drops while
+    /// (aiming a little off-centre to vary the bounce; `style` shifts the
+    /// pattern), chases drops while
     /// every ball is going up, launches soon and fires whenever it can.
     /// Deterministic, so its runs make good shared test vectors.
-    pub fn bot_input(g: &Game) -> (Option<i32>, bool, bool) {
+    pub fn bot_input(g: &Game, style: u32) -> (Option<i32>, bool, bool) {
         let r = rules();
-        let aim = (((g.tick / 211) % 5) as i32 - 2) * 1500;
+        let aim = (((g.tick / 211 + style) % 5) as i32 - 2) * 1500;
         let falling = g.balls.iter().filter(|b| b.stuck.is_none() && b.sy > 0).max_by_key(|b| b.y);
         let want = if let Some(b) = falling {
             Some(b.x + aim)
@@ -1047,7 +1049,7 @@ pub mod tests {
                 g.quit();
                 break;
             }
-            let (t, l, f) = bot_input(&g);
+            let (t, l, f) = bot_input(&g, seed % 5);
             if let Some(x) = t {
                 inputs.push((g.tick, x));
             }
@@ -1241,6 +1243,40 @@ pub mod tests {
         assert_eq!(replay(1, None, &[], Some(0)).unwrap().score, 0);
     }
 
+    /// `cargo test --release brick_print_waves -- --ignored --nocapture`
+    #[test]
+    #[ignore]
+    fn brick_print_waves() {
+        let mut rng = Rng::new(5);
+        for wave in 1..=14 {
+            let l = wave_layout(&mut rng, wave);
+            let count = |k: Kind| l.iter().filter(|b| b.t == k).count();
+            println!(
+                "wave {wave:>2}: {:>3} bricks  tough {:>2} steel {:>2} expl {:>2} moving {} drops {:>2}",
+                l.len(),
+                count(Kind::Tough),
+                count(Kind::Steel),
+                count(Kind::Explosive),
+                l.iter().filter(|b| b.m.is_some()).count(),
+                l.iter().filter(|b| b.d.is_some()).count()
+            );
+        }
+        for seed in 1..=4u32 {
+            let mut g = Game::new(seed, None);
+            let mut at = vec![0u32];
+            while g.over.is_none() && g.tick < 60 * 60 * 20 {
+                let w = g.s.wave;
+                let (t, l, f) = bot_input(&g, seed);
+                g.step(t, l, f);
+                if g.s.wave != w {
+                    at.push(g.tick / 60);
+                }
+            }
+            let gaps: Vec<u32> = at.windows(2).map(|w| w[1] - w[0]).collect();
+            println!("seed {seed}: secs per wave {gaps:?} score {} after 20 min", g.s.score);
+        }
+    }
+
     /// Prints shared/brick_vectors.json:
     /// `cargo test --release brick_print_vectors -- --ignored --nocapture`.
     #[test]
@@ -1263,12 +1299,22 @@ pub mod tests {
                 "summary": s,
             }));
         }
+        // Real Campaign levels, by id, so both sides also read the level file alike.
+        for (seed, id) in [(77u32, 8u32), (81, 20)] {
+            let lv = super::super::levels::level(id).unwrap();
+            let (inputs, s) = bot_run(seed, Some(lv), u32::MAX);
+            out.push(serde_json::json!({
+                "seed": seed, "level": null, "level_id": id, "stop_at": null,
+                "inputs": inputs.iter().map(|t| [t.0 as i64, t.1 as i64]).collect::<Vec<_>>(),
+                "summary": s,
+            }));
+        }
         // A run where the ball is lost a few times (the bot stops after a while).
         let lv = &levels[0];
         let mut g = Game::new(66, Some(lv));
         let mut inputs = Vec::new();
         while g.over.is_none() {
-            let (t, l, f) = if g.tick < 1500 { bot_input(&g) } else { (None, g.tick.is_multiple_of(50), false) };
+            let (t, l, f) = if g.tick < 1500 { bot_input(&g, 0) } else { (None, g.tick.is_multiple_of(50), false) };
             if let Some(x) = t {
                 inputs.push((g.tick, x));
             }
@@ -1293,10 +1339,14 @@ pub mod tests {
         const V: &str = include_str!("../../../shared/brick_vectors.json");
         let v: serde_json::Value = serde_json::from_str(V).unwrap();
         let runs = v["runs"].as_array().unwrap();
-        assert!(runs.len() >= 6);
+        assert!(runs.len() >= 8);
         for run in runs {
             let seed = run["seed"].as_u64().unwrap() as u32;
-            let level: Option<Level> = serde_json::from_value(run["level"].clone()).unwrap();
+            let mut level: Option<Level> = serde_json::from_value(run["level"].clone()).unwrap();
+            if let Some(id) = run["level_id"].as_u64() {
+                level = super::super::levels::level(id as u32).cloned();
+                assert!(level.is_some(), "level {id}");
+            }
             let stop = run["stop_at"].as_u64().map(|x| x as u32);
             let inputs: Vec<Input> = run["inputs"]
                 .as_array()
