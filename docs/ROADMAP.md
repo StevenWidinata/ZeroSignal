@@ -296,9 +296,9 @@ Commits go to `main` step by step (each step live once tested); owner is the onl
 - **F. Game Kit** (`feat/game-kit`, done): `docs/GAME_KIT.md` rules so every game
   feels the same; shared ModeSelect / ResultsPanel / GameHeader used by all
   games; "Coming soon" cards and a /roadmap page.
-- **Planned games:** Brick Breaker, Signal Flap, Pixel Picross, Block Drop,
-  Pong Online, Reversi, Dots & Boxes (Sonar, Snake Signal, Checkers, Sudoku
-  and Memory Match are live). All follow the Game Kit.
+- **Planned games:** Signal Flap, Pixel Picross, Block Drop, Pong Online,
+  Reversi, Dots & Boxes (Sonar, Snake Signal, Checkers, Sudoku, Memory Match
+  and Brick Breaker are live). All follow the Game Kit.
 - **Ideas (build when the owner picks):** Live Arcade Lobby, Community Boss
   Raid, Ghost races, Pet that grows, Glitch Hour, Free seasons, Crews, Share
   cards, Chiptune Jukebox, Weekend tournaments.
@@ -487,6 +487,28 @@ Commits go to `main` step by step (each step live once tested); owner is the onl
 - **Extras:** 3 quests (40 → 43), 4 achievements (64 → 68: Sharp Eye, Total
   Recall, Chaos Master, Full Locker), Stats card, rebindable keys. The "New"
   ribbon was removed from every hub card the same day.
+
+### Brick Breaker (`feat/brick-breaker`; agreed and done 2026-11-25)
+- **Modes (owner picked):** a 24-level Campaign (2 worlds of 12, levels open
+  one by one), Endless waves, and a Daily (today's waves for everyone, one
+  try). 3 lives; stars = lives left on a clear.
+- **Rules:** normal, tough (2-3 hits), steel, explosive and moving bricks;
+  drops Wide, Multi-ball, Slow, Extra life, Laser, Sticky (placed by hand in
+  the Campaign, from the seed in Endless/Daily). One speed curve for everyone.
+- **Fair play:** fixed 60 ticks/s, integer-only engine copied line for line in
+  Rust and TS with shared vectors; the server replays the paddle inputs
+  (clamped paddle speed, clock, order and expiry checks). Test bots clear
+  every level (an aiming bot in under 4 minutes each).
+- **Boards:** Endless, Campaign (stars, then summed best scores, stored as
+  stars x 10,000,000 + score and shown apart), Daily. Weekly prizes on
+  Endless and Campaign.
+- **Rewards:** score coins/XP, 10 coins once per new star (outside the cap),
+  20% lucky drop on 3-star clears and Endless/Daily 10,000+. 32 cosmetics (8
+  paddles, balls, brick themes, backdrops; half free).
+- **Extras:** 3 quests (43 -> 46: Brick by Brick, Level Up, Wave Rider), 4
+  achievements (68 -> 72: Wall Breaker, Brick Master, Wave Survivor, Chain
+  Reaction / Demolisher), Stats card, share card, Today's Dailies entry,
+  rebindable keys and phone buttons.
 
 ### Sonar powers everywhere (`feat/sonar-powers-everywhere`, `feat/sonar-daily-powers`; agreed and done 2026-11-22)
 - Owner found Sonar boring with only pings (the menu opened on Classic and the

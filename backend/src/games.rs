@@ -103,14 +103,15 @@ pub const GAMES: &[GameInfo] = &[
         ranking: Ranking::Best,
         prize_boards: &[1, 2],
     },
-    // Planned (docs/ROADMAP.md, docs/GAME_KIT.md): shown as "Coming soon".
     GameInfo {
         id: "brick-breaker",
         title: "Brick Breaker",
-        status: GameStatus::ComingSoon,
+        status: GameStatus::Live,
         ranking: Ranking::Best,
-        prize_boards: &[],
+        // Endless and Campaign (not the Daily board).
+        prize_boards: &[1, 2],
     },
+    // Planned (docs/ROADMAP.md, docs/GAME_KIT.md): shown as "Coming soon".
     GameInfo {
         id: "signal-flap",
         title: "Signal Flap",
@@ -212,6 +213,7 @@ mod tests {
         assert!(require("checkers").is_ok());
         assert!(require("sudoku").is_ok());
         assert!(require("memory-match").is_ok());
+        assert!(require("brick-breaker").is_ok());
         assert!(require("../etc").is_err());
         assert!(require("").is_err());
     }
