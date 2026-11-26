@@ -57,6 +57,9 @@ pub enum Event {
     /// bricks broken, whether it cleared a Campaign level, and the wave
     /// reached in Endless (0 in other modes).
     BrickRun { bricks: i64, level_cleared: bool, endless_wave: i64 },
+    /// A finished Signal Flap run (10+ seconds): gaps passed and signal bars
+    /// picked up.
+    FlapRun { gaps: i64, bars: i64 },
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -100,6 +103,9 @@ enum Goal {
     BrickBricks,
     BrickClears,
     BrickWave(i64),
+    FlapRuns,
+    FlapBars,
+    FlapGaps(i64),
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -175,6 +181,9 @@ impl QuestDef {
             (Goal::BrickBricks, BrickRun { bricks, .. }) => bricks.clamp(0, i32::MAX as i64) as i32,
             (Goal::BrickClears, BrickRun { level_cleared, .. }) => hit(level_cleared),
             (Goal::BrickWave(min), BrickRun { endless_wave, .. }) => hit(endless_wave >= min),
+            (Goal::FlapRuns, FlapRun { .. }) => 1,
+            (Goal::FlapBars, FlapRun { bars, .. }) => bars.clamp(0, i32::MAX as i64) as i32,
+            (Goal::FlapGaps(min), FlapRun { gaps, .. }) => hit(gaps >= min),
             _ => 0,
         }
     }
@@ -186,7 +195,7 @@ const fn q(id: &'static str, title: &'static str, goal: Goal, target: i32, coins
 
 use Game::{ConnectFour as CF, TicTacToe as TTT};
 
-pub const POOL: [QuestDef; 46] = [
+pub const POOL: [QuestDef; 49] = [
     q("cf_play_3", "Play 3 Connect Four games vs the AI", Goal::PlayAi(CF), 3, 20, 30),
     q("cf_win_2_medium", "Win 2 Connect Four games vs Medium or harder",
         Goal::WinAi { game: Some(CF), min_level: 2 }, 2, 40, 60),
@@ -240,6 +249,9 @@ pub const POOL: [QuestDef; 46] = [
     q("brick_bricks_150", "Brick by Brick: break 150 bricks in Brick Breaker", Goal::BrickBricks, 150, 30, 40),
     q("brick_clear_3", "Level Up: clear 3 Brick Breaker Campaign levels", Goal::BrickClears, 3, 40, 60),
     q("brick_wave_5", "Wave Rider: reach wave 5 in Brick Breaker Endless", Goal::BrickWave(5), 1, 40, 60),
+    q("flap_play_3", "Lift Off: play 3 Signal Flap runs", Goal::FlapRuns, 3, 20, 30),
+    q("flap_bars_30", "Bar Collector: pick up 30 signal bars in Signal Flap", Goal::FlapBars, 30, 30, 40),
+    q("flap_gaps_25", "Long Flight: pass 25 gaps in one Signal Flap run", Goal::FlapGaps(25), 1, 40, 60),
 ];
 
 pub fn find(id: &str) -> Option<&'static QuestDef> {
@@ -456,5 +468,16 @@ mod tests {
         assert_eq!(quest("brick_wave_5").progress(&run(90, false, 4)), 0);
         assert_eq!(quest("brick_wave_5").progress(&run(90, false, 5)), 1);
         assert_eq!(quest("brick_wave_5").progress(&Event::SnakeRun { score: 9_000, best_combo: 5 }), 0);
+    }
+
+    #[test]
+    fn flap_quests() {
+        let run = |gaps, bars| Event::FlapRun { gaps, bars };
+        assert_eq!(quest("flap_play_3").progress(&run(0, 0)), 1);
+        assert_eq!(quest("flap_bars_30").progress(&run(12, 7)), 7);
+        assert_eq!(quest("flap_bars_30").progress(&run(12, -2)), 0);
+        assert_eq!(quest("flap_gaps_25").progress(&run(24, 9)), 0);
+        assert_eq!(quest("flap_gaps_25").progress(&run(25, 0)), 1);
+        assert_eq!(quest("flap_play_3").progress(&Event::MysteryBox), 0);
     }
 }

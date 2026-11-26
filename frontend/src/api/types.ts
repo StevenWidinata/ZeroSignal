@@ -663,6 +663,46 @@ export interface BrickCollection {
 }
 
 // ---------------------------------------------------------------------------
+// Signal Flap
+// ---------------------------------------------------------------------------
+
+export type FlapMode = "endless" | "daily";
+export type FlapItemKind = "drone" | "trail" | "sky";
+
+export interface FlapStart {
+  run_id: string;
+  seed: number;
+  mode: FlapMode;
+}
+
+/** The server's replay of a run (same shape as the engine's Summary). */
+export interface FlapSummary {
+  score: number;
+  gaps: number;
+  bars: number;
+  flaps: number;
+  ticks: number;
+  ended_by: "crash" | "time" | "quit" | null;
+  game_ms: number;
+}
+
+export interface FlapFinish {
+  mode: FlapMode;
+  summary: FlapSummary;
+  previous_best: number;
+  new_best: boolean;
+  rewards: Granted;
+  /** Lucky drop ("trail:comet"), if any. */
+  drop: string | null;
+}
+
+export interface FlapCollection {
+  drones: WamItemView[];
+  trails: WamItemView[];
+  skies: WamItemView[];
+}
+
+// ---------------------------------------------------------------------------
 // Minefield
 // ---------------------------------------------------------------------------
 

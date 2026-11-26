@@ -1,5 +1,10 @@
 import type {
   BrickCollection,
+  FlapCollection,
+  FlapFinish,
+  FlapItemKind,
+  FlapMode,
+  FlapStart,
   BrickFinish,
   BrickItemKind,
   BrickMode,
@@ -456,6 +461,25 @@ export const brickBreaker = {
   },
   buy(kind: BrickItemKind, id: string) {
     return post<BrickCollection>(`${BRICK}/buy`, { kind, id });
+  },
+};
+
+const FLAP = "/api/games/signal-flap";
+
+/** Signal Flap: the server gives a seed and replays your flaps itself. */
+export const signalFlap = {
+  start(mode: FlapMode, look: { drone: string; trail: string; sky: string }) {
+    return post<FlapStart>(`${FLAP}/runs`, { mode, ...look });
+  },
+  /** `flaps`: the ticks you flapped on, in order; `quitAt`: the tick you stopped at, if you quit. */
+  finish(runId: string, flaps: number[], quitAt: number | null) {
+    return post<FlapFinish>(`${FLAP}/runs/${encodeURIComponent(runId)}/finish`, { flaps, quit_at: quitAt });
+  },
+  collection() {
+    return request<FlapCollection>(`${FLAP}/collection`);
+  },
+  buy(kind: FlapItemKind, id: string) {
+    return post<FlapCollection>(`${FLAP}/buy`, { kind, id });
   },
 };
 

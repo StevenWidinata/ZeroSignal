@@ -1,0 +1,33 @@
+{
+  "_doc": "Signal Flap cosmetics, read by backend/src/signal_flap/items.rs and the frontend (which draws them from `art`). price null = free for everyone; the rest are bought with coins or found as lucky drops.",
+  "drones": [
+    { "id": "scout", "name": "Scout", "rarity": "common", "price": null, "art": { "style": "round", "body": "#5B8DEF", "rotor": "#DCE6F5", "light": "#7CFFB2" } },
+    { "id": "relay", "name": "Relay", "rarity": "common", "price": null, "art": { "style": "box", "body": "#F4A62A", "rotor": "#3A3F4B", "light": "#FFFFFF" } },
+    { "id": "pixel", "name": "Pixel Drone", "rarity": "common", "price": null, "art": { "style": "pixel", "body": "#7CFFB2", "rotor": "#2EE88A", "light": "#FFE066" } },
+    { "id": "kite", "name": "Paper Kite", "rarity": "common", "price": null, "art": { "style": "kite", "body": "#F2F5F9", "rotor": "#9AA4B2", "light": "#FF6B6B" } },
+    { "id": "chrome", "name": "Chrome Rotor", "rarity": "rare", "price": 400, "art": { "style": "round", "body": "#AEB7C4", "rotor": "#F2F5F9", "light": "#5B8DEF" } },
+    { "id": "neon", "name": "Neon Wing", "rarity": "rare", "price": 450, "art": { "style": "wing", "body": "#FF4FA3", "rotor": "#FFC2E0", "light": "#2EE8C4" } },
+    { "id": "crystal", "name": "Crystal Prism", "rarity": "epic", "price": 700, "art": { "style": "prism", "body": "#8FD8FF", "rotor": "#E8F8FF", "light": "#FFFFFF" } },
+    { "id": "gold", "name": "Golden Beacon", "rarity": "legendary", "price": 1200, "art": { "style": "beacon", "body": "#E5B522", "rotor": "#FFF0A8", "light": "#FF8A3D" } }
+  ],
+  "trails": [
+    { "id": "none", "name": "None", "rarity": "common", "price": null, "art": { "style": "none", "color": "#FFFFFF" } },
+    { "id": "waves", "name": "Signal Waves", "rarity": "common", "price": null, "art": { "style": "waves", "color": "#7CFFB2" } },
+    { "id": "sparks", "name": "Sparks", "rarity": "common", "price": null, "art": { "style": "sparks", "color": "#FFE066" } },
+    { "id": "dots", "name": "Pixel Dots", "rarity": "common", "price": null, "art": { "style": "dots", "color": "#5B8DEF" } },
+    { "id": "static", "name": "Static", "rarity": "rare", "price": 350, "art": { "style": "static", "color": "#DCE6F5" } },
+    { "id": "bubbles", "name": "Bubbles", "rarity": "rare", "price": 400, "art": { "style": "bubbles", "color": "#8FD8FF" } },
+    { "id": "stardust", "name": "Stardust", "rarity": "epic", "price": 600, "art": { "style": "stars", "color": "#FFF0A8" } },
+    { "id": "comet", "name": "Comet Tail", "rarity": "legendary", "price": 1000, "art": { "style": "comet", "color": "#FF8A3D" } }
+  ],
+  "skies": [
+    { "id": "day", "name": "Day Sky", "rarity": "common", "price": null, "art": { "style": "plain", "top": "#7EC8F2", "bottom": "#CDEBFA", "tower": "#4B5563", "accent": "#E85D5D", "ground": "#6BA368" } },
+    { "id": "city", "name": "Night City", "rarity": "common", "price": null, "art": { "style": "city", "top": "#0E1A33", "bottom": "#24365C", "tower": "#3A4A6B", "accent": "#FFD25A", "ground": "#141C2E" } },
+    { "id": "blueprint", "name": "Blueprint", "rarity": "common", "price": null, "art": { "style": "grid", "top": "#1E4C8F", "bottom": "#1E4C8F", "tower": "#DCE9FA", "accent": "#FFFFFF", "ground": "#173D73" } },
+    { "id": "terminal", "name": "Terminal", "rarity": "common", "price": null, "art": { "style": "scan", "top": "#06110A", "bottom": "#06110A", "tower": "#2EE88A", "accent": "#7CFFB2", "ground": "#0B2414" } },
+    { "id": "sunset", "name": "Sunset", "rarity": "rare", "price": 400, "art": { "style": "sun", "top": "#3B2A5C", "bottom": "#F08A5D", "tower": "#2A1F3D", "accent": "#FFD25A", "ground": "#2A1F3D" } },
+    { "id": "synthwave", "name": "Synthwave", "rarity": "rare", "price": 450, "art": { "style": "synth", "top": "#14092B", "bottom": "#3B1460", "tower": "#FF4FA3", "accent": "#2EE8C4", "ground": "#1A0B33" } },
+    { "id": "aurora", "name": "Northern Lights", "rarity": "epic", "price": 700, "art": { "style": "aurora", "top": "#061826", "bottom": "#0F3B4A", "tower": "#C9D6E3", "accent": "#7CFFB2", "ground": "#0A2230" } },
+    { "id": "space", "name": "Deep Space", "rarity": "legendary", "price": 1200, "art": { "style": "space", "top": "#05060F", "bottom": "#120E2B", "tower": "#8A93A6", "accent": "#FFF0A8", "ground": "#1C1A2E" } }
+  ]
+}
