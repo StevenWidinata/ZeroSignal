@@ -19,7 +19,7 @@ describe("play styles", () => {
   it("filters the live games", () => {
     expect(ids("all")).toHaveLength(LIVE_GAMES.length);
     expect(ids("online")).toEqual(expect.arrayContaining(["chess", "checkers", "sonar", "connect-four", "tic-tac-toe"]));
-    expect(ids("offline")).toEqual(expect.arrayContaining(["snake-signal", "brick-breaker", "2048", "sling-squad", "minefield", "whack-a-mole"]));
+    expect(ids("offline")).toEqual(expect.arrayContaining(["snake-signal", "brick-breaker", "signal-flap", "2048", "sling-squad", "minefield", "whack-a-mole"]));
     // Two groups that split every game.
     expect(countBy(LIVE_GAMES, "online") + countBy(LIVE_GAMES, "offline")).toBe(LIVE_GAMES.length);
     expect(ids("online").filter((id) => ids("offline").includes(id))).toEqual([]);

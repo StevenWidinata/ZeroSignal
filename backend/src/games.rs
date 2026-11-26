@@ -111,14 +111,15 @@ pub const GAMES: &[GameInfo] = &[
         // Endless and Campaign (not the Daily board).
         prize_boards: &[1, 2],
     },
-    // Planned (docs/ROADMAP.md, docs/GAME_KIT.md): shown as "Coming soon".
     GameInfo {
         id: "signal-flap",
         title: "Signal Flap",
-        status: GameStatus::ComingSoon,
+        status: GameStatus::Live,
         ranking: Ranking::Best,
-        prize_boards: &[],
+        // Endless only (not the Daily board).
+        prize_boards: &[1],
     },
+    // Planned (docs/ROADMAP.md, docs/GAME_KIT.md): shown as "Coming soon".
     GameInfo {
         id: "memory-match",
         title: "Memory Match",
@@ -214,6 +215,7 @@ mod tests {
         assert!(require("sudoku").is_ok());
         assert!(require("memory-match").is_ok());
         assert!(require("brick-breaker").is_ok());
+        assert!(require("signal-flap").is_ok());
         assert!(require("../etc").is_err());
         assert!(require("").is_err());
     }

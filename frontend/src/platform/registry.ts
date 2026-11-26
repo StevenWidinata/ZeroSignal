@@ -4,6 +4,7 @@ import checkersGame from "../games/checkers";
 import chess from "../games/chess";
 import sonarGame from "../games/sonar";
 import snakeSignal from "../games/snake-signal";
+import signalFlap from "../games/signal-flap";
 import sudokuGame from "../games/sudoku";
 import memoryMatchGame from "../games/memory-match";
 import slingSquad from "../games/sling-squad";
@@ -15,7 +16,7 @@ import { UPCOMING } from "../games/upcoming";
 import type { GameModule } from "./types";
 
 /** All games on the platform, in hub display order. */
-export const GAMES: GameModule[] = [slingSquad, connectFour, ticTacToe, whackAMole, minefield, game2048, chess, sonarGame, snakeSignal, checkersGame, sudokuGame, memoryMatchGame, brickBreaker, ...UPCOMING];
+export const GAMES: GameModule[] = [slingSquad, connectFour, ticTacToe, whackAMole, minefield, game2048, chess, sonarGame, snakeSignal, checkersGame, sudokuGame, memoryMatchGame, brickBreaker, signalFlap, ...UPCOMING];
 
 export function findGame(id: string | undefined): GameModule | undefined {
   return GAMES.find((g) => g.meta.id === id);

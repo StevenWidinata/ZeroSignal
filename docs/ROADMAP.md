@@ -296,9 +296,9 @@ Commits go to `main` step by step (each step live once tested); owner is the onl
 - **F. Game Kit** (`feat/game-kit`, done): `docs/GAME_KIT.md` rules so every game
   feels the same; shared ModeSelect / ResultsPanel / GameHeader used by all
   games; "Coming soon" cards and a /roadmap page.
-- **Planned games:** Signal Flap, Pixel Picross, Block Drop, Pong Online,
-  Reversi, Dots & Boxes (Sonar, Snake Signal, Checkers, Sudoku, Memory Match
-  and Brick Breaker are live). All follow the Game Kit.
+- **Planned games:** Pixel Picross, Block Drop, Pong Online, Reversi,
+  Dots & Boxes (Sonar, Snake Signal, Checkers, Sudoku, Memory Match, Brick
+  Breaker and Signal Flap are live). All follow the Game Kit.
 - **Ideas (build when the owner picks):** Live Arcade Lobby, Community Boss
   Raid, Ghost races, Pet that grows, Glitch Hour, Free seasons, Crews, Share
   cards, Chiptune Jukebox, Weekend tournaments.
@@ -509,6 +509,25 @@ Commits go to `main` step by step (each step live once tested); owner is the onl
   achievements (68 -> 72: Wall Breaker, Brick Master, Wave Survivor, Chain
   Reaction / Demolisher), Stats card, share card, Today's Dailies entry,
   rebindable keys and phone buttons.
+
+### Signal Flap (`feat/signal-flap`; agreed and done 2026-11-26)
+- **Modes (owner picked):** Endless and a Daily (today's course for everyone,
+  one try). A signal drone flies through gaps in antenna towers; one hit on a
+  tower, the ground or the ceiling ends the run.
+- **Rules:** gaps narrow and the speed steps up with distance, gaps slide from
+  gap 15, signal bars to pick up. Score = gaps + bars (boards show the gaps
+  too). One speed curve for everyone. One button (click/tap, Space/Up/W).
+- **Fair play:** fixed 60 ticks/s, integer-only engine copied line for line in
+  Rust and TS with shared vectors; the server replays the flap ticks (clock,
+  order and expiry checks). A test search flies 500 gaps on every test seed.
+- **Boards:** Endless and Daily; weekly prizes on Endless.
+- **Rewards:** score coins/XP like Snake Signal (runs under 10 s pay nothing),
+  20% lucky drop on runs scoring 50+. 24 cosmetics (8 drones, trails, skies;
+  half free).
+- **Extras:** 3 quests (46 -> 49: Lift Off, Bar Collector, Long Flight), 4
+  achievements (72 -> 76: Clear Signal / Signal Pilot, Long Range, Bar
+  Hoarder, Daily Flyer), Stats card, share card, Today's Dailies entry,
+  rebindable keys.
 
 ### Sonar powers everywhere (`feat/sonar-powers-everywhere`, `feat/sonar-daily-powers`; agreed and done 2026-11-22)
 - Owner found Sonar boring with only pings (the menu opened on Classic and the

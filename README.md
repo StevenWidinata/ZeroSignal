@@ -23,7 +23,8 @@ A hub of fun browser games with a retro arcade UI and real, **server-verified le
 | Sudoku       | Live        | Classic 9×9 in 4 levels + a Daily; every puzzle has one solution and needs no guessing; notes, hints with reasons, Check when the grid is full; 8 board themes |
 | Memory Match | Live        | Online only: take turns flipping pairs with a friend on 4×4, 4×6 or 6×6; Chaos mode adds 10 confusing power-ups (bring 3) |
 | Brick Breaker | Live       | A 24-level Campaign in 2 worlds (stars = lives left), Endless waves and a Daily; tough, steel, explosive and moving bricks; 6 drops; 32 cosmetics; the server replays every paddle move |
-| 4 more       | Coming soon | Signal Flap, Pixel Picross, Block Drop, Pong Online (see `/roadmap`) |
+| Signal Flap  | Live        | One button: fly a signal drone through the gaps in antenna towers, picking up signal bars; gaps narrow, speed up and slide the farther you go; Endless and a Daily; 24 cosmetics; the server replays every flap |
+| 3 more       | Coming soon | Pixel Picross, Block Drop, Pong Online (see `/roadmap`) |
 
 ## Features
 
@@ -37,10 +38,10 @@ A hub of fun browser games with a retro arcade UI and real, **server-verified le
 - The Hub shows **4 games per row** (2 on tablets, 1 on phones), and every page has the same big, labelled **← Back** button at the top left.
 - **Settings** open full-screen over whatever you're doing (a game keeps running underneath; Esc or ✕ closes). A sidebar lists the sections (Appearance · Sound · Gameplay · Controls · Privacy · Account), each setting is one row with a short explanation and its switch or picker on the right, a **search box** finds any setting (press /), each section has its own **Reset this section**, and Appearance shows a **live preview** of your theme, text size and contrast. On phones the section list comes first and you tap into a section. Registered players' settings (and theme) are **saved to the account** and follow them to every device (the account's copy wins on login); guests' stay in the browser.
   - **Display:** high contrast (plain black/white, bright borders), readable font (replaces the pixel font), fullscreen, FPS counter, light graphics, colorblind-friendly, reduced motion (also follows your device setting), screen shake, text size S/M/L/XL.
-  - **Controls:** shortcut keys on every page (**M** mute everything, **F** fullscreen, **Esc** close a window / pause Whack-a-Mole, Snake Signal or Brick Breaker; a game that uses the same key keeps it), with a switch to turn them off, and **every game's keys can be changed**: click ✕ to remove a key or **+ Key** and press a new one (up to 4 per action), with a warning when two actions share a key and a **Reset keys** button per game. Changed keys are part of the synced settings. Connect Four (1–7 drop in a column) and Tic-Tac-Toe (numpad layout, 7 8 9 = top row) can be played by keyboard too.
+  - **Controls:** shortcut keys on every page (**M** mute everything, **F** fullscreen, **Esc** close a window / pause Whack-a-Mole, Snake Signal, Brick Breaker or Signal Flap; a game that uses the same key keeps it), with a switch to turn them off, and **every game's keys can be changed**: click ✕ to remove a key or **+ Key** and press a new one (up to 4 per action), with a warning when two actions share a key and a **Reset keys** button per game. Changed keys are part of the synced settings. Connect Four (1–7 drop in a column) and Tic-Tac-Toe (numpad layout, 7 8 9 = top row) can be played by keyboard too.
   - **Sound and music:** on/off and volume for each, plus a separate **menu sounds** volume for button clicks.
   - **Privacy:** **hide me on leaderboards** (you still earn everything, but get no weekly prizes) and **private profile** (your page shows only your name). **Pop-ups:** switch off the daily-login pop-up (claim from the 🎁 button on the Hub instead), the level-up pop-up and the reward toasts separately.
-  - **Gameplay:** turn timer, **ask before leaving a round** (warns before closing the tab or opening another page mid-round in Whack-a-Mole, Snake Signal, Brick Breaker, Sling Squad and Minefield), vibration on phones.
+  - **Gameplay:** turn timer, **ask before leaving a round** (warns before closing the tab or opening another page mid-round in Whack-a-Mole, Snake Signal, Brick Breaker, Signal Flap, Sling Squad and Minefield), vibration on phones.
   - **Help:** reset tutorials so every "how to play" shows again.
   - **Account** (registered players): change username (free, once every 30 days), email and password (both need your current password), and **delete account**: you're signed out and hidden at once, and the account is deleted for good after 7 days unless you log in again before then.
 - **Stats page** (`/stats`): your level, coins earned and spent, tokens, login streak, quests and achievements, plus a card per game: AI series win rates per level, best and average scores per mode or size, Minefield and Sudoku best times, Whack-a-Mole best combo and FEVER rounds, 2048 biggest tile and games that reached 2048. Only server-verified results count.
@@ -141,6 +142,24 @@ More:
 - **Looks:** 8 paddles, 8 balls, 8 brick themes and 8 backdrops, half free (paid: 350-1,200 coins). The map on each level tile is drawn in your brick theme.
 - **Extras:** a share card for the Daily, a Stats card (runs, bricks, levels cleared, stars, best wave, biggest chain), 3 quests and 4 achievements with titles.
 
+## Signal Flap
+
+A one-button flyer. Your small signal drone flies through the gaps in antenna towers; one hit on a tower, the ground or the top of the sky ends the run. Two modes:
+
+- **Endless:** fly as far as you can. Every run has its own course.
+- **Daily:** today's course, the same for everyone (seed = WIB date). One ranked try.
+
+More:
+
+- **Course:** the drone hovers until your first flap. The gaps get narrower and the towers come faster the farther you fly, and from gap 15 some gaps slide up and down. Signal bars float in and between the gaps, some in risky spots. One speed curve for everyone.
+- **Score:** +1 for every gap passed and every signal bar. Boards show the score and the gap count.
+- **Controls:** click or tap the board, or press Space, Up or W, to flap; Esc/P pauses (rebindable). Phones need no extra buttons.
+- **Fair play:** the game runs at 60 ticks/s with integer math only, line for line the same in Rust and TypeScript (`shared/flap_rules.json`, checked by `shared/flap_vectors.json`). The browser sends only the ticks you flapped on; the server replays them and checks the clock, the order of inputs, the 60-minute expiry and ownership. A test search proves every course can be flown for 500 gaps.
+- **Boards:** Endless (best score) and today's Daily. Endless pays weekly prizes.
+- **Rewards:** coins and XP from the score like Snake Signal (runs under 10 s pay nothing), and a 20% lucky drop of a cosmetic you don't own on Endless or Daily runs scoring 50+.
+- **Looks:** 8 drones, 8 trails and 8 skies, half free (paid: 350-1,200 coins).
+- **Extras:** a share card for the Daily, a Today's Dailies entry, a Stats card (runs, gaps, bars, most gaps in a run, Dailies played), 3 quests and 4 achievements with titles.
+
 ## Sling Squad
 
 A slingshot physics game with its own cast: **Pip** (balanced), **Zip** (dash), **Boomer** (explode), **Eggbert** (egg drop), **Tank** (heavy) and **Trio** (splits in three), against purple one-eyed **gobbos** hiding in wood, stone and ice forts. (It was called "Angry Bird" before; migration 0019 renamed its id and birds in saved scores, and old links redirect.)
@@ -236,7 +255,7 @@ A pop-up offers the reward when you open the site. Claim once per day (days star
 
 ### Daily quests
 
-Every day (00:00 WIB) you get 3 different random quests, shown on the Hub and on the **Quests** page (`/quests`). The nav shows a badge when one is ready to claim. Only results the server verified count: AI games, Sling Squad, Whack-a-Mole, Minefield, 2048, chess and Sonar results (vs Zero-Bot, the Daily puzzle and the Daily Hunt), Sudoku solves, online Memory Match games, Brick Breaker runs, and mystery boxes. Local 2-player games don't count.
+Every day (00:00 WIB) you get 3 different random quests, shown on the Hub and on the **Quests** page (`/quests`). The nav shows a badge when one is ready to claim. Only results the server verified count: AI games, Sling Squad, Whack-a-Mole, Minefield, 2048, chess and Sonar results (vs Zero-Bot, the Daily puzzle and the Daily Hunt), Sudoku solves, online Memory Match games, Brick Breaker and Signal Flap runs, and mystery boxes. Local 2-player games don't count.
 
 - Press **Claim** on a finished quest to get its coins + XP. Claiming all 3 pays a bonus **1 token**.
 - **Reroll:** once per day, swap one unfinished quest for a new random one.
@@ -283,10 +302,13 @@ Every day (00:00 WIB) you get 3 different random quests, shown on the Hub and on
 | Brick by Brick: break 150 bricks in Brick Breaker | 30 | 40 |
 | Level Up: clear 3 Brick Breaker Campaign levels | 40 | 60 |
 | Wave Rider: reach wave 5 in Brick Breaker Endless | 40 | 60 |
+| Lift Off: play 3 Signal Flap runs | 20 | 30 |
+| Bar Collector: pick up 30 signal bars in Signal Flap | 30 | 40 |
+| Long Flight: pass 25 gaps in one Signal Flap run | 40 | 60 |
 
 ## Achievements
 
-The `/achievements` page lists 72 one-time achievements with progress bars; locked ones are visible too. The server works out progress from results it already verified (matches, scores, the coin ledger, owned items, login and quest history), so progress made before achievements existed counts as well. Press **Claim** to get the coins, the same amount of XP, and a **title** to wear. Achievement coins don't count toward the daily cap. Claimed achievements show on your public profile.
+The `/achievements` page lists 76 one-time achievements with progress bars; locked ones are visible too. The server works out progress from results it already verified (matches, scores, the coin ledger, owned items, login and quest history), so progress made before achievements existed counts as well. Press **Claim** to get the coins, the same amount of XP, and a **title** to wear. Achievement coins don't count toward the daily cap. Claimed achievements show on your public profile.
 
 | Achievement | Coins | Title |
 |-------------|-------|-------|
@@ -350,6 +372,10 @@ The `/achievements` page lists 72 one-time achievements with progress bars; lock
 | Get 3 stars on all 24 Brick Breaker levels | 400 | Brick Master |
 | Reach wave 10 in Brick Breaker Endless | 150 | Wave Survivor |
 | Break 8 or more bricks with one explosion chain in Brick Breaker | 150 | Demolisher |
+| Pass 50 gaps in one Signal Flap run | 120 | Signal Pilot |
+| Pass 100 gaps in one Signal Flap run | 300 | Long Range |
+| Pick up 1,000 signal bars in Signal Flap | 200 | Bar Hoarder |
+| Play 7 Signal Flap Dailies | 150 | Daily Flyer |
 
 ### Title looks
 
@@ -499,7 +525,7 @@ zero_signal/
 │       ├── daily.rs            # WIB (UTC+7) day boundary for everything daily
 │       ├── daily_login.rs      # 7-day login streak reward
 │       ├── quests/             # daily quest pool, progress hooks, claim/reroll API
-│       ├── achievements.rs     # 72 achievements, live progress, claim + titles
+│       ├── achievements.rs     # 76 achievements, live progress, claim + titles
 │       ├── chess/              # rules (cozy-chess), Zero-Bot AI, games API, items, daily puzzles
 │       ├── sonar/              # rules + Tactics, Zero-Bot (probability map, pings, powers), games API, Workshop, Campaign, Daily Hunt, items
 │       ├── character/          # item catalog, outfits, presets, shop, profiles
@@ -509,6 +535,7 @@ zero_signal/
 │       ├── sudoku/             # rules, logic solver (grading + hints with reasons), puzzle bank, games API, themes
 │       ├── memory/             # Memory Match rules (turns, 10 Chaos powers, per-player view), power locker, game records
 │       ├── brick_breaker/      # fixed-tick engine (= frontend engine.ts), 24 levels, wave generator, runs API, Campaign stars, items
+│       ├── signal_flap/        # fixed-tick engine (= frontend engine.ts), seeded tower course, runs API, items
 │       ├── game_2048/          # board, seeded tile drops, undo, move replay scorer, runs API
 │       ├── connect_four/       # rules (bitboard), AI, skins/spins, match API
 │       └── physics/            # rapier2d authoritative simulation
@@ -543,7 +570,7 @@ zero_signal/
 | GET  | `/api/me/quests` | today's 3 quests, progress, reroll and bonus status (auth) |
 | POST | `/api/me/quests/:slot/claim` | claim a finished quest; the 3rd claim adds the bonus token (auth) |
 | POST | `/api/me/quests/:slot/reroll` | swap one unfinished quest, once per day (auth) |
-| GET  | `/api/me/achievements` | all 72 achievements with live progress (auth) |
+| GET  | `/api/me/achievements` | all 76 achievements with live progress (auth) |
 | POST | `/api/me/achievements/:id/claim` | claim an unlocked achievement: coins + XP + title (auth) |
 | GET  | `/api/me/character` | outfit, owned items, presets, wallet (auth) |
 | PUT  | `/api/me/character/loadout` | wear an outfit (server checks ownership) (auth) |
@@ -588,6 +615,10 @@ zero_signal/
 | GET  | `/api/games/brick-breaker/levels` | your Campaign: stars and best per level, total stars and score, the highest open level (auth) |
 | GET  | `/api/games/brick-breaker/collection` | paddles, balls, brick themes and backdrops with prices and what you own (auth) |
 | POST | `/api/games/brick-breaker/buy` | `{kind, id}` buy a cosmetic with coins (auth) |
+| POST | `/api/games/signal-flap/runs` | `{mode, drone?, trail?, sky?}` start a run (Daily once per WIB day); returns `run_id`, `seed` (auth) |
+| POST | `/api/games/signal-flap/runs/:id/finish` | `{flaps: [tick, ...], quit_at?}` the server replays the run and pays out (auth) |
+| GET  | `/api/games/signal-flap/collection` | drones, trails and skies with prices and what you own (auth) |
+| POST | `/api/games/signal-flap/buy` | `{kind, id}` buy a cosmetic with coins (auth) |
 | POST | `/api/games/2048/runs` | `{mode}` start a game; returns `run_id`, `seed`, `size`, `undos` (Daily: continues today's if open) (auth) |
 | GET  | `/api/games/2048/runs/active` | your unfinished game with its saved moves, or null (auth) |
 | POST | `/api/games/2048/runs/:id/save` | `{moves}` save progress; must extend the saved moves (auth) |

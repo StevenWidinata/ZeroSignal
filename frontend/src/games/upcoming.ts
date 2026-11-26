@@ -17,7 +17,6 @@ const soon = (
 ): GameModule => ({ meta: { id, title, icon, accent, tagline, tags, play, status: "soon", scoreLabel: "Best score" } });
 
 export const UPCOMING: GameModule[] = [
-  soon("signal-flap", "Signal Flap", "🪽", "yellow", "One button. Fly through the gaps as far as you can.", ["Reflex", "One button"], ["solo", "daily"]),
   soon("pixel-picross", "Pixel Picross", "🖼️", "blue", "Solve the number clues to paint a hidden pixel picture.", ["Logic", "Pictures"], ["solo", "daily"]),
   soon("block-drop", "Block Drop", "🟪", "yellow", "Stack falling blocks and clear lines. The server replays it.", ["Puzzle", "Replay"], ["solo"]),
   soon("pong-online", "Pong Online", "🏓", "blue", "Paddles, a ball and a friend on another device.", ["Arcade", "Real-time"], ["online", "local"]),
