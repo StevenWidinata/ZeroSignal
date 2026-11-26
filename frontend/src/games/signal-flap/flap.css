@@ -1,0 +1,193 @@
+/* ---------- Signal Flap ---------- */
+
+/* Menu */
+.flap-mode-towers {
+  display: block;
+  width: 42px;
+  height: 28px;
+}
+.flap-mode-towers rect {
+  fill: var(--flap-tower, var(--ink));
+}
+.flap-mode-towers rect.cap {
+  fill: var(--flap-accent, var(--yellow));
+}
+.flap-menu > .game-controls {
+  justify-content: flex-start;
+}
+
+/* Shop swatches */
+.flap-swatch {
+  display: block;
+}
+.flap-swatch.drone {
+  width: 40px;
+  height: 28px;
+}
+.flap-swatch.trail {
+  width: 40px;
+  height: 20px;
+  border-radius: 4px;
+  background: #1b2233;
+}
+.flap-swatch.trail.none {
+  display: grid;
+  place-items: center;
+  font-size: 0.65rem;
+  color: #c9ced8;
+}
+.flap-swatch.sky {
+  position: relative;
+  width: 32px;
+  height: 38px;
+  overflow: hidden;
+  border-radius: 4px;
+}
+.flap-swatch-tower {
+  position: absolute;
+  left: 12px;
+  width: 8px;
+  top: 0;
+  height: 13px;
+}
+.flap-swatch-light {
+  position: absolute;
+  left: 14px;
+  top: 13px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+}
+.flap-swatch-ground {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 6px;
+}
+
+/* Legend */
+.flap-legend {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+.flap-legend > div {
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  align-items: center;
+  justify-items: start;
+  gap: 10px;
+  text-align: left;
+}
+.flap-legend-art {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: #1b2233;
+}
+.flap-legend-art svg {
+  width: 24px;
+  height: 24px;
+}
+.flap-legend-art .tower {
+  fill: var(--flap-tower, #9aa4b2);
+}
+.flap-legend-art .accent {
+  fill: var(--flap-accent, #ffd25a);
+}
+
+/* The round */
+.flap-round {
+  display: grid;
+  gap: 12px;
+  /* Keep the whole 3:4 board on screen on short windows too. */
+  max-width: min(480px, 100%, calc((100vh - 200px) * 0.75));
+  min-width: min(280px, 100%);
+  margin: 0 auto;
+}
+.flap-hud {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  padding: 10px 12px;
+}
+.flap-hud .wam-stat {
+  min-width: 44px;
+}
+.flap-hud strong {
+  font-variant-numeric: tabular-nums;
+}
+.flap-hud .wam-hud-btns {
+  margin-left: auto;
+}
+
+.flap-board {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  width: 100%;
+  overflow: hidden;
+  border: var(--bw) solid var(--line);
+  border-radius: var(--radius);
+  background: #7ec8f2;
+  box-shadow: var(--shadow-off) var(--shadow-off) 0 var(--line);
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.flap-board canvas {
+  display: block;
+}
+.flap-pop {
+  position: absolute;
+  z-index: 4;
+  transform: translate(-50%, -50%);
+  font-family: var(--font-pixel);
+  font-size: clamp(0.5rem, 2.2vw, 0.7rem);
+  white-space: nowrap;
+  color: #fff;
+  text-shadow: 2px 2px 0 #000;
+  pointer-events: none;
+  animation: flap-pop 0.8s var(--ease) forwards;
+}
+.flap-pop.gold { color: #ffd23f; }
+.flap-pop.good { color: #b8f5d0; }
+.flap-pop.bad { color: #ff8a8d; }
+@keyframes flap-pop {
+  to { transform: translate(-50%, -150%); opacity: 0; }
+}
+[data-motion="reduced"] .flap-pop {
+  animation: none;
+}
+.flap-start {
+  position: absolute;
+  left: 50%;
+  top: 64%;
+  z-index: 3;
+  max-width: 90%;
+  transform: translateX(-50%);
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 0.85rem;
+  text-align: center;
+  pointer-events: none;
+}
+.flap-ko strong {
+  font-family: var(--font-pixel);
+  font-size: clamp(0.8rem, 3.5vw, 1.1rem);
+  color: #ff8a8d;
+  text-shadow: 3px 3px 0 #000;
+  text-align: center;
+  padding: 0 12px;
+}
+.flap-ko.time strong {
+  color: #ffd23f;
+}
+.flap-help {
+  text-align: center;
+}

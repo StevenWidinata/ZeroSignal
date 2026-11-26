@@ -233,12 +233,24 @@ export const KEYMAPS: GameKeymap[] = [
     ],
     note: "Or move the mouse over the board, drag a finger on it, or turn on the phone buttons.",
   },
+  {
+    gameId: "signal-flap",
+    groups: [
+      {
+        actions: [
+          { id: "flap", label: "Flap", keys: ["Space", "ArrowUp", "KeyW"] },
+          { id: "pause", label: "Pause / resume", keys: ["Escape", "KeyP"] },
+        ],
+      },
+    ],
+    note: "Or click or tap anywhere on the board.",
+  },
 ];
 
 export const SHORTCUTS: KeyAction[] = [
   { id: "mute", label: "Mute / unmute everything", keys: ["KeyM"] },
   { id: "fullscreen", label: "Fullscreen on / off", keys: ["KeyF"] },
-  { id: "close", label: "Close a window (and pause Whack-a-Mole, Snake Signal or Brick Breaker)", keys: ["Escape"] },
+  { id: "close", label: "Close a window (and pause Whack-a-Mole, Snake Signal, Brick Breaker or Signal Flap)", keys: ["Escape"] },
 ];
 
 /** Most keys one action can have. */
