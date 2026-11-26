@@ -1,0 +1,50 @@
+{
+  "_doc": "Signal Flap rules, read by backend/src/signal_flap/engine.rs and frontend/src/games/signal-flap/engine.ts. Lengths are in arena units (100 units = 1 logical pixel of a 480 x 640 arena), times in ticks (60 per second), speeds in units per tick. Change both engines' tests (shared/flap_vectors.json) together.",
+  "width": 48000,
+  "height": 64000,
+  "ground_h": 4000,
+
+  "drone_x": 13000,
+  "drone_r": 1300,
+  "start_y": 28000,
+  "gravity": 45,
+  "flap_v": -820,
+  "max_fall": 1100,
+
+  "tower_w": 6400,
+  "spacing": 24000,
+  "first_x": 50000,
+  "margin": 5000,
+  "max_shift": 13000,
+
+  "gap_start": 17500,
+  "gap_step": 150,
+  "gap_min": 12500,
+
+  "speed_start": 240,
+  "speed_step": 20,
+  "speed_every": 10,
+  "speed_max": 420,
+
+  "_moving": "From gap `moving_from` on, `pct_start` % of gaps slide up and down (+`pct_step` per gap, up to `pct_max`), between `amp_min` and `amp_max` from their centre, at `speed_min`..`speed_max` per tick.",
+  "moving": {
+    "from": 15,
+    "pct_start": 20,
+    "pct_step": 2,
+    "pct_max": 60,
+    "amp_min": 3000,
+    "amp_max": 7000,
+    "speed_min": 30,
+    "speed_max": 70
+  },
+
+  "_bars": "A signal bar sits between two towers (from the 2nd tower on) with `pct` % chance, near the middle of the two gaps, up to `spread` off.",
+  "bars": {
+    "pct": 70,
+    "r": 1100,
+    "spread": 6000
+  },
+
+  "max_ticks": 216000,
+  "max_inputs": 100000
+}

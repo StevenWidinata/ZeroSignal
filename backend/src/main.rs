@@ -25,6 +25,7 @@ mod physics;
 mod quests;
 mod rng;
 mod scores;
+mod signal_flap;
 mod sonar;
 mod state;
 mod stats;
