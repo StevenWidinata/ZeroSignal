@@ -130,6 +130,17 @@ pub struct BrickRow {
     pub stars: Option<i64>,
 }
 
+#[derive(Serialize, sqlx::FromRow, Default)]
+pub struct FlapRow {
+    /// Finished runs in both modes.
+    pub runs: i64,
+    pub gaps: Option<i64>,
+    pub bars: Option<i64>,
+    /// The most gaps passed in one run.
+    pub best_gaps: Option<i32>,
+    pub dailies: i64,
+}
+
 #[derive(Serialize)]
 pub struct StatsView {
     pub joined: DateTime<Utc>,
@@ -149,6 +160,7 @@ pub struct StatsView {
     pub whack: WhackRow,
     pub snake: SnakeRow,
     pub brick: BrickRow,
+    pub flap: FlapRow,
     pub chess: ChessStats,
     pub checkers: ChessStats,
     pub sonar: SonarStats,
@@ -292,6 +304,15 @@ pub async fn my_stats(State(state): State<AppState>, user: AuthUser) -> AppResul
     .fetch_one(pool)
     .await?;
 
+    let flap: FlapRow = sqlx::query_as(
+        r#"SELECT COUNT(*) AS runs, SUM(gaps)::BIGINT AS gaps, SUM(bars)::BIGINT AS bars,
+                  MAX(gaps) AS best_gaps, COUNT(*) FILTER (WHERE mode = 'daily') AS dailies
+           FROM flap_runs WHERE user_id = $1 AND finished_at IS NOT NULL"#,
+    )
+    .bind(id)
+    .fetch_one(pool)
+    .await?;
+
     const LEVEL_ORDER: &str = "CASE level WHEN 'easy' THEN 1 WHEN 'medium' THEN 2 WHEN 'hard' THEN 3 ELSE 4 END";
     let chess_levels: Vec<LevelRow> = sqlx::query_as(&format!(
         r#"SELECT level::TEXT AS level, COUNT(*) AS played,
@@ -364,6 +385,7 @@ pub async fn my_stats(State(state): State<AppState>, user: AuthUser) -> AppResul
         whack,
         snake,
         brick,
+        flap,
         chess: ChessStats { levels: chess_levels, puzzles_played, puzzles_solved },
         checkers: ChessStats { levels: checkers_levels, puzzles_played: ck_played, puzzles_solved: ck_solved },
         sonar: SonarStats { levels: sonar_levels, hunts, best_hunt, flawless },

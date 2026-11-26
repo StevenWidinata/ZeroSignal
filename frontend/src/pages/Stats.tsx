@@ -163,6 +163,7 @@ export default function Stats() {
   const snakeBoards = s.boards.filter((b) => b.game_id === "snake-signal");
   // The Campaign board (2) packs stars and score into one number: shown above instead.
   const brickBoards = s.boards.filter((b) => b.game_id === "brick-breaker" && b.level !== 2);
+  const flapBoards = s.boards.filter((b) => b.game_id === "signal-flap");
   const totalGames =
     s.series.reduce((n, r) => n + r.played, 0) +
     ab.rounds +
@@ -173,6 +174,7 @@ export default function Stats() {
     s.g2048.games +
     s.snake.runs +
     s.brick.runs +
+    s.flap.runs +
     s.chess.levels.reduce((n, r) => n + r.played, 0) +
     s.chess.puzzles_played +
     s.checkers.levels.reduce((n, r) => n + r.played, 0) +
@@ -496,6 +498,55 @@ export default function Stats() {
                   {brickBoards.map((b) => (
                     <tr key={b.level}>
                       <th scope="row">{boardLabel("brick-breaker", b.level)}</th>
+                      <td className="num">{b.rounds}</td>
+                      <td className="num">{fmt(b.best)}</td>
+                      <td className="num">{fmt(b.average)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </GameCard>
+
+        <GameCard id="signal-flap" played={s.flap.runs > 0}>
+          <dl className="wam-stats">
+            <div>
+              <dt>Runs</dt>
+              <dd>{fmt(s.flap.runs)}</dd>
+            </div>
+            <div>
+              <dt>Gaps passed</dt>
+              <dd>{fmt(s.flap.gaps ?? 0)}</dd>
+            </div>
+            <div>
+              <dt>Signal bars</dt>
+              <dd>{fmt(s.flap.bars ?? 0)}</dd>
+            </div>
+            <div>
+              <dt>Most gaps in a run</dt>
+              <dd>{s.flap.best_gaps ?? "–"}</dd>
+            </div>
+            <div>
+              <dt>Dailies played</dt>
+              <dd>{fmt(s.flap.dailies)}</dd>
+            </div>
+          </dl>
+          {flapBoards.length > 0 && (
+            <div className="board-table-wrap">
+              <table className="board-table stats-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Mode</th>
+                    <th scope="col">Runs</th>
+                    <th scope="col">Best</th>
+                    <th scope="col">Average</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {flapBoards.map((b) => (
+                    <tr key={b.level}>
+                      <th scope="row">{boardLabel("signal-flap", b.level)}</th>
                       <td className="num">{b.rounds}</td>
                       <td className="num">{fmt(b.best)}</td>
                       <td className="num">{fmt(b.average)}</td>

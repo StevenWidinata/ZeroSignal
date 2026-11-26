@@ -1,4 +1,4 @@
-//! Achievements: 72 one-time goals. Progress is computed live from data the
+//! Achievements: 76 one-time goals. Progress is computed live from data the
 //! server already verified (matches, scores, ledger, inventory), so older
 //! progress counts too. Claiming pays coins + the same XP once, plus a title.
 
@@ -114,6 +114,11 @@ pub struct Stats {
     pub brick_three_stars: i64,
     pub brick_best_wave: i64,
     pub brick_best_chain: i64,
+    /// Signal Flap: the most gaps passed in one run, bars picked up in
+    /// total and Daily runs finished.
+    pub flap_best_gaps: i64,
+    pub flap_bars: i64,
+    pub flap_dailies: i64,
 }
 
 pub struct Achievement {
@@ -147,7 +152,7 @@ macro_rules! ach {
     };
 }
 
-pub static ACHIEVEMENTS: [Achievement; 72] = [
+pub static ACHIEVEMENTS: [Achievement; 76] = [
     ach!("cf_first_win", "First Drop", "Win your first Connect Four series", 30, "title-chip-dropper", 1, |s| s.cf_wins),
     ach!("cf_medium", "Thinking Ahead", "Win a Connect Four series vs Medium or harder", 40, "title-four-thinker", 1, |s| s.cf_wins_medium),
     ach!("cf_hard", "Hard Hitter", "Win a Connect Four series vs Hard or harder", 80, "title-grid-breaker", 1, |s| s.cf_wins_hard),
@@ -229,6 +234,10 @@ pub static ACHIEVEMENTS: [Achievement; 72] = [
     ach!("brick_wave_survivor", "Wave Survivor", "Reach wave 10 in Brick Breaker Endless", 150, "title-wave-survivor", 10, |s| s.brick_best_wave),
     ach!("brick_chain_reaction", "Chain Reaction", "Break 8 or more bricks with one explosion chain in Brick Breaker", 150, "title-demolisher", 8,
         |s| s.brick_best_chain),
+    ach!("flap_clear_signal", "Clear Signal", "Pass 50 gaps in one Signal Flap run", 120, "title-signal-pilot", 50, |s| s.flap_best_gaps),
+    ach!("flap_long_range", "Long Range", "Pass 100 gaps in one Signal Flap run", 300, "title-long-range", 100, |s| s.flap_best_gaps),
+    ach!("flap_bar_hoarder", "Bar Hoarder", "Pick up 1,000 signal bars in Signal Flap", 200, "title-bar-hoarder", 1_000, |s| s.flap_bars),
+    ach!("flap_daily_flyer", "Daily Flyer", "Play 7 Signal Flap Dailies", 150, "title-daily-flyer", 7, |s| s.flap_dailies),
     ach!("quest_days_7","Quest Master", "Finish all 3 daily quests in one day, 7 times", 200, "title-quest-master", 7, |s| s.quest_full_days),
 ];
 
@@ -353,6 +362,13 @@ pub async fn load_stats(pool: &sqlx::PgPool, user_id: Uuid) -> AppResult<Stats> 
     let brick_runs: (Option<i32>, Option<i32>) = sqlx::query_as(
         r#"SELECT MAX(wave) FILTER (WHERE mode = 'endless'), MAX(best_chain)
            FROM brick_runs WHERE user_id = $1 AND finished_at IS NOT NULL"#,
+    )
+    .bind(user_id)
+    .fetch_one(pool)
+    .await?;
+    let flap: (Option<i32>, Option<i64>, i64) = sqlx::query_as(
+        r#"SELECT MAX(gaps), SUM(bars)::BIGINT, COUNT(*) FILTER (WHERE mode = 'daily')
+           FROM flap_runs WHERE user_id = $1 AND finished_at IS NOT NULL"#,
     )
     .bind(user_id)
     .fetch_one(pool)
@@ -534,6 +550,9 @@ pub async fn load_stats(pool: &sqlx::PgPool, user_id: Uuid) -> AppResult<Stats> 
         brick_three_stars: brick_levels.1,
         brick_best_wave: brick_runs.0.unwrap_or(0).into(),
         brick_best_chain: brick_runs.1.unwrap_or(0).into(),
+        flap_best_gaps: flap.0.unwrap_or(0).into(),
+        flap_bars: flap.1.unwrap_or(0),
+        flap_dailies: flap.2,
     })
 }
 
@@ -707,11 +726,24 @@ mod tests {
     }
 
     #[test]
-    fn there_are_72_unique_achievements() {
+    fn signal_flap_achievements_follow_their_stats() {
+        let s = Stats { flap_best_gaps: 64, flap_bars: 1_250, flap_dailies: 3, ..Stats::default() };
+        let p = |id: &str| find(id).unwrap().progress(&s);
+        assert_eq!(
+            (p("flap_clear_signal"), p("flap_long_range"), p("flap_bar_hoarder"), p("flap_daily_flyer")),
+            (50, 64, 1_000, 3)
+        );
+        let v = build_view(&s, &[]);
+        let ready: Vec<_> = v.achievements.iter().filter(|a| a.unlocked).map(|a| a.id).collect();
+        assert_eq!(ready, vec!["flap_clear_signal", "flap_bar_hoarder"]);
+    }
+
+    #[test]
+    fn there_are_76_unique_achievements() {
         let mut ids: Vec<_> = ACHIEVEMENTS.iter().map(|a| a.id).collect();
         ids.sort();
         ids.dedup();
-        assert_eq!(ids.len(), 72);
+        assert_eq!(ids.len(), 76);
         assert!(ACHIEVEMENTS.iter().all(|a| a.coins > 0 && a.target > 0 && a.id.len() <= 32));
     }
 
@@ -726,9 +758,9 @@ mod tests {
         let mut titles: Vec<_> = ACHIEVEMENTS.iter().map(|a| a.title).collect();
         titles.sort();
         titles.dedup();
-        assert_eq!(titles.len(), 72);
+        assert_eq!(titles.len(), 76);
         let achievement_items = c.items.iter().filter(|i| i.unlock == Unlock::Achievement).count();
-        assert_eq!(achievement_items, 72, "orphan achievement-only items in catalog");
+        assert_eq!(achievement_items, 76, "orphan achievement-only items in catalog");
     }
 
     #[test]

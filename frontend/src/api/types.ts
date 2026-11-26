@@ -919,6 +919,13 @@ export interface StatsView {
     levels_cleared: number;
     stars: number | null;
   };
+  flap: {
+    runs: number;
+    gaps: number | null;
+    bars: number | null;
+    best_gaps: number | null;
+    dailies: number;
+  };
 }
 
 // ---------------------------------------------------------------------------

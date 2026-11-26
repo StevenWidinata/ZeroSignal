@@ -296,6 +296,10 @@
     { "id": "title-wall-breaker", "slot": "title", "name": "Wall Breaker", "rarity": "rare", "unlock": { "kind": "achievement" }, "art": { "text": "Wall Breaker", "tier": "silver", "color": "#e5484d", "icon": "🧱" } },
     { "id": "title-brick-master", "slot": "title", "name": "Brick Master", "rarity": "legendary", "unlock": { "kind": "achievement" }, "art": { "text": "Brick Master", "tier": "mythic", "color": "#f2c94c", "icon": "⭐", "effect": "shimmer" } },
     { "id": "title-wave-survivor", "slot": "title", "name": "Wave Survivor", "rarity": "epic", "unlock": { "kind": "achievement" }, "art": { "text": "Wave Survivor", "tier": "gold", "color": "#3e8bd9", "icon": "🌊", "effect": "glow" } },
-    { "id": "title-demolisher", "slot": "title", "name": "Demolisher", "rarity": "epic", "unlock": { "kind": "achievement" }, "art": { "text": "Demolisher", "tier": "gold", "color": "#ff5a1f", "icon": "💥", "effect": "glow" } }
+    { "id": "title-demolisher", "slot": "title", "name": "Demolisher", "rarity": "epic", "unlock": { "kind": "achievement" }, "art": { "text": "Demolisher", "tier": "gold", "color": "#ff5a1f", "icon": "💥", "effect": "glow" } },
+    { "id": "title-signal-pilot", "slot": "title", "name": "Signal Pilot", "rarity": "rare", "unlock": { "kind": "achievement" }, "art": { "text": "Signal Pilot", "tier": "silver", "color": "#38bdf8", "icon": "📡" } },
+    { "id": "title-long-range", "slot": "title", "name": "Long Range", "rarity": "legendary", "unlock": { "kind": "achievement" }, "art": { "text": "Long Range", "tier": "mythic", "color": "#4f7cff", "icon": "🛰️", "effect": "shimmer" } },
+    { "id": "title-bar-hoarder", "slot": "title", "name": "Bar Hoarder", "rarity": "epic", "unlock": { "kind": "achievement" }, "art": { "text": "Bar Hoarder", "tier": "gold", "color": "#2ee8b6", "icon": "📶", "effect": "glow" } },
+    { "id": "title-daily-flyer", "slot": "title", "name": "Daily Flyer", "rarity": "rare", "unlock": { "kind": "achievement" }, "art": { "text": "Daily Flyer", "tier": "silver", "color": "#f59e0b", "icon": "📅" } }
   ]
 }
