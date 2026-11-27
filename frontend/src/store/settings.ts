@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { DEFAULT_PING, parsePing, type PingSaved } from "../mascot/mood";
 
 /** Seconds per turn; 0 = timer off. */
 export type TurnTimer = 0 | 10 | 20 | 30;
@@ -46,6 +47,10 @@ export interface Settings {
   shortcuts: boolean;
   /** Changed game keys: "gameId.actionId" → KeyboardEvent.code list. */
   keys: Record<string, string[]>;
+  /** Ping (the bat in the logo) idles, does tricks, talks and squeaks. Off = he keeps still. */
+  pingLively: boolean;
+  /** Ping's mood and when he last got attention. */
+  ping: PingSaved;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -70,6 +75,8 @@ export const DEFAULT_SETTINGS: Settings = {
   showFps: false,
   shortcuts: true,
   keys: {},
+  pingLively: true,
+  ping: DEFAULT_PING,
 };
 
 const KEY = "zerosignal_settings";
@@ -121,6 +128,8 @@ export function parseSettings(raw: string | null): Settings {
       showFps: bool(v.showFps, DEFAULT_SETTINGS.showFps),
       shortcuts: bool(v.shortcuts, DEFAULT_SETTINGS.shortcuts),
       keys: parseKeys(v.keys),
+      pingLively: bool(v.pingLively, DEFAULT_SETTINGS.pingLively),
+      ping: parsePing(v.ping),
     };
   } catch {
     return { ...DEFAULT_SETTINGS };

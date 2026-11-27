@@ -147,6 +147,7 @@ const CONTROLS: Record<string, ComponentType> = {
   lightGraphics: toggle("lightGraphics"),
   screenShake: toggle("screenShake"),
   showFps: toggle("showFps"),
+  pingLively: toggle("pingLively"),
   fullscreen: FullscreenControl,
   sound: toggle("sound"),
   volume: volume("volume", soundOff),

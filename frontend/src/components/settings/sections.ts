@@ -19,7 +19,7 @@ export const SECTIONS: { id: SectionId; icon: string; label: string; blurb: stri
 
 /** Settings each section's "Reset this section" puts back. */
 export const SECTION_KEYS: Partial<Record<SectionId, (keyof Settings)[]>> = {
-  appearance: ["highContrast", "readableFont", "colorblind", "textSize", "reducedMotion", "lightGraphics", "screenShake", "showFps"],
+  appearance: ["highContrast", "readableFont", "colorblind", "textSize", "reducedMotion", "lightGraphics", "screenShake", "showFps", "pingLively"],
   sound: ["sound", "volume", "uiVolume", "music", "musicVolume"],
   gameplay: ["turnTimer", "confirmLeave", "vibration", "dailyLoginPopup", "levelUpPopup", "rewardToasts"],
   controls: ["shortcuts", "keys"],
@@ -57,6 +57,7 @@ export const ROW_INFO: RowInfo[] = [
   { id: "reducedMotion", section: "appearance", group: "Motion and performance", label: "Reduced motion", hint: "Stops animations but keeps the effects. Your device's setting is followed too.", keywords: "animation motion sickness" },
   { id: "lightGraphics", section: "appearance", group: "Motion and performance", label: "Light graphics", hint: "Fewer animations and effects. Good for slow devices.", keywords: "performance slow lag battery" },
   { id: "screenShake", section: "appearance", group: "Motion and performance", label: "Screen shake", hint: "The board shakes on bombs and big hits.", keywords: "shake effects" },
+  { id: "pingLively", section: "appearance", group: "Motion and performance", label: "Lively Ping", hint: "Ping, the bat in the logo, idles, does tricks, talks and squeaks. Turn off to keep him still.", keywords: "mascot bat logo animation sounds speech" },
   { id: "showFps", section: "appearance", group: "Motion and performance", label: "Show FPS", hint: "Frames per second in the bottom-right corner.", keywords: "fps frames performance" },
   { id: "fullscreen", section: "appearance", group: "Motion and performance", label: "Fullscreen", hint: "Hide the browser bars. Shortcut: F. Esc leaves.", keywords: "full screen" },
 

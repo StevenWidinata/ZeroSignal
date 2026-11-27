@@ -10,6 +10,24 @@
   z-index: 30;
 }
 
+/* Picked up: above everything while you carry him. */
+.ping-logo.carried {
+  z-index: 1000;
+}
+.ping-logo.carried .ping-hit {
+  cursor: grabbing;
+}
+.ping-logo.carried .ping-bubble {
+  display: none;
+}
+
+/* "Lively Ping" off: just the logo. */
+.ping-still {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
 /* Not a regular button: no pixel box, no hover lift. */
 .ping-hit,
 .ping-hit:hover:not(:disabled),
@@ -28,9 +46,10 @@
   padding: 0;
   border: 0;
   background: none;
-  cursor: pointer;
+  cursor: grab;
   pointer-events: auto;
-  touch-action: manipulation;
+  /* He can be dragged: don't let the page scroll from under your finger. */
+  touch-action: none;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
   -webkit-user-select: none;

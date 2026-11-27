@@ -1,4 +1,4 @@
-import { CLICK_LINES, DIZZY_LINES, JOKES, PET_LINES } from "./lines";
+import { CLICK_LINES, DIZZY_LINES, JOKES, MOPE_LINES, PET_LINES } from "./lines";
 import { headY, isUpsideDown, type Particle, type PingState, type Pose } from "./sprite";
 
 /**
@@ -55,6 +55,10 @@ export class PingBrain {
   petting = false;
   night = false;
   hanging = false;
+  /** Low mood: his resting pose is a mope (wings wrapped, ears down). */
+  moping = false;
+  /** Being dragged around (or flying home): upright and flapping. */
+  carried = false;
   particles: Particle[] = [];
 
   private next: number;
@@ -158,8 +162,8 @@ export class PingBrain {
 
   /** A click or tap. `nowMs` is a wall-clock time in ms; `still` = reduced motion (talks, no tricks). */
   click(nowMs: number, still = false): Reaction {
-    if (this.fixed || this.pose === "dizzy") return {};
-    if (still) return { line: this.pick(JOKES), sfx: "batChirp" };
+    if (this.fixed || this.carried || this.pose === "dizzy") return {};
+    if (still) return { line: this.pick(this.moping ? MOPE_LINES : JOKES), sfx: "batChirp" };
     this.pokes = this.pokes.filter((t) => nowMs - t < DIZZY_WINDOW_MS);
     this.pokes.push(nowMs);
     if (this.pokes.length >= DIZZY_POKES) {
@@ -170,13 +174,25 @@ export class PingBrain {
     const trick = this.pick(TRICKS.filter((n) => n !== this.lastTrick));
     this.lastTrick = trick;
     this.play(trick);
+    if (this.moping) return { line: this.pick(MOPE_LINES), sfx: "batChirp" };
     if (trick === "echo") return { line: CLICK_LINES.echo, sfx: "batPong" };
     if (trick === "flap") return { line: CLICK_LINES.flap, sfx: "batFlap" };
     return { line: this.pick(JOKES), sfx: "batFlap" };
   }
 
+  /** Picked up (true) or back on his bar (false). */
+  carry(on: boolean) {
+    this.carried = on;
+    if (on) {
+      this.pose = null;
+      this.petting = false;
+    } else {
+      this.next = this.between(...IDLE_GAP);
+    }
+  }
+
   startPet() {
-    if (this.fixed) return;
+    if (this.fixed || this.carried) return;
     this.petting = true;
     this.pose = null;
     this.petClock = 0.3;
@@ -190,10 +206,23 @@ export class PingBrain {
   }
 
   state(): PingState {
+    if (this.carried)
+      return {
+        t: this.t,
+        pose: "flap",
+        at: this.t,
+        k: (this.t * 1.4) % 1,
+        blink: false,
+        look: 0,
+        petting: false,
+        night: this.night,
+        hanging: false,
+      };
+    const resting = !this.pose && this.moping && !this.petting;
     return {
       t: this.t,
-      pose: this.pose,
-      at: this.at,
+      pose: resting ? "mope" : this.pose,
+      at: resting ? this.t : this.at,
       k: this.dur ? Math.min(1, this.at / this.dur) : 0,
       blink: this.blinkLeft > 0,
       look: this.look,

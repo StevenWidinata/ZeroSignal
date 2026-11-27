@@ -30,6 +30,8 @@ describe("parseSettings", () => {
       showFps: true,
       shortcuts: false,
       keys: { "2048.up": ["KeyI"] },
+      pingLively: false,
+      ping: { mood: 2, at: 1_800_000_000_000 },
     };
     expect(parseSettings(JSON.stringify(stored))).toEqual(stored);
   });

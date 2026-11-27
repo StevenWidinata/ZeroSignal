@@ -19,3 +19,5 @@ export const CLICK_LINES = {
 export const DIZZY_LINES = ["Too many pokes.", "Seeing stars...", "Okay, okay. Stop."];
 
 export const PET_LINES = ["Signal restored.", "Again.", "That helped."];
+
+export const MOPE_LINES = ["Low signal...", "No bars today.", "A pet would help.", "*sigh*"];
