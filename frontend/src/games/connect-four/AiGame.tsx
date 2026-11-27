@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { connectFour } from "../../api/client";
 import type { CfMatch, Difficulty } from "../../api/types";
 import { playSfx } from "../../platform/sound";
+import { pingResult } from "../../mascot/bus";
 import { useAuth } from "../../store/auth";
 import { useSettings } from "../../store/settings";
 import { useWallet } from "../../store/wallet";
@@ -65,6 +66,7 @@ export default function AiGame({ initial, onExit, onSpin, onRematch }: Props) {
     if (!m.game_over) return;
     if (m.outcome.kind === "draw") playSfx("draw");
     else if (m.outcome.kind === "win") playSfx(m.outcome.winner === "p1" ? "win" : "lose");
+    if (m.outcome.kind !== "ongoing") pingResult(m.outcome.kind === "draw" ? "draw" : m.outcome.winner === "p1" ? "cheer" : "sad");
     if (m.spin_granted) window.setTimeout(() => playSfx("reward"), 700);
   }
 

@@ -8,6 +8,7 @@ import type { Cells as C4Cells } from "../games/connect-four/logic";
 import TttBoard from "../games/tic-tac-toe/Board";
 import type { Cells as TttCells } from "../games/tic-tac-toe/logic";
 import { playSfx } from "../platform/sound";
+import { pingResult } from "../mascot/bus";
 import { useRoom } from "./useRoom";
 
 const GAME_NAME: Record<OnlineGame, string> = {
@@ -71,6 +72,7 @@ export default function OnlineMatch({
     const o = room.board.outcome;
     const winnerSeat = o.kind === "win" ? (o.winner === "p1" ? room.first_seat : 3 - room.first_seat) : 0;
     playSfx(winnerSeat === 0 ? "draw" : winnerSeat === room.you ? "win" : "lose");
+    pingResult(winnerSeat === 0 ? "draw" : winnerSeat === room.you ? "cheer" : "sad");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [over]);
 

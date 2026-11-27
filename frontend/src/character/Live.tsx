@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useCharacter } from "../store/character";
 import { useAuth } from "../store/auth";
+import { pingResult } from "../mascot/bus";
 import type { Loadout } from "./catalog";
 import Avatar, { type Pose } from "./Avatar";
 
@@ -74,8 +75,13 @@ export function useMyLoadout(): Loadout | null {
 }
 
 /** Your character reacting to a result: cheer (win / new best), wave (good game) or sad (loss). */
-export function MyReaction({ pose, size = 88 }: { pose: Pose; size?: number }) {
+export function MyReaction({ pose, size = 88, best = false }: { pose: Pose; size?: number; best?: boolean }) {
   const loadout = useMyLoadout();
+  // Results screens show this once a game is over, so Ping reacts too (once per screen).
+  useEffect(() => {
+    pingResult(best ? "best" : pose === "cheer" ? "cheer" : pose === "sad" ? "sad" : "wave");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const label = pose === "cheer" ? "Your character cheering" : pose === "sad" ? "Your character, a bit sad" : "Your character";
   return (
     <div className="my-reaction">

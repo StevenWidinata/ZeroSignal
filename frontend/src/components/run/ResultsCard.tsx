@@ -45,7 +45,7 @@ export default function ResultsCard({
 }: Props) {
   return (
     <div className="panel wam-results">
-      <MyReaction pose={pose} />
+      <MyReaction pose={pose} best={newBest} />
       <div className="wam-results-head">
         <small>{label}</small>
         <strong className="wam-final">{fmt(score)}</strong>

@@ -4,6 +4,7 @@ import type { CheckersGame } from "../../api/types";
 import { VersusBar, ZERO_BOT } from "../../character/Live";
 import { SaveScorePrompt } from "../../components/Guest";
 import { playSfx } from "../../platform/sound";
+import { pingResult } from "../../mascot/bus";
 import { useWallet } from "../../store/wallet";
 import Board from "./Board";
 import { ENDING_TEXT, LEVEL_LABEL, SIDE_LABEL, SidePanel } from "./common";
@@ -54,6 +55,7 @@ export default function AiGame({
       return;
     }
     playSfx(g.status === "won" ? "win" : g.status === "drawn" ? "draw" : "lose");
+    pingResult(g.status === "won" ? "cheer" : g.status === "drawn" ? "draw" : "sad");
     useWallet.getState().celebrate(g.rewards);
   }
 

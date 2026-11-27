@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { ticTacToe } from "../../api/client";
 import type { TttDifficulty, TttMatch } from "../../api/types";
 import { playSfx } from "../../platform/sound";
+import { pingResult } from "../../mascot/bus";
 import { TimerBadge, useTurnTimer } from "../../platform/turnTimer";
 import { useAuth } from "../../store/auth";
 import { useSettings } from "../../store/settings";
@@ -53,6 +54,8 @@ export default function AiGame({ initial, onExit, onSpin, onRematch }: Props) {
     if (!m.game_over) return;
     if (m.outcome.kind === "draw") playSfx("draw");
     else if (m.outcome.kind === "win") playSfx(m.outcome.winner === "p1" ? "win" : "lose");
+    if (m.outcome.kind === "draw") pingResult("draw");
+    else if (m.outcome.kind === "win") pingResult(m.outcome.winner === "p1" ? "cheer" : "sad");
     useWallet.getState().celebrate(m.rewards);
   }
 

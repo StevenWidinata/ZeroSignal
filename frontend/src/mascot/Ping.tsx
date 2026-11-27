@@ -1,9 +1,15 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { useLocation } from "react-router-dom";
+import { api } from "../api/client";
 import { playSfx } from "../platform/sound";
+import { isMember, useAuth } from "../store/auth";
+import { readyCount, useQuests } from "../store/quests";
 import { useSettings } from "../store/settings";
+import { pingBus } from "./bus";
 import { PET_HOLD_MS, PingBrain, type Reaction } from "./engine";
+import { NUDGES, REACTIONS, tipsFor, type NudgeKind } from "./lines";
 import { isMoping, moodNow, petted, touched } from "./mood";
+import { nudgesAllowed, pickNudge, relevantHere } from "./nudge";
 import PingCanvas, { OFFSET_X, OFFSET_Y } from "./PingCanvas";
 import { SW } from "./sprite";
 import "./ping.css";
@@ -12,6 +18,45 @@ const SAY_MS = 2600;
 /** Pointer travel (px) that turns a press into picking him up. */
 const DRAG_SLOP = { mouse: 6, touch: 10 } as const;
 const HOME_LINES = ["Home sweet bar.", "Back on my bar.", "Nice view up there."];
+/** A nudge comes this long after a page opens (if one applies). */
+const NUDGE_DELAY_MS = 4000;
+const NUDGE_KEY = "zerosignal_ping_nudges";
+/** Prize and Daily status are fetched at most this often. */
+const NUDGE_CACHE_MS = 5 * 60 * 1000;
+
+const pick = <T,>(list: readonly T[]): T => list[Math.floor(Math.random() * list.length)];
+
+function readNudges(): Partial<Record<NudgeKind, number>> {
+  try {
+    const v = JSON.parse(localStorage.getItem(NUDGE_KEY) ?? "{}");
+    return v && typeof v === "object" ? v : {};
+  } catch {
+    return {};
+  }
+}
+function markNudge(k: NudgeKind) {
+  try {
+    localStorage.setItem(NUDGE_KEY, JSON.stringify({ ...readNudges(), [k]: Date.now() }));
+  } catch {
+    /* storage may be blocked */
+  }
+}
+
+let nudgeCache: { at: number; who: string; prize: boolean; daily: boolean } | null = null;
+/** Whether a weekly prize waits to be claimed and a Daily is still unplayed (cached briefly). */
+async function openThings(who: string, member: boolean): Promise<{ prize: boolean; daily: boolean }> {
+  if (nudgeCache && nudgeCache.who === who && Date.now() - nudgeCache.at < NUDGE_CACHE_MS) return nudgeCache;
+  const [prize, daily] = await Promise.all([
+    member ? api.weeklyPrizes().then((v) => v.prizes.some((p) => !p.claimed)).catch(() => false) : Promise.resolve(false),
+    api.dailies().then((v) => v.some((d) => d.status === "new")).catch(() => false),
+  ]);
+  nudgeCache = { at: Date.now(), who, prize, daily };
+  return nudgeCache;
+}
+
+function prefersReduced(): boolean {
+  return useSettings.getState().reducedMotion || !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+}
 
 function useMedia(query: string): boolean {
   const [on, setOn] = useState(() => typeof window !== "undefined" && !!window.matchMedia?.(query).matches);
@@ -60,6 +105,8 @@ export default function Ping() {
   const scale = phone ? 1.25 : 1.5;
   const quiet = !lively || reduced || pathname.startsWith("/play/");
   const [line, setLine] = useState<string | null>(null);
+  const [floating, setFloating] = useState(false);
+  const user = useAuth((s) => s.user);
   const logoRef = useRef<HTMLDivElement>(null);
   const boxRef = useRef<HTMLButtonElement>(null);
   const press = useRef<Press | null>(null);
@@ -76,8 +123,11 @@ export default function Ping() {
     return () => window.clearInterval(t);
   }, [brain, saved]);
 
+  /** Show a line. When the logo has scrolled out of view, the bubble floats at the top of the screen instead. */
   const say = (text?: string) => {
     if (!text) return;
+    const r = logoRef.current?.getBoundingClientRect();
+    setFloating(!!r && r.bottom < 8);
     setLine(text);
     window.clearTimeout(sayTimer.current);
     sayTimer.current = window.setTimeout(() => setLine(null), SAY_MS);
@@ -99,6 +149,50 @@ export default function Ping() {
     },
     [],
   );
+
+  // Page tips for whatever page he's on.
+  useEffect(() => {
+    brain.tips = tipsFor(pathname);
+  }, [brain, pathname]);
+
+  // Games tell him how it went.
+  useEffect(
+    () =>
+      pingBus.on((e) => {
+        if (e.type !== "result" || !useSettings.getState().pingLively) return;
+        if (!prefersReduced() && !brain.carried) {
+          if (e.kind === "best") brain.play("echo");
+          else if (e.kind === "cheer") brain.play(Math.random() < 0.5 ? "flap" : "flip");
+        }
+        playSfx(e.kind === "best" ? "batPong" : e.kind === "cheer" ? "batFlap" : "batChirp");
+        say(pick(REACTIONS[e.kind]));
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [brain],
+  );
+
+  // At most one nudge per page visit: a prize to claim, quests ready, or today's Daily.
+  const who = user?.username ?? null;
+  useEffect(() => {
+    const u = useAuth.getState().user;
+    if (!lively || !u || !nudgesAllowed(pathname)) return;
+    let cancelled = false;
+    const t = window.setTimeout(async () => {
+      const things = await openThings(u.username, isMember(u));
+      if (cancelled || brain.carried || brain.petting) return;
+      const open = { ...things, quests: isMember(u) && readyCount(useQuests.getState().view) > 0 };
+      const k = pickNudge(open, readNudges(), Date.now());
+      if (!k || !relevantHere(k, pathname)) return;
+      markNudge(k);
+      playSfx("batChirp");
+      say(NUDGES[k]);
+    }, NUDGE_DELAY_MS);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(t);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname, lively, who, brain]);
 
   // His eyes follow the pointer across the page.
   useEffect(() => {
@@ -249,7 +343,8 @@ export default function Ping() {
           {canvas}
         </div>
       )}
-      <div className={`ping-bubble${line ? " show" : ""}`} role="status" aria-live="polite">
+      <div className={`ping-bubble${line ? " show" : ""}${floating ? " float" : ""}`} role="status" aria-live="polite">
+        {line && floating && <img className="ping-bubble-face" src="/favicon.svg" alt="" width={20} height={19} />}
         {line}
       </div>
     </div>

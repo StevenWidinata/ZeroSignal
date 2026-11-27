@@ -96,6 +96,20 @@
   display: none;
 }
 
+/* The logo is scrolled out of view: the bubble floats at the top of the screen with his face. */
+.ping-bubble.float {
+  position: fixed;
+  top: calc(12px + env(safe-area-inset-top, 0px));
+  left: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ping-bubble-face {
+  flex: none;
+  image-rendering: pixelated;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .ping-bubble {
     transition: none;

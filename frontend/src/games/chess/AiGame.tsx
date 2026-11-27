@@ -5,6 +5,7 @@ import type { ChessGame, ChessLevel } from "../../api/types";
 import { VersusBar, ZERO_BOT } from "../../character/Live";
 import { SaveScorePrompt } from "../../components/Guest";
 import { playSfx } from "../../platform/sound";
+import { pingResult } from "../../mascot/bus";
 import { useWallet } from "../../store/wallet";
 import ChessBoard from "./ChessBoard";
 import { ENDING_TEXT } from "./endings";
@@ -53,6 +54,7 @@ export default function AiGame({ initial, onExit, onRematch }: { initial: ChessG
       return;
     }
     playSfx(g.status === "won" ? "win" : g.status === "drawn" ? "draw" : "lose");
+    pingResult(g.status === "won" ? "cheer" : g.status === "drawn" ? "draw" : "sad");
     useWallet.getState().celebrate(g.rewards);
   }
 

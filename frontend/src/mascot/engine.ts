@@ -59,6 +59,8 @@ export class PingBrain {
   moping = false;
   /** Being dragged around (or flying home): upright and flapping. */
   carried = false;
+  /** Tips for the page he's on; mixed with jokes when he chats. */
+  tips: string[] = [];
   particles: Particle[] = [];
 
   private next: number;
@@ -163,7 +165,7 @@ export class PingBrain {
   /** A click or tap. `nowMs` is a wall-clock time in ms; `still` = reduced motion (talks, no tricks). */
   click(nowMs: number, still = false): Reaction {
     if (this.fixed || this.carried || this.pose === "dizzy") return {};
-    if (still) return { line: this.pick(this.moping ? MOPE_LINES : JOKES), sfx: "batChirp" };
+    if (still) return { line: this.moping ? this.pick(MOPE_LINES) : this.chatter(), sfx: "batChirp" };
     this.pokes = this.pokes.filter((t) => nowMs - t < DIZZY_WINDOW_MS);
     this.pokes.push(nowMs);
     if (this.pokes.length >= DIZZY_POKES) {
@@ -177,7 +179,12 @@ export class PingBrain {
     if (this.moping) return { line: this.pick(MOPE_LINES), sfx: "batChirp" };
     if (trick === "echo") return { line: CLICK_LINES.echo, sfx: "batPong" };
     if (trick === "flap") return { line: CLICK_LINES.flap, sfx: "batFlap" };
-    return { line: this.pick(JOKES), sfx: "batFlap" };
+    return { line: this.chatter(), sfx: "batFlap" };
+  }
+
+  /** Something to say: half the time a tip for this page (when there is one), else a joke. */
+  chatter(): string {
+    return this.tips.length && this.rnd() < 0.5 ? this.pick(this.tips) : this.pick(JOKES);
   }
 
   /** Picked up (true) or back on his bar (false). */
