@@ -17,9 +17,13 @@ A hub of fun browser games with a retro arcade UI and real, **server-verified le
 **Ping** is Zero Signal's official mascot and logo: a small bat, because bats find their way by sending out a signal and listening for the echo. He is pixel art drawn in code (no image files; see `frontend/src/mascot/`), and he hangs upside down beside the ZERO SIGNAL wordmark on every page.
 
 - **Idles on his own:** swings, sends a sonar ping, stretches his wings with a yawn, looks around, and his eyes follow your pointer. During a game he keeps quiet and only blinks.
-- **Click him** for a trick (a flap, a loop or an echo, never the same twice in a row) with a line in a speech bubble; **press and hold** to pet him (hearts); poke him five times fast and he gets dizzy.
-- Follows **reduced motion** (he stays still but still talks), and his squeaks follow the menu-sounds volume.
-- His head is the browser-tab icon and the home-screen icon, and he is on the link preview when the site is shared. Brand images: `docs/brand/` (`ping.svg`, `ping.png`, `ping-hanging.png`, `social-preview.png`).
+- **Click him** for a trick (a flap, a loop or an echo, never the same twice in a row) with a line in a speech bubble: a joke or a tip for the page or game you're on. Poke him five times fast and he gets dizzy. **Drag him** anywhere and he flaps back to his bar when you let go.
+- **Mood:** press and hold to pet him (hearts). Petting cheers him up; every 8 hours without attention his mood drops a step, and at the bottom he mopes until someone pets him. His mood is saved with your settings, so it follows a registered account to every device.
+- **Talks, but not much:** at most one nudge per page (a weekly prize to claim, quests ready, or today's Daily, each at most once an hour; never in games), and a reaction when a game ends: a win, a loss, a draw or a new best (the bubble floats at the top of the screen when the logo is scrolled away).
+- **Secrets** (just for fun, no rewards): he dozes off on the 10th click of a visit, wears a nightcap from midnight to 5 am, answers when you type `ping`, and joins in on Sonar pings and every 25 gaps in Signal Flap.
+- **Everywhere:** he waves hello beside the logged-out intro, presents every game's tutorial, hangs on the "Lost signal" page for unknown links, and turns up on empty boards and error messages. His head is the browser-tab and home-screen icon, and he is on the link preview when the site is shared.
+- **Settings → Appearance → Lively Ping** turns him into a still logo (no idles, tricks, sounds or speech). He follows **reduced motion** (still, but still talks), and his squeaks follow the menu-sounds volume.
+- Brand images: `docs/brand/` (`ping.svg`, `ping.png`, `ping-hanging.png`, `social-preview.png`).
 
 ## Games
 
