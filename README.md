@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/brand/social-preview.png" alt="Ping the pixel bat hanging beside the ZERO SIGNAL wordmark" width="720">
+</p>
+
 # Zero Signal
 
 A hub of fun browser games with a retro arcade UI and real, **server-verified leaderboards** (clients cannot cheat).
@@ -5,6 +9,17 @@ A hub of fun browser games with a retro arcade UI and real, **server-verified le
 - **Frontend:** React + TypeScript + Vite
 - **Backend:** Rust + Axum + sqlx
 - **Database:** PostgreSQL 16
+
+## Meet Ping
+
+<img src="docs/brand/ping.png" alt="Ping, a blue pixel-art bat with yellow ears" width="120" align="right">
+
+**Ping** is Zero Signal's official mascot and logo: a small bat, because bats find their way by sending out a signal and listening for the echo. He is pixel art drawn in code (no image files; see `frontend/src/mascot/`), and he hangs upside down beside the ZERO SIGNAL wordmark on every page.
+
+- **Idles on his own:** swings, sends a sonar ping, stretches his wings with a yawn, looks around, and his eyes follow your pointer. During a game he keeps quiet and only blinks.
+- **Click him** for a trick (a flap, a loop or an echo, never the same twice in a row) with a line in a speech bubble; **press and hold** to pet him (hearts); poke him five times fast and he gets dizzy.
+- Follows **reduced motion** (he stays still but still talks), and his squeaks follow the menu-sounds volume.
+- His head is the browser-tab icon and the home-screen icon, and he is on the link preview when the site is shared. Brand images: `docs/brand/` (`ping.svg`, `ping.png`, `ping-hanging.png`, `social-preview.png`).
 
 ## Games
 
