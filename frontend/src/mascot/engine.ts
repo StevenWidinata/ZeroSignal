@@ -27,6 +27,7 @@ export const DURATION: Record<Pose, number> = {
   dizzy: 1.8,
   mope: 4,
   look: 2.6,
+  wave: 2.4,
 };
 
 export const IDLES: Pose[] = ["hang", "ping", "stretch", "look"];

@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState } from "react";
+import { PingFigure } from "../mascot/PingNote";
+import type { Pose } from "../mascot/sprite";
 import type { TutorialStep } from "../platform/types";
+
+/** Ping presents the steps: a different pose for each. */
+const STEP_POSES: (Pose | null)[] = ["wave", "look", "ping", null];
 
 interface Props {
   title: string;
@@ -42,12 +47,17 @@ export default function TutorialDialog({ title, steps, open, onClose }: Props) {
               ✕
             </button>
           </div>
-          <div className="tutorial-step" aria-live="polite">
-            <span className="tutorial-icon" aria-hidden="true">
-              {step.icon}
-            </span>
-            <h3>{step.title}</h3>
-            <p>{step.text}</p>
+          <div className="tutorial-step tutorial-ping" aria-live="polite">
+            <PingFigure key={i} pose={STEP_POSES[i % STEP_POSES.length]} scale={2} />
+            <div className="tutorial-bubble">
+              <h3>
+                <span className="tutorial-icon" aria-hidden="true">
+                  {step.icon}
+                </span>{" "}
+                {step.title}
+              </h3>
+              <p>{step.text}</p>
+            </div>
           </div>
           <ol className="tutorial-dots" aria-label={`Step ${i + 1} of ${steps.length}`}>
             {steps.map((s, k) => (

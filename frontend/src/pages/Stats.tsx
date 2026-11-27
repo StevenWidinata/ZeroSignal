@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import PingNote from "../mascot/PingNote";
 import { Link } from "react-router-dom";
 import { api } from "../api/client";
 import type { StatsLevelRow, StatsSeries, StatsView } from "../api/types";
@@ -140,7 +141,7 @@ export default function Stats() {
       <>
         {head}
         <div className="error" role="alert">
-          {error}
+          <PingNote pose="dizzy">{error}</PingNote>
         </div>
       </>
     );

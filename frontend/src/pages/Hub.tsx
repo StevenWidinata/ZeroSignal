@@ -20,6 +20,7 @@ import { GAMES, LIVE_GAMES, findGame } from "../platform/registry";
 import type { GameModule } from "../platform/types";
 import { isMember, useAuth } from "../store/auth";
 import { LiveAvatar } from "../character/Live";
+import PingNote, { PingFigure } from "../mascot/PingNote";
 import { rewardWaiting, useDailyLogin } from "../store/dailyLogin";
 import { useCharacter } from "../store/character";
 import { useWallet } from "../store/wallet";
@@ -167,7 +168,9 @@ function RecentRow({ ids, stats }: { ids: string[]; stats: StatsView | null }) {
         🕹️ Recently played
       </h2>
       {games.length === 0 ? (
-        <p className="stats-empty">Nothing yet. Pick a game below and it shows up here.</p>
+        <p className="stats-empty">
+          <PingNote pose="look">Nothing yet. Pick a game below and it shows up here.</PingNote>
+        </p>
       ) : (
         <ul className="recent-list">
           {games.map((g) => {
@@ -274,6 +277,10 @@ export default function Hub() {
             <Link to="/login" className="btn btn-ghost">
               Log in
             </Link>
+          </div>
+          <div className="hero-ping" aria-hidden="true">
+            <p className="hero-ping-bubble">Hi, I'm Ping. Pick a game, any game.</p>
+            <PingFigure pose="wave" scale={3} />
           </div>
         </section>
       )}

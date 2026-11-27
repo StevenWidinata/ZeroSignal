@@ -15,6 +15,7 @@ import Hub from "./pages/Hub";
 import Achievements from "./pages/Achievements";
 import Leaderboard from "./pages/Leaderboard";
 import Login from "./pages/Login";
+import NotFound from "./pages/NotFound";
 import PlayGame from "./pages/PlayGame";
 import Profile from "./pages/Profile";
 import PublicProfile from "./pages/PublicProfile";
@@ -250,7 +251,7 @@ export default function App() {
           <Route path="/roadmap" element={<Roadmap />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
 

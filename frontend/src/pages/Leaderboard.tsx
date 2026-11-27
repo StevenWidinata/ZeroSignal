@@ -12,6 +12,7 @@ import { boardCells } from "../platform/boardScore";
 import { GAMES, LIVE_GAMES, findGame } from "../platform/registry";
 import { useAuth } from "../store/auth";
 import BackButton from "../components/BackButton";
+import PingNote from "../mascot/PingNote";
 
 const fmt = (n: number) => n.toLocaleString();
 
@@ -147,7 +148,7 @@ export default function Leaderboard() {
           <p className="wam-hint">{meta.title} is played online with friends: the board counts online series won (all time).</p>
           {error && (
             <div className="error" role="alert">
-              {error}
+              <PingNote pose="dizzy">{error}</PingNote>
             </div>
           )}
           <div className="board-table-wrap">
@@ -194,7 +195,7 @@ export default function Leaderboard() {
                 {champions?.length === 0 && !error && (
                   <tr>
                     <td colSpan={4} className="empty">
-                      Nobody has won an online series yet. Be the first!
+                      <PingNote pose="look">Nobody has won an online series yet. Be the first!</PingNote>
                     </td>
                   </tr>
                 )}
@@ -237,7 +238,7 @@ export default function Leaderboard() {
 
       {!onlineOnly && error && (
         <div className="error" role="alert">
-          {error}
+          <PingNote pose="dizzy">{error}</PingNote>
         </div>
       )}
 
@@ -293,9 +294,9 @@ export default function Leaderboard() {
               {entries?.length === 0 && !error && (
                 <tr>
                   <td colSpan={cols} className="empty">
-                    {live
-                      ? "No scores yet. Be the first legend."
-                      : `${meta.title} is coming soon. Its board opens on launch day.`}
+                    <PingNote pose={live ? "look" : "hang"}>
+                      {live ? "No scores yet. Be the first legend." : `${meta.title} is coming soon. Its board opens on launch day.`}
+                    </PingNote>
                   </td>
                 </tr>
               )}
@@ -340,7 +341,7 @@ export default function Leaderboard() {
                 {mine.scores.length === 0 && (
                   <tr>
                     <td colSpan={5} className="empty">
-                      No runs yet. Go play!
+                      <PingNote pose="look">No runs yet. Go play!</PingNote>
                     </td>
                   </tr>
                 )}

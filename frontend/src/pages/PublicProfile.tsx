@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { PingFigure } from "../mascot/PingNote";
 import { Link, useParams } from "react-router-dom";
 import { api } from "../api/client";
 import type { PublicProfile as Profile } from "../api/types";
@@ -36,9 +37,7 @@ export default function PublicProfile() {
   if (error)
     return (
       <div className="panel notice">
-        <span className="notice-icon" aria-hidden="true">
-          👻
-        </span>
+        <PingFigure pose="look" scale={2} />
         <h2>{error}</h2>
         <Link to="/" className="btn">
           ← Back to arcade

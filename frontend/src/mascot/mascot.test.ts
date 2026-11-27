@@ -4,7 +4,7 @@ import { IDLE_STATE, OUTLINE, SW, headY, isUpsideDown, renderFrame, type PingSta
 import { CLICK_LINES, DIZZY_LINES, JOKES, PET_LINES } from "./lines";
 import { NAP_AT } from "./secrets";
 
-const POSES: Pose[] = ["hang", "ping", "echo", "stretch", "flap", "flip", "nap", "dizzy", "mope", "look"];
+const POSES: Pose[] = ["hang", "ping", "echo", "stretch", "flap", "flip", "nap", "dizzy", "mope", "look", "wave"];
 
 /** A seeded random so brain tests are repeatable. */
 function seeded(seed = 7) {
@@ -60,7 +60,7 @@ describe("Ping's sprite", () => {
 
   it("poses look different from plain idle", () => {
     const idle = hashFrame(renderFrame(at(null), []).sprite);
-    for (const pose of ["hang", "stretch", "dizzy", "mope", "nap", "flap"] as Pose[])
+    for (const pose of ["hang", "stretch", "dizzy", "mope", "nap", "flap", "wave"] as Pose[])
       expect(hashFrame(renderFrame(at(pose), []).sprite), pose).not.toBe(idle);
   });
 

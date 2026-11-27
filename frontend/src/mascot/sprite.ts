@@ -44,7 +44,8 @@ export type Pose =
   | "nap"
   | "dizzy"
   | "mope"
-  | "look";
+  | "look"
+  | "wave";
 
 export interface PingState {
   /** Seconds since start (drives slow idle motion). */
@@ -264,21 +265,25 @@ export function drawPing(p: Painter, s: PingState) {
   }
   if (s.blink && (eyes === "open" || eyes === "half")) eyes = "closed";
 
+  // Waving: his right wing (screen left) up and swinging, the other folded.
+  const waving = pose === "wave" && !s.petting;
   const wing = (front: boolean) => {
     for (const m of [false, true]) {
       const X = mirror(m);
+      const wo = waving ? (m ? 0.12 : 0.95) : open;
+      const wf = waving ? (m ? 0 : Math.sin(at * 7)) : flap;
       const S: Pt = [X(16), 27];
       let pts: Pt[] = front
         ? [[15, 24], [17, 30], [19, 36], [21, 39]]
         : [
-            [12 - 11 * open, 22 - 8 * open + flap * 4],
-            [10 - 9 * open, 31 - 4 * open + flap * 2],
-            [12 - 6 * open, 37 - open + flap],
+            [12 - 11 * wo, 22 - 8 * wo + wf * 4],
+            [10 - 9 * wo, 31 - 4 * wo + wf * 2],
+            [12 - 6 * wo, 37 - wo + wf],
             [16, 39],
           ];
       pts = pts.map(([x, y]) => [X(x), y]);
       // Scalloped membrane: each panel dips toward the shoulder between two fingers.
-      const dip = front ? 0 : 0.22 * Math.min(1, open * 2);
+      const dip = front ? 0 : 0.22 * Math.min(1, wo * 2);
       for (let i = 0; i < 3; i++) {
         const A = pts[i];
         const B = pts[i + 1];
@@ -289,7 +294,7 @@ export function drawPing(p: Painter, s: PingState) {
         p.tri(S, A, M, col);
         p.tri(S, M, B, col);
       }
-      if (open > 0.3) {
+      if (wo > 0.3) {
         for (let i = 0; i < 3; i++) p.line(S[0], S[1], pts[i][0], pts[i][1], C.bone);
         p.px(pts[0][0] + (m ? -1 : 1), pts[0][1] - 1, "#e8ecff");
       } else if (!front) {

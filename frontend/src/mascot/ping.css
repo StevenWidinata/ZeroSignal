@@ -118,3 +118,141 @@
 [data-motion="reduced"] .ping-bubble {
   transition: none;
 }
+
+/* Ping beside a message (empty lists, errors, not found) */
+.ping-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+}
+.ping-note-text {
+  min-width: 0;
+}
+.ping-figure {
+  position: relative;
+  display: inline-block;
+  flex: none;
+}
+
+/* Logged-out Hub: Ping waves hello beside the intro (wide screens only; the logo Ping is always there). */
+.hero > .hero-ping {
+  position: absolute;
+  right: 250px;
+  top: 50%;
+  transform: translateY(-50%);
+  max-width: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+.hero-ping-bubble {
+  position: relative;
+  margin: 0;
+  max-width: 220px;
+  padding: 8px 12px;
+  background: var(--surface-2);
+  color: var(--ink);
+  border: var(--bw) solid var(--line);
+  border-radius: 6px;
+  box-shadow: 3px 3px 0 var(--line);
+  font: 600 0.9rem/1.4 var(--font-body);
+  text-align: center;
+}
+.hero-ping-bubble::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -9px;
+  width: 12px;
+  height: 12px;
+  background: var(--surface-2);
+  border-right: var(--bw) solid var(--line);
+  border-bottom: var(--bw) solid var(--line);
+  transform: translateX(-50%) rotate(45deg);
+}
+@media (max-width: 1080px) {
+  .hero > .hero-ping {
+    display: none;
+  }
+}
+
+/* Tutorials: Ping explains each step from a speech bubble. */
+.tutorial-step.tutorial-ping {
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  justify-items: stretch;
+  gap: 22px;
+  text-align: left;
+}
+.tutorial-ping .tutorial-icon {
+  font-size: 1.4rem;
+  vertical-align: -0.15em;
+}
+.tutorial-bubble {
+  position: relative;
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+  background: var(--surface-2);
+  border: var(--bw) solid var(--line);
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 var(--line);
+}
+.tutorial-bubble::before {
+  content: "";
+  position: absolute;
+  left: -9px;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  background: var(--surface-2);
+  border-left: var(--bw) solid var(--line);
+  border-bottom: var(--bw) solid var(--line);
+  transform: translateY(-50%) rotate(45deg);
+}
+@media (max-width: 520px) {
+  .tutorial-step.tutorial-ping {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    gap: 16px;
+  }
+  .tutorial-bubble::before {
+    left: 50%;
+    top: -9px;
+    transform: translateX(-50%) rotate(135deg);
+  }
+}
+
+/* 404: Lost signal */
+.not-found {
+  display: flex;
+  align-items: center;
+  gap: 36px;
+  margin-top: 16px;
+  padding: 36px 32px 28px;
+}
+.not-found-text h1 {
+  margin: 0 0 12px;
+}
+.not-found-text p {
+  margin: 0 0 22px;
+  color: var(--muted);
+  max-width: 520px;
+  overflow-wrap: anywhere;
+}
+.not-found-text .hero-actions {
+  margin-bottom: 0;
+}
+@media (max-width: 640px) {
+  .not-found {
+    flex-direction: column;
+    text-align: center;
+    gap: 20px;
+    padding: 28px 18px 22px;
+  }
+  .not-found-text .hero-actions {
+    justify-content: center;
+  }
+}
