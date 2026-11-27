@@ -84,3 +84,10 @@ export function tipsFor(pathname: string): string[] {
   const page = pathname.slice(1).split("/")[0];
   return PAGE_TIPS[page] ?? [];
 }
+
+/** Secrets. */
+export const NAP_LINE = "Five more minutes...";
+export const WAKE_LINES = ["Huh? I was awake.", "I wasn't sleeping. I was buffering.", "Who's there?"];
+export const ECHO_LINES = ["pong.", "Pong. Obviously.", "...pong?"];
+export const NIGHT_LINES = ["Past your bedtime? Mine too.", "Bats are night people. You?", "*yawn*", "Late-night high scores hit different."];
+export const SONAR_LINES = ["Heard that one.", "Good ping.", "Echo's back. Something's there."];

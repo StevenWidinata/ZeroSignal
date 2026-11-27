@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { DIZZY_POKES, DURATION, IDLES, PingBrain, TRICKS } from "./engine";
 import { IDLE_STATE, OUTLINE, SW, headY, isUpsideDown, renderFrame, type PingState, type Pose } from "./sprite";
 import { CLICK_LINES, DIZZY_LINES, JOKES, PET_LINES } from "./lines";
+import { NAP_AT } from "./secrets";
 
 const POSES: Pose[] = ["hang", "ping", "echo", "stretch", "flap", "flip", "nap", "dizzy", "mope", "look"];
 
@@ -133,8 +134,8 @@ describe("Ping's behaviour", () => {
   it("never plays the same trick twice in a row", () => {
     const b = new PingBrain({ random: seeded(11) });
     let last: Pose | null = null;
-    for (let i = 0; i < 40; i++) {
-      // Far apart, so he never gets dizzy.
+    for (let i = 0; i < NAP_AT - 1; i++) {
+      // Far apart, so he never gets dizzy (and before the nap secret).
       b.click(i * 10_000);
       expect(TRICKS).toContain(b.pose);
       expect(b.pose).not.toBe(last);

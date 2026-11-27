@@ -1,4 +1,5 @@
-import { CLICK_LINES, DIZZY_LINES, JOKES, MOPE_LINES, PET_LINES } from "./lines";
+import { CLICK_LINES, DIZZY_LINES, JOKES, MOPE_LINES, NAP_LINE, NIGHT_LINES, PET_LINES, WAKE_LINES } from "./lines";
+import { NAP_AT } from "./secrets";
 import { headY, isUpsideDown, type Particle, type PingState, type Pose } from "./sprite";
 
 /**
@@ -70,6 +71,8 @@ export class PingBrain {
   private lastTrick: Pose | null = null;
   private lastIdle: Pose | null = null;
   private petClock = 0;
+  /** Clicks this visit (the 10th sends him to sleep). */
+  private clicks = 0;
   private rnd: () => number;
   private fixed: Pose | null;
 
@@ -133,7 +136,7 @@ export class PingBrain {
         this.spawn("heart", x, headY(st), this.between(-3, 3), -12, 1.2);
       }
     }
-    if (this.pose === "nap" && this.everyZ(dt)) this.spawn("z", 30, 4, 6, -8, 2.2);
+    if (this.pose === "nap" && this.everyZ(dt)) this.spawn("z", 30, headY(this.state()) - 2, 6, -8, 2.2);
 
     for (const q of this.particles) {
       q.x += q.vx * dt;
@@ -157,7 +160,9 @@ export class PingBrain {
 
   /** Start an idle (a given one, or a random one that isn't the last). */
   idle(pose?: Pose) {
-    const p = pose ?? this.pick(IDLES.filter((n) => n !== this.lastIdle));
+    // Night owl: yawns a lot more.
+    const sleepy = this.night && this.lastIdle !== "stretch" && this.rnd() < 0.45;
+    const p = pose ?? (sleepy ? "stretch" : this.pick(IDLES.filter((n) => n !== this.lastIdle)));
     this.lastIdle = p;
     this.play(p);
   }
@@ -165,6 +170,10 @@ export class PingBrain {
   /** A click or tap. `nowMs` is a wall-clock time in ms; `still` = reduced motion (talks, no tricks). */
   click(nowMs: number, still = false): Reaction {
     if (this.fixed || this.carried || this.pose === "dizzy") return {};
+    if (this.pose === "nap") {
+      this.play("flap");
+      return { line: this.pick(WAKE_LINES), sfx: "batChirp" };
+    }
     if (still) return { line: this.moping ? this.pick(MOPE_LINES) : this.chatter(), sfx: "batChirp" };
     this.pokes = this.pokes.filter((t) => nowMs - t < DIZZY_WINDOW_MS);
     this.pokes.push(nowMs);
@@ -172,6 +181,11 @@ export class PingBrain {
       this.pokes = [];
       this.play("dizzy");
       return { line: this.pick(DIZZY_LINES), sfx: "batChirp" };
+    }
+    this.clicks++;
+    if (this.clicks === NAP_AT && !still) {
+      this.play("nap");
+      return { line: NAP_LINE, sfx: "batYawn" };
     }
     const trick = this.pick(TRICKS.filter((n) => n !== this.lastTrick));
     this.lastTrick = trick;
@@ -184,6 +198,7 @@ export class PingBrain {
 
   /** Something to say: half the time a tip for this page (when there is one), else a joke. */
   chatter(): string {
+    if (this.night && this.rnd() < 0.4) return this.pick(NIGHT_LINES);
     return this.tips.length && this.rnd() < 0.5 ? this.pick(this.tips) : this.pick(JOKES);
   }
 

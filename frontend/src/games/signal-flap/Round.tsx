@@ -5,6 +5,7 @@ import { keyLabel, keysFor } from "../../platform/keymap";
 import { useGuardWhile } from "../../platform/leaveGuard";
 import { useRunClock } from "../../platform/runClock";
 import { playSfx } from "../../platform/sound";
+import { pingBus } from "../../mascot/bus";
 import { useSettings, vibrate } from "../../store/settings";
 import { rules, type Game, type GameEvent } from "./engine";
 import { FlapControl, GAME_ID, actionForKey } from "./input";
@@ -116,6 +117,7 @@ export default function Round({ game, look, daily, best, onDone }: Props) {
             break;
           case "pass":
             playSfx("tick");
+            pingBus.emit({ type: "flap-far", gaps: e.gaps });
             if (e.gaps % 10 === 0) {
               playSfx("chime");
               addPop(rules.width / 2, rules.height * 0.3, `${e.gaps} gaps`, "gold", 1100);

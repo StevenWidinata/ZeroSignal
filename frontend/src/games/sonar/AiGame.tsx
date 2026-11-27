@@ -4,6 +4,7 @@ import type { SonarGame, SonarLevel, SonarResult } from "../../api/types";
 import { MyReaction, VersusBar, ZERO_BOT } from "../../character/Live";
 import { SaveScorePrompt } from "../../components/Guest";
 import { playSfx, type Sfx } from "../../platform/sound";
+import { pingBus } from "../../mascot/bus";
 import { useWallet } from "../../store/wallet";
 import Battle from "./Battle";
 import { Stars } from "./Campaign";
@@ -72,6 +73,7 @@ export default function AiGame({
     setBusy(true);
     setError(null);
     playSfx("cell" in move && move.ping ? "zap" : "click");
+    if ("cell" in move && move.ping) pingBus.emit({ type: "sonar-ping" });
     try {
       const g = "code" in move ? await sonar.move(game.id, move.code) : await sonar.fire(game.id, move.cell, move.ping);
       if (!mounted.current) return;

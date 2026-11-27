@@ -5,6 +5,7 @@ import type { SonarDaily, SonarLogEntry } from "../../api/types";
 import { MyReaction } from "../../character/Live";
 import { SaveScorePrompt } from "../../components/Guest";
 import { playSfx } from "../../platform/sound";
+import { pingBus } from "../../mascot/bus";
 import { useWallet } from "../../store/wallet";
 import { SOUND } from "./AiGame";
 import Battle from "./Battle";
@@ -45,6 +46,7 @@ export default function DailyHunt({ look, onExit }: { look: { fleet: string; sea
     setBusy(true);
     setError(null);
     playSfx("cell" in move && move.ping ? "zap" : "click");
+    if ("cell" in move && move.ping) pingBus.emit({ type: "sonar-ping" });
     try {
       const next = "code" in move ? await sonar.dailyMove(move.code) : await sonar.dailyFire(move.cell, move.ping);
       if (!mounted.current) return;

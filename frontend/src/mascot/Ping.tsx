@@ -1,15 +1,17 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { useLocation } from "react-router-dom";
 import { api } from "../api/client";
+import { isTyping } from "../platform/display";
 import { playSfx } from "../platform/sound";
 import { isMember, useAuth } from "../store/auth";
 import { readyCount, useQuests } from "../store/quests";
 import { useSettings } from "../store/settings";
 import { pingBus } from "./bus";
 import { PET_HOLD_MS, PingBrain, type Reaction } from "./engine";
-import { NUDGES, REACTIONS, tipsFor, type NudgeKind } from "./lines";
+import { ECHO_LINES, NUDGES, REACTIONS, SONAR_LINES, tipsFor, type NudgeKind } from "./lines";
 import { isMoping, moodNow, petted, touched } from "./mood";
 import { nudgesAllowed, pickNudge, relevantHere } from "./nudge";
+import { FLAP_CHEER_EVERY, echoKey, isNight } from "./secrets";
 import PingCanvas, { OFFSET_X, OFFSET_Y } from "./PingCanvas";
 import { SW } from "./sprite";
 import "./ping.css";
@@ -155,11 +157,49 @@ export default function Ping() {
     brain.tips = tipsFor(pathname);
   }, [brain, pathname]);
 
-  // Games tell him how it went.
+  // Night owl: from midnight to 5 am he wears his nightcap.
+  useEffect(() => {
+    const check = () => {
+      brain.night = isNight(new Date());
+    };
+    check();
+    const t = window.setInterval(check, 60_000);
+    return () => window.clearInterval(t);
+  }, [brain]);
+
+  // Echo chamber: type "ping" anywhere (not in a text field) and he answers.
+  useEffect(() => {
+    let buf = "";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey || e.altKey || e.repeat || isTyping(e.target)) return;
+      const r = echoKey(buf, e.key);
+      buf = r.buf;
+      if (!r.hit || !useSettings.getState().pingLively || brain.carried) return;
+      if (!prefersReduced()) brain.play("echo");
+      playSfx("batPong");
+      say(pick(ECHO_LINES));
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [brain]);
+
+  // Games tell him how it went (and Sonar and Signal Flap let him join in).
   useEffect(
     () =>
       pingBus.on((e) => {
-        if (e.type !== "result" || !useSettings.getState().pingLively) return;
+        if (!useSettings.getState().pingLively || brain.carried) return;
+        if (e.type === "sonar-ping") {
+          if (!prefersReduced() && !brain.petting) brain.play("ping");
+          if (Math.random() < 0.35) say(pick(SONAR_LINES));
+          return;
+        }
+        if (e.type === "flap-far") {
+          if (e.gaps % FLAP_CHEER_EVERY !== 0) return;
+          if (!prefersReduced() && !brain.petting) brain.play("flap");
+          say(`${e.gaps} gaps. Keep flapping.`);
+          return;
+        }
         if (!prefersReduced() && !brain.carried) {
           if (e.kind === "best") brain.play("echo");
           else if (e.kind === "cheer") brain.play(Math.random() < 0.5 ? "flap" : "flip");
