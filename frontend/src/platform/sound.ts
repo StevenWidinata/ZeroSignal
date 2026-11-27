@@ -29,7 +29,11 @@ export type Sfx =
   | "merge"
   | "chomp"
   | "powerup"
-  | "glitch";
+  | "glitch"
+  | "batFlap"
+  | "batPong"
+  | "batChirp"
+  | "batYawn";
 
 interface Note {
   /** Hz at start (and optional end, for slides). */
@@ -111,6 +115,20 @@ export const RECIPES: Record<Sfx, Note[]> = {
     { freq: 1700, at: 0.05, dur: 0.03, type: "square", gain: 0.1 },
     { freq: 220, to: 60, at: 0.09, dur: 0.1, type: "sawtooth", gain: 0.14 },
   ],
+  // Ping the bat (the mascot)
+  batFlap: [
+    { freq: 220, to: 160, at: 0, dur: 0.05, type: "triangle", gain: 0.14 },
+    { freq: 240, to: 170, at: 0.08, dur: 0.05, type: "triangle", gain: 0.12 },
+  ],
+  batPong: [
+    { freq: 1760, at: 0, dur: 0.06, type: "sine", gain: 0.16 },
+    { freq: 1320, at: 0.16, dur: 0.12, type: "sine", gain: 0.1 },
+  ],
+  batChirp: [
+    { freq: 1900, to: 2600, at: 0, dur: 0.04, type: "square", gain: 0.06 },
+    { freq: 2100, to: 2800, at: 0.07, dur: 0.04, type: "square", gain: 0.05 },
+  ],
+  batYawn: [{ freq: 520, to: 260, at: 0, dur: 0.45, type: "triangle", gain: 0.1 }],
   // 2048
   slide: [{ freq: 300, to: 240, at: 0, dur: 0.05, type: "triangle", gain: 0.12 }],
   merge: [
@@ -145,7 +163,7 @@ export function audio(): AudioContext | null {
 }
 
 /** Menu sounds: they follow the UI volume instead of the game volume. */
-export const UI_SFX: ReadonlySet<Sfx> = new Set<Sfx>(["click"]);
+export const UI_SFX: ReadonlySet<Sfx> = new Set<Sfx>(["click", "batFlap", "batPong", "batChirp", "batYawn"]);
 
 /** Volume for one effect (0 = silent). */
 export function sfxVolume(name: Sfx, s: { sound: boolean; volume: number; uiVolume: number }): number {

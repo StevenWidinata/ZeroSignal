@@ -30,6 +30,7 @@ import { useDailyLogin } from "./store/dailyLogin";
 import { readyCount, useQuests } from "./store/quests";
 import { usePhoto } from "./store/photo";
 import { useSettingsDialog } from "./store/settingsDialog";
+import Ping from "./mascot/Ping";
 import { useWallet } from "./store/wallet";
 
 function RequireAuth({ children }: { children: JSX.Element }) {
@@ -189,6 +190,7 @@ export default function App() {
           <ThemeToggle />
           <SettingsButton />
         </nav>
+        <Ping />
       </header>
 
       <main id="main">
