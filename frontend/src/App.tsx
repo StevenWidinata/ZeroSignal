@@ -116,14 +116,14 @@ export default function App() {
         Skip to content
       </a>
       <header className="nav">
-        <Link to="/" className="brand" aria-label="Zero Signal home">
-          <span className="brand-logo" aria-hidden="true">
-            ▶
-          </span>
-          <span className="brand-text">
-            ZERO<span>SIGNAL</span>
-          </span>
-        </Link>
+        <div className="brand">
+          <Ping />
+          <Link to="/" className="brand-home" aria-label="Zero Signal home">
+            <span className="brand-text">
+              ZERO<span>SIGNAL</span>
+            </span>
+          </Link>
+        </div>
         <nav className="nav-links" aria-label="Main">
           <NavLink to="/" end className={navClass}>
             Games
@@ -190,7 +190,6 @@ export default function App() {
           <ThemeToggle />
           <SettingsButton />
         </nav>
-        <Ping />
       </header>
 
       <main id="main">

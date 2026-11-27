@@ -1,14 +1,13 @@
 /* Ping the bat: the site mascot */
 
-/* The header is his perch. */
-.nav {
+/* The logo: he hangs from the top of the page, left of the wordmark.
+   The negative margins trim the empty space around his folded wings. */
+.ping-logo {
   position: relative;
-}
-
-.ping-perch {
-  position: absolute;
+  flex: none;
+  align-self: flex-start;
+  margin: -20px -12px 0 -10px;
   z-index: 30;
-  pointer-events: none;
 }
 
 /* Not a regular button: no pixel box, no hover lift. */
@@ -53,7 +52,7 @@
 .ping-bubble {
   position: absolute;
   top: calc(100% + 6px);
-  right: 0;
+  left: 0;
   width: max-content;
   max-width: min(260px, 70vw);
   padding: 6px 11px;

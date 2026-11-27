@@ -1,76 +1,31 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { useLocation } from "react-router-dom";
 import { playSfx } from "../platform/sound";
 import { useSettings } from "../store/settings";
 import { PET_HOLD_MS, PingBrain, type Reaction } from "./engine";
 import PingCanvas, { OFFSET_X, OFFSET_Y } from "./PingCanvas";
-import { freeSpot, type Box } from "./perch";
 import { SW } from "./sprite";
 import "./ping.css";
 
 const SAY_MS = 2600;
 
-function useDeviceReducedMotion(): boolean {
-  const [on, setOn] = useState(() => typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches);
+function useMedia(query: string): boolean {
+  const [on, setOn] = useState(() => typeof window !== "undefined" && !!window.matchMedia?.(query).matches);
   useEffect(() => {
-    const mq = window.matchMedia?.("(prefers-reduced-motion: reduce)");
+    const mq = window.matchMedia?.(query);
     if (!mq) return;
     const onChange = () => setOn(mq.matches);
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
-  }, []);
+  }, [query]);
   return on;
 }
 
-/** Screen pixels per sprite pixel: smaller on phones. */
-function useScale(): number {
-  const query = "(max-width: 640px)";
-  const [small, setSmall] = useState(() => typeof window !== "undefined" && window.matchMedia?.(query).matches);
-  useEffect(() => {
-    const mq = window.matchMedia?.(query);
-    if (!mq) return;
-    const onChange = () => setSmall(mq.matches);
-    mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
-  }, []);
-  return small ? 1.5 : 2;
-}
-
-/** Sprite rows above his feet when hanging (where the bar goes). */
-const FEET = 2;
-
 /**
- * His spot: hanging from the top of the page in a free gap of the header row
- * (between the logo and the links), or, when the row is full, just below the
- * header on the right.
- */
-function usePerch(perchRef: React.RefObject<HTMLDivElement>, size: number, active: boolean): number | null {
-  const [left, setLeft] = useState<number | null>(null);
-  useLayoutEffect(() => {
-    const header = perchRef.current?.parentElement;
-    if (!active || !header) return;
-    const measure = () => {
-      const row = header.getBoundingClientRect();
-      const items: Box[] = [];
-      header.querySelectorAll(".brand, .nav-links > *").forEach((el) => items.push(el.getBoundingClientRect()));
-      setLeft(freeSpot(row, items, { top: row.top, bottom: row.top + size }, size));
-    };
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(header);
-    header.querySelectorAll(".nav-links").forEach((el) => ro.observe(el));
-    window.addEventListener("resize", measure);
-    return () => {
-      ro.disconnect();
-      window.removeEventListener("resize", measure);
-    };
-  }, [perchRef, size, active]);
-  return left;
-}
-
-/**
- * Ping, live: hangs upside down from the header, idles on his own, reacts to
- * clicks, gets dizzy when poked fast and enjoys being petted (press and hold).
+ * Ping, the site's logo and mascot: hangs upside down beside the ZERO SIGNAL
+ * wordmark, idles on his own, does a trick when clicked, gets dizzy when
+ * poked fast and enjoys being petted (press and hold). In a game he keeps
+ * quiet: no idles, just blinks, though he still answers clicks.
  */
 export default function Ping() {
   const { pathname } = useLocation();
@@ -80,14 +35,13 @@ export default function Ping() {
     return b;
   }, []);
   const reducedSetting = useSettings((s) => s.reducedMotion);
-  const still = useDeviceReducedMotion() || reducedSetting;
-  const scale = useScale();
+  const reducedDevice = useMedia("(prefers-reduced-motion: reduce)");
+  const phone = useMedia("(max-width: 560px)");
+  const reduced = reducedSetting || reducedDevice;
+  const scale = phone ? 1.25 : 1.5;
+  const quiet = reduced || pathname.startsWith("/play/");
   const [line, setLine] = useState<string | null>(null);
   const boxRef = useRef<HTMLButtonElement>(null);
-  const perchRef = useRef<HTMLDivElement>(null);
-  const inGame = pathname.startsWith("/play/");
-  const box = SW * scale;
-  const spot = usePerch(perchRef, box, !inGame);
   const hold = useRef<number | undefined>(undefined);
   const sayTimer = useRef<number | undefined>(undefined);
 
@@ -119,9 +73,6 @@ export default function Ping() {
     return () => window.removeEventListener("pointermove", onMove);
   }, [brain]);
 
-  // Games get a peeking Ping later; for now he stays out of them.
-  if (inGame) return null;
-
   const onDown = (e: ReactPointerEvent) => {
     if (e.button !== 0) return;
     window.clearTimeout(hold.current);
@@ -136,7 +87,7 @@ export default function Ping() {
     if (hold.current === undefined) return;
     window.clearTimeout(hold.current);
     hold.current = undefined;
-    react(brain.click(performance.now(), still));
+    react(brain.click(performance.now(), reduced));
   };
   const onLeave = () => {
     window.clearTimeout(hold.current);
@@ -144,12 +95,9 @@ export default function Ping() {
     if (brain.petting) react(brain.stopPet());
   };
 
-  const place: CSSProperties =
-    spot === null
-      ? { top: `calc(100% - ${FEET * scale}px)`, right: "clamp(12px, 14%, 200px)" }
-      : { top: 0, left: spot };
+  const box = SW * scale;
   return (
-    <div ref={perchRef} className="ping-perch" style={{ width: box, height: box, ...place }}>
+    <div className="ping-logo" style={{ width: box, height: box }}>
       <button
         ref={boxRef}
         type="button"
@@ -163,14 +111,14 @@ export default function Ping() {
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
-            if (!e.repeat) react(brain.click(performance.now(), still));
+            if (!e.repeat) react(brain.click(performance.now(), reduced));
           }
         }}
       >
         <PingCanvas
           brain={brain}
           scale={scale}
-          still={still}
+          still={quiet}
           className="ping-canvas"
           style={{ left: -OFFSET_X * scale, top: -OFFSET_Y * scale }}
         />
