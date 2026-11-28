@@ -1,0 +1,331 @@
+/* ---------- Echo Rally ---------- */
+
+/* Menu */
+.rally-menu > .game-controls {
+  justify-content: flex-start;
+}
+.rally-mode-art {
+  display: block;
+  width: 42px;
+  height: 28px;
+}
+.rally-mode-art rect {
+  fill: currentColor;
+}
+.rally-mode-art .spark {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+
+/* Kit picker */
+.rally-kitpick {
+  display: grid;
+  min-width: 0;
+  gap: 12px;
+  margin: 0;
+  padding: 12px;
+  border: 2px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+.rally-kitpick legend {
+  padding: 0 6px;
+  font-family: var(--font-pixel);
+  font-size: 0.6rem;
+  color: var(--green);
+}
+.rally-kitpick legend small {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.rally-kitgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 8px;
+}
+.rally-kittile {
+  --btn-bg: var(--surface);
+  --btn-fg: var(--ink);
+  flex-direction: column;
+  gap: 4px;
+  min-height: 84px;
+  padding: 8px 6px;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  text-transform: none;
+  letter-spacing: 0;
+  box-shadow: 3px 3px 0 var(--line);
+}
+.rally-kittile strong {
+  font-weight: 600;
+}
+.rally-kittile small {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+.rally-kittile.selected {
+  --btn-bg: var(--yellow);
+  --btn-fg: var(--on-yellow);
+}
+.rally-kittile.selected small {
+  color: var(--on-yellow);
+}
+.rally-kittile.locked {
+  opacity: 0.72;
+}
+.rally-kitdetail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin: 0;
+  max-width: 72ch;
+  font-size: 0.9rem;
+}
+
+/* Shop swatches */
+.rally-swatch {
+  display: block;
+  width: 40px;
+  height: 28px;
+}
+.rally-swatch:not(.court) {
+  border-radius: 4px;
+  background: #0a0c14;
+}
+.rally-swatch.court {
+  border-radius: 4px;
+}
+
+/* Round */
+.rally-round {
+  display: grid;
+  gap: 12px;
+  /* Keep the whole 16:9 court on screen on short windows, but never
+     smaller than 560 px wide (a phone held sideways scrolls instead). */
+  max-width: min(960px, 100%, max(560px, calc((100vh - 260px) * 16 / 9)));
+  min-width: min(300px, 100%);
+  margin: 0 auto;
+}
+.rally-hud {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto;
+  align-items: center;
+  gap: 8px 16px;
+  padding: 8px 12px;
+}
+.rally-side {
+  display: grid;
+  gap: 2px;
+}
+.rally-side.right {
+  text-align: right;
+}
+.rally-side small {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+.rally-side strong {
+  font-family: var(--font-pixel);
+  font-size: 1.1rem;
+  font-variant-numeric: tabular-nums;
+}
+.rally-ref {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+.rally-ref-ping {
+  width: 48px;
+  height: 48px;
+}
+.rally-call {
+  max-width: 28ch;
+  font-size: 0.8rem;
+  color: var(--muted);
+  text-align: center;
+}
+.rally-hud-btns {
+  margin-left: 0;
+}
+.rally-turn {
+  display: none;
+  margin: 0;
+  text-align: center;
+}
+
+.rally-board {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  width: 100%;
+  overflow: hidden;
+  border: var(--bw) solid var(--line);
+  border-radius: var(--radius);
+  background: #05060a;
+  box-shadow: var(--shadow-off) var(--shadow-off) 0 var(--line);
+  cursor: ns-resize;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.rally-board canvas {
+  display: block;
+}
+.rally-ko strong {
+  font-family: var(--font-pixel);
+  font-size: clamp(0.75rem, 3vw, 1.1rem);
+  color: #ff8a8d;
+  text-shadow: 3px 3px 0 #000;
+  text-align: center;
+  padding: 0 12px;
+}
+.rally-ko.won strong {
+  color: #ffd23f;
+}
+
+/* Powers under the court */
+.rally-powers {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.rally-kit {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  flex: 1 1 320px;
+}
+.rally-power {
+  --btn-bg: var(--surface);
+  --btn-fg: var(--ink);
+  position: relative;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 72px;
+  padding: 8px 6px;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  text-transform: none;
+  letter-spacing: 0;
+  touch-action: manipulation;
+}
+.rally-power-name {
+  font-weight: 600;
+}
+.rally-power small {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+.rally-power kbd {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  min-width: 18px;
+  padding: 0 4px;
+  border: 1px solid var(--muted);
+  border-radius: 4px;
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  line-height: 16px;
+  color: var(--muted);
+}
+.rally-power.active {
+  --btn-bg: var(--yellow);
+  --btn-fg: var(--on-yellow);
+  opacity: 1;
+}
+.rally-power.active small {
+  color: var(--on-yellow);
+}
+.rally-power.used:not(.active) {
+  opacity: 0.5;
+}
+.rally-botkit {
+  display: grid;
+  gap: 4px;
+  flex: 0 1 auto;
+}
+.rally-botkit small {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+.rally-botkit ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.rally-botkit li {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border: 1px solid var(--muted);
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+.rally-botkit li.used {
+  opacity: 0.45;
+  text-decoration: line-through;
+}
+
+.rally-pads {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.rally-pad {
+  justify-content: center;
+  min-height: 56px;
+  padding: 0;
+  font-size: 1.3rem;
+}
+.rally-help {
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .rally-hud {
+    grid-template-columns: 1fr auto 1fr;
+    padding: 6px 8px;
+  }
+  .rally-hud-btns {
+    grid-column: 1 / -1;
+    justify-content: center;
+  }
+}
+@media (max-width: 640px) and (orientation: portrait) {
+  .rally-turn {
+    display: block;
+  }
+}
+@media (max-width: 520px) {
+  .rally-ref-ping {
+    width: 36px;
+    height: 36px;
+  }
+  .rally-call {
+    font-size: 0.72rem;
+  }
+}
+
+/* Results */
+.rally-verdict {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}

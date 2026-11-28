@@ -152,9 +152,9 @@ export const NO_INPUT: Control = { target: null, fire: null };
 
 export type GameEvent =
   | { type: "serve" }
-  | { type: "hit"; side: number; speed: number }
+  | { type: "hit"; side: number; speed: number; x: number; y: number }
   | { type: "wall" }
-  | { type: "shield"; side: number }
+  | { type: "shield"; side: number; y: number }
   | { type: "point"; side: number }
   | { type: "fire"; side: number; power: Power }
   | { type: "over"; winner: number | null };
@@ -342,7 +342,7 @@ export class Game {
     this.rally += 1;
     this.s.hits[side] += 1;
     this.s.longest_rally = Math.max(this.s.longest_rally, this.rally);
-    this.events.push({ type: "hit", side, speed: flight });
+    this.events.push({ type: "hit", side, speed: flight, x: b.x, y: b.y });
     return true;
   }
 
@@ -394,12 +394,12 @@ export class Game {
       b.x = pr.shield_w + rad;
       b.vx = -b.vx;
       this.pads[0].shield = 0;
-      this.events.push({ type: "shield", side: 0 });
+      this.events.push({ type: "shield", side: 0, y: b.y });
     } else if (b.vx > 0 && this.pads[1].shield > 0 && b.x + rad > r.width - pr.shield_w) {
       b.x = r.width - pr.shield_w - rad;
       b.vx = -b.vx;
       this.pads[1].shield = 0;
-      this.events.push({ type: "shield", side: 1 });
+      this.events.push({ type: "shield", side: 1, y: b.y });
     }
     if (b.x + rad < 0) return 1;
     if (b.x - rad > r.width) return 0;

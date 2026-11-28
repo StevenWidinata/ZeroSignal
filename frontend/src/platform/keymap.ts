@@ -245,6 +245,22 @@ export const KEYMAPS: GameKeymap[] = [
     ],
     note: "Or click or tap anywhere on the board.",
   },
+  {
+    gameId: "echo-rally",
+    groups: [
+      {
+        actions: [
+          { id: "up", label: "Move the paddle up", keys: ["ArrowUp", "KeyW"] },
+          { id: "down", label: "Move the paddle down", keys: ["ArrowDown", "KeyS"] },
+          { id: "power1", label: "Fire power 1 (Chaos)", keys: ["Digit1", "Numpad1"] },
+          { id: "power2", label: "Fire power 2 (Chaos)", keys: ["Digit2", "Numpad2"] },
+          { id: "power3", label: "Fire power 3 (Chaos)", keys: ["Digit3", "Numpad3"] },
+          { id: "pause", label: "Pause / resume", keys: ["Escape", "KeyP"] },
+        ],
+      },
+    ],
+    note: "Or move the mouse over the court, drag a finger on it, or turn on the phone buttons.",
+  },
 ];
 
 export const SHORTCUTS: KeyAction[] = [
