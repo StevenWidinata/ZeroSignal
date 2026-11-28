@@ -14,6 +14,7 @@ mod dailies;
 mod daily;
 mod daily_login;
 mod db;
+mod echo_rally;
 mod economy;
 mod error;
 mod game_2048;

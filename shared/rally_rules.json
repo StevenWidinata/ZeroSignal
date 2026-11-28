@@ -1,0 +1,56 @@
+{
+  "_doc": "Echo Rally rules, read by backend/src/echo_rally/{engine,bot}.rs and frontend/src/games/echo-rally/{engine,bot}.ts. Lengths are in court units (100 units = 1 logical pixel of a 640 x 360 court), times in ticks (60 per second), speeds in units per tick, percentages as whole numbers. Side 0 is the left paddle, side 1 the right. Change both engines' tests (shared/rally_vectors.json) together.",
+  "width": 64000,
+  "height": 36000,
+
+  "_paddles": "Each paddle is `pad_w` wide, `pad_inset` from its goal line, and moves at most `pad_speed` per tick toward its target.",
+  "pad_inset": 2400,
+  "pad_w": 1200,
+  "pad_h": 7200,
+  "pad_speed": 900,
+
+  "_ball": "Every return adds `speed_step` (up to `speed_max`); a new point starts at `speed_start`. Where the ball meets the paddle picks one of the angles below (centre = straight, edge = the last one, 60 degrees). cos/sin are x 1000.",
+  "ball_r": 600,
+  "speed_start": 520,
+  "speed_step": 35,
+  "speed_max": 1300,
+  "cos": [1000, 991, 966, 924, 866, 793, 707, 609, 500],
+  "sin": [0, 131, 259, 383, 500, 609, 707, 793, 866],
+
+  "_serve": "Each point starts after `serve_delay` ticks, served toward the player who lost the last point (the first serve's side is drawn from the seed), at a random angle up to index `serve_angle`.",
+  "serve_delay": 60,
+  "serve_angle": 3,
+
+  "targets": [5, 7, 11],
+  "kit_size": 3,
+  "max_ticks": 108000,
+  "max_inputs": 100000,
+
+  "_powers": "Chaos mode. Ids in shop order; `free` ones are owned by everyone. Timed effects last the given ticks.",
+  "power_ids": ["grow", "shrink", "smash", "shield", "echo", "curve", "freeze", "multi-ball", "ghost", "fog"],
+  "powers": {
+    "grow_ticks": 480,
+    "grow_pct": 150,
+    "shrink_ticks": 480,
+    "shrink_pct": 60,
+    "smash_pct": 160,
+    "smash_max": 1800,
+    "shield_ticks": 600,
+    "shield_w": 500,
+    "echo_ticks": 300,
+    "curve_acc": 22,
+    "curve_ticks": 40,
+    "freeze_ticks": 60,
+    "multi_ticks": 480,
+    "fog_ticks": 240,
+    "fog_clear": 20000
+  },
+
+  "_bot": "Zero-Bot levels: `react` ticks before it moves for a new shot, aim `error` (+/- units at a ball speed of 1000 per tick, scaled with the speed), paddle speed in % of pad_speed, `aim_pct` = how far off-centre it hits on purpose (% of half a paddle), how many powers it brings in Chaos, `smart` = times its powers instead of firing at random moments, `center` = drifts back to the middle between shots.",
+  "bot": [
+    { "name": "easy", "react": 22, "error": 8000, "speed_pct": 50, "aim_pct": 0, "powers": 1, "smart": false, "center": false },
+    { "name": "medium", "react": 14, "error": 6500, "speed_pct": 68, "aim_pct": 0, "powers": 2, "smart": false, "center": false },
+    { "name": "hard", "react": 8, "error": 4400, "speed_pct": 85, "aim_pct": 30, "powers": 3, "smart": true, "center": true },
+    { "name": "master", "react": 4, "error": 3000, "speed_pct": 100, "aim_pct": 45, "powers": 3, "smart": true, "center": true }
+  ]
+}
