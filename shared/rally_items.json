@@ -1,0 +1,45 @@
+{
+  "_doc": "Echo Rally shop, read by backend/src/echo_rally/items.rs and the frontend (which draws the cosmetics from `art`). price null = free for everyone; the rest are bought with coins (cosmetics can also be lucky drops). Powers must list exactly the ids in shared/rally_rules.json `power_ids`, in that order.",
+  "powers": [
+    { "id": "grow", "name": "Grow", "rarity": "common", "price": null, "text": "Your paddle is 1.5x as tall for 8 seconds." },
+    { "id": "shrink", "name": "Shrink", "rarity": "common", "price": null, "text": "Your rival's paddle is 0.6x as tall for 8 seconds." },
+    { "id": "smash", "name": "Smash", "rarity": "common", "price": null, "text": "Your next return flies 1.6x faster." },
+    { "id": "shield", "name": "Shield", "rarity": "common", "price": null, "text": "A wall behind your paddle stops one goal. Lasts 10 seconds or until it's used." },
+    { "id": "echo", "name": "Echo", "rarity": "common", "price": null, "text": "A sonar ping marks where the ball will reach your side, for 5 seconds." },
+    { "id": "curve", "name": "Curve", "rarity": "rare", "price": 300, "text": "Your next return bends once it crosses the net." },
+    { "id": "freeze", "name": "Freeze", "rarity": "rare", "price": 350, "text": "Your rival's paddle can't move for 1 second." },
+    { "id": "multi-ball", "name": "Multi-ball", "rarity": "epic", "price": 400, "text": "The ball splits in two for 8 seconds. The first one to score counts." },
+    { "id": "ghost", "name": "Ghost", "rarity": "epic", "price": 450, "text": "Your next return turns invisible across the middle of the court." },
+    { "id": "fog", "name": "Fog", "rarity": "legendary", "price": 500, "text": "Fog covers your rival's half for 4 seconds, so they only see near their paddle." }
+  ],
+  "paddles": [
+    { "id": "classic", "name": "Classic", "rarity": "common", "price": null, "art": { "style": "solid", "color": "#F2F5F9", "edge": "#F2F5F9" } },
+    { "id": "cyan", "name": "Neon Cyan", "rarity": "common", "price": null, "art": { "style": "neon", "color": "#2EE8E8", "edge": "#B8FFFF" } },
+    { "id": "pink", "name": "Neon Pink", "rarity": "common", "price": null, "art": { "style": "neon", "color": "#FF4FA3", "edge": "#FFC2E0" } },
+    { "id": "lime", "name": "Lime Bar", "rarity": "common", "price": null, "art": { "style": "solid", "color": "#9BE84F", "edge": "#D8FFB0" } },
+    { "id": "chrome", "name": "Chrome Bar", "rarity": "rare", "price": 300, "art": { "style": "chrome", "color": "#AEB7C4", "edge": "#F2F5F9" } },
+    { "id": "laser", "name": "Laser Edge", "rarity": "rare", "price": 350, "art": { "style": "laser", "color": "#1A0B33", "edge": "#FF3B3B" } },
+    { "id": "crystal", "name": "Crystal Paddle", "rarity": "epic", "price": 550, "art": { "style": "crystal", "color": "#8FD8FF", "edge": "#FFFFFF" } },
+    { "id": "gold", "name": "Golden Racket", "rarity": "legendary", "price": 900, "art": { "style": "gold", "color": "#E5B522", "edge": "#FFF0A8" } }
+  ],
+  "balls": [
+    { "id": "pixel", "name": "Pixel Square", "rarity": "common", "price": null, "art": { "style": "square", "color": "#F2F5F9", "glow": "none" } },
+    { "id": "round", "name": "Round Ball", "rarity": "common", "price": null, "art": { "style": "round", "color": "#F2F5F9", "glow": "none" } },
+    { "id": "orb", "name": "Neon Orb", "rarity": "common", "price": null, "art": { "style": "round", "color": "#7CFFB2", "glow": "#2EE88A" } },
+    { "id": "ping", "name": "Ping Ball", "rarity": "common", "price": null, "art": { "style": "bat", "color": "#6B5B95", "glow": "none" } },
+    { "id": "fire", "name": "Fireball", "rarity": "rare", "price": 300, "art": { "style": "fire", "color": "#FF8A3D", "glow": "#FFD25A" } },
+    { "id": "plasma", "name": "Plasma", "rarity": "rare", "price": 350, "art": { "style": "plasma", "color": "#B58CFF", "glow": "#E0CCFF" } },
+    { "id": "comet", "name": "Comet", "rarity": "epic", "price": 550, "art": { "style": "comet", "color": "#8FD8FF", "glow": "#FFFFFF" } },
+    { "id": "echo", "name": "Echo Orb", "rarity": "legendary", "price": 900, "art": { "style": "rings", "color": "#2EE8C4", "glow": "#B8FFF0" } }
+  ],
+  "courts": [
+    { "id": "black", "name": "Black Box", "rarity": "common", "price": null, "art": { "style": "plain", "bg": "#05060A", "line": "#F2F5F9", "net": "#F2F5F9", "accent": "#F2F5F9" } },
+    { "id": "grid", "name": "Grid", "rarity": "common", "price": null, "art": { "style": "grid", "bg": "#070B14", "line": "#2E3A55", "net": "#5B8DEF", "accent": "#5B8DEF" } },
+    { "id": "blueprint", "name": "Blueprint", "rarity": "common", "price": null, "art": { "style": "grid", "bg": "#1E4C8F", "line": "#4C77B8", "net": "#DCE9FA", "accent": "#FFFFFF" } },
+    { "id": "crt", "name": "CRT Green", "rarity": "common", "price": null, "art": { "style": "scan", "bg": "#06110A", "line": "#0F3A1E", "net": "#2EE88A", "accent": "#7CFFB2" } },
+    { "id": "synthwave", "name": "Synthwave", "rarity": "rare", "price": 300, "art": { "style": "synth", "bg": "#14092B", "line": "#3B1460", "net": "#FF4FA3", "accent": "#2EE8C4" } },
+    { "id": "cabinet", "name": "Arcade Cabinet", "rarity": "rare", "price": 350, "art": { "style": "cabinet", "bg": "#0A0A12", "line": "#1E1E2E", "net": "#FFE066", "accent": "#FF4FA3" } },
+    { "id": "stadium", "name": "Night Stadium", "rarity": "epic", "price": 550, "art": { "style": "stadium", "bg": "#0B2414", "line": "#1B4A2A", "net": "#F2F5F9", "accent": "#FFF0A8" } },
+    { "id": "space", "name": "Deep Space", "rarity": "legendary", "price": 900, "art": { "style": "space", "bg": "#05060F", "line": "#1C1A2E", "net": "#8A93A6", "accent": "#FFF0A8" } }
+  ]
+}

@@ -151,10 +151,10 @@ pub const GAMES: &[GameInfo] = &[
         prize_boards: &[1, 2, 3, 4],
     },
     GameInfo {
-        id: "pong-online",
-        title: "Pong Online",
+        id: "echo-rally",
+        title: "Echo Rally",
         status: GameStatus::ComingSoon,
-        ranking: Ranking::Best,
+        ranking: Ranking::Total,
         prize_boards: &[],
     },
     GameInfo {

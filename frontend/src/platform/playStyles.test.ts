@@ -26,7 +26,11 @@ describe("play styles", () => {
   });
 
   it("every online game can also be played on one device, unless it's online only", () => {
-    for (const g of filterGames(GAMES, "online")) if (!isOnlineOnly(g)) expect(g.meta.play, g.meta.id).toContain("local");
+    // Echo Rally is real-time: the owner chose online and Zero-Bot, no shared keyboard.
+    const noLocal = ["echo-rally"];
+    for (const g of filterGames(GAMES, "online")) {
+      if (!isOnlineOnly(g) && !noLocal.includes(g.meta.id)) expect(g.meta.play, g.meta.id).toContain("local");
+    }
     expect(GAMES.filter(isOnlineOnly).map((g) => g.meta.id)).toEqual(["memory-match"]);
   });
 

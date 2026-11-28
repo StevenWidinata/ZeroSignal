@@ -60,6 +60,9 @@ pub enum Event {
     /// A finished Signal Flap run (10+ seconds): gaps passed and signal bars
     /// picked up.
     FlapRun { gaps: i64, bars: i64 },
+    /// A finished Echo Rally match (vs Zero-Bot, or online): the most returns
+    /// in one point and the powers you fired.
+    RallyMatch { won: bool, longest_rally: i64, powers: i64 },
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -106,6 +109,9 @@ enum Goal {
     FlapRuns,
     FlapBars,
     FlapGaps(i64),
+    RallyMatches,
+    RallyLong(i64),
+    RallyPowers,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -184,6 +190,9 @@ impl QuestDef {
             (Goal::FlapRuns, FlapRun { .. }) => 1,
             (Goal::FlapBars, FlapRun { bars, .. }) => bars.clamp(0, i32::MAX as i64) as i32,
             (Goal::FlapGaps(min), FlapRun { gaps, .. }) => hit(gaps >= min),
+            (Goal::RallyMatches, RallyMatch { .. }) => 1,
+            (Goal::RallyLong(min), RallyMatch { longest_rally, .. }) => hit(longest_rally >= min),
+            (Goal::RallyPowers, RallyMatch { powers, .. }) => powers.clamp(0, i32::MAX as i64) as i32,
             _ => 0,
         }
     }
@@ -195,7 +204,7 @@ const fn q(id: &'static str, title: &'static str, goal: Goal, target: i32, coins
 
 use Game::{ConnectFour as CF, TicTacToe as TTT};
 
-pub const POOL: [QuestDef; 49] = [
+pub const POOL: [QuestDef; 52] = [
     q("cf_play_3", "Play 3 Connect Four games vs the AI", Goal::PlayAi(CF), 3, 20, 30),
     q("cf_win_2_medium", "Win 2 Connect Four games vs Medium or harder",
         Goal::WinAi { game: Some(CF), min_level: 2 }, 2, 40, 60),
@@ -252,6 +261,9 @@ pub const POOL: [QuestDef; 49] = [
     q("flap_play_3", "Lift Off: play 3 Signal Flap runs", Goal::FlapRuns, 3, 20, 30),
     q("flap_bars_30", "Bar Collector: pick up 30 signal bars in Signal Flap", Goal::FlapBars, 30, 30, 40),
     q("flap_gaps_25", "Long Flight: pass 25 gaps in one Signal Flap run", Goal::FlapGaps(25), 1, 40, 60),
+    q("rally_play_3", "Rally Starter: play 3 Echo Rally matches", Goal::RallyMatches, 3, 20, 30),
+    q("rally_long_15", "Long Rally: reach a 15-return rally in Echo Rally", Goal::RallyLong(15), 1, 40, 60),
+    q("rally_powers_5", "Power Play: fire 5 powers in Echo Rally", Goal::RallyPowers, 5, 30, 40),
 ];
 
 pub fn find(id: &str) -> Option<&'static QuestDef> {
@@ -479,5 +491,16 @@ mod tests {
         assert_eq!(quest("flap_gaps_25").progress(&run(24, 9)), 0);
         assert_eq!(quest("flap_gaps_25").progress(&run(25, 0)), 1);
         assert_eq!(quest("flap_play_3").progress(&Event::MysteryBox), 0);
+    }
+
+    #[test]
+    fn rally_quests() {
+        let m = |longest_rally, powers| Event::RallyMatch { won: false, longest_rally, powers };
+        assert_eq!(quest("rally_play_3").progress(&m(0, 0)), 1);
+        assert_eq!(quest("rally_long_15").progress(&m(14, 0)), 0);
+        assert_eq!(quest("rally_long_15").progress(&m(15, 0)), 1);
+        assert_eq!(quest("rally_powers_5").progress(&m(3, 2)), 2);
+        assert_eq!(quest("rally_powers_5").progress(&m(3, -1)), 0);
+        assert_eq!(quest("rally_play_3").progress(&Event::MysteryBox), 0);
     }
 }

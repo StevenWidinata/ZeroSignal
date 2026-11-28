@@ -703,6 +703,55 @@ export interface FlapCollection {
 }
 
 // ---------------------------------------------------------------------------
+// Echo Rally
+// ---------------------------------------------------------------------------
+
+export type RallyLevel = "easy" | "medium" | "hard" | "master";
+export type RallyMode = "classic" | "chaos";
+export type RallyItemKind = "power" | "paddle" | "ball" | "court";
+
+export interface RallyStart {
+  match_id: string;
+  seed: number;
+  target: number;
+  level: RallyLevel;
+  chaos: boolean;
+  kit: string[];
+  /** The powers Zero-Bot brings (empty in Classic). */
+  bot_kit: string[];
+}
+
+/** The server's replay of a match (same shape as the engine's Summary). */
+export interface RallySummary {
+  score: [number, number];
+  winner: number | null;
+  ended_by: "win" | "time" | "quit" | null;
+  ticks: number;
+  game_ms: number;
+  hits: [number, number];
+  longest_rally: number;
+  powers: [number, number];
+}
+
+export interface RallyFinish {
+  summary: RallySummary;
+  won: boolean;
+  /** Board points this match added, and the running total. */
+  points: number;
+  total: number;
+  rewards: Granted;
+  /** Lucky drop ("ball:comet"), if any. */
+  drop: string | null;
+}
+
+export interface RallyCollection {
+  powers: WamItemView[];
+  paddles: WamItemView[];
+  balls: WamItemView[];
+  courts: WamItemView[];
+}
+
+// ---------------------------------------------------------------------------
 // Minefield
 // ---------------------------------------------------------------------------
 

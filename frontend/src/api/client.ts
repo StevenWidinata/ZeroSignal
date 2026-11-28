@@ -5,6 +5,12 @@ import type {
   FlapItemKind,
   FlapMode,
   FlapStart,
+  RallyCollection,
+  RallyFinish,
+  RallyItemKind,
+  RallyLevel,
+  RallyMode,
+  RallyStart,
   BrickFinish,
   BrickItemKind,
   BrickMode,
@@ -480,6 +486,28 @@ export const signalFlap = {
   },
   buy(kind: FlapItemKind, id: string) {
     return post<FlapCollection>(`${FLAP}/buy`, { kind, id });
+  },
+};
+
+const RALLY = "/api/games/echo-rally";
+
+/** Echo Rally vs Zero-Bot: the server gives a seed and replays your inputs against the bot. */
+export const echoRally = {
+  start(
+    setup: { target: number; level: RallyLevel; mode: RallyMode; kit: string[] },
+    look: { paddle: string; ball: string; court: string },
+  ) {
+    return post<RallyStart>(`${RALLY}/matches`, { ...setup, ...look });
+  },
+  /** `inputs`: `[tick, y]` paddle targets and `[tick, -1..-3]` power fires; `quitAt`: the tick you left at, if you did. */
+  finish(matchId: string, inputs: [number, number][], quitAt: number | null) {
+    return post<RallyFinish>(`${RALLY}/matches/${encodeURIComponent(matchId)}/finish`, { inputs, quit_at: quitAt });
+  },
+  collection() {
+    return request<RallyCollection>(`${RALLY}/collection`);
+  },
+  buy(kind: RallyItemKind, id: string) {
+    return post<RallyCollection>(`${RALLY}/buy`, { kind, id });
   },
 };
 

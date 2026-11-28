@@ -42,7 +42,6 @@ pub struct PowerRules {
 
 #[derive(Debug, Deserialize)]
 pub struct BotLevel {
-    pub name: String,
     pub react: u32,
     pub error: i32,
     pub speed_pct: i32,
